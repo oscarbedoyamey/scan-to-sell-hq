@@ -1,6 +1,7 @@
 import { useLanguage } from '@/i18n/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import zignoLogo from '@/assets/zigno-logo.png';
 
 export const Footer = () => {
   const { t } = useLanguage();
@@ -10,9 +11,9 @@ export const Footer = () => {
       <div className="container-wide">
         <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
           <div className="lg:col-span-2">
-            <div className="flex items-center gap-1 mb-4">
-              <span className="font-display font-bold text-2xl tracking-tight">ZIGNO</span>
-            </div>
+             <div className="flex items-center mb-4">
+               <img src={zignoLogo} alt="ZIGNO" className="h-10 w-auto" />
+             </div>
             <p className="text-background/70 mb-6 max-w-sm">{t.footer.description}</p>
             <div className="flex gap-2">
               <Input placeholder={t.footer.newsletter.placeholder} className="bg-white/10 border-white/20 text-background placeholder:text-background/50" />
