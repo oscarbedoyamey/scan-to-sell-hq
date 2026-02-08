@@ -10,13 +10,8 @@ export const Footer = () => {
       <div className="container-wide">
         <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
           <div className="lg:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-5 h-5 text-primary-foreground" fill="currentColor">
-                  <path d="M3 3h7v7H3V3zm11 0h7v7h-7V3zm0 11h7v7h-7v-7zM3 14h7v7H3v-7z"/>
-                </svg>
-              </div>
-              <span className="font-display font-bold text-xl">ScanToSell</span>
+            <div className="flex items-center gap-1 mb-4">
+              <span className="font-display font-bold text-2xl tracking-tight">ZIGNO</span>
             </div>
             <p className="text-background/70 mb-6 max-w-sm">{t.footer.description}</p>
             <div className="flex gap-2">
