@@ -224,6 +224,20 @@ const en = {
     madeWith: 'Made with ❤️ in Europe',
   },
 
+  // Poster Gallery
+  posterGallery: {
+    sectionLabel: 'Real Examples',
+    title: 'Professional poster designs',
+    subtitle: 'Browse our collection of ready-to-use poster designs for any property type and format.',
+    viewDetails: 'Click to enlarge',
+    colorLabel: 'Color scheme',
+    formats: {
+      poster: 'Poster',
+      banner: 'Banner',
+      sticker: 'Sticker',
+    },
+  },
+
   // Common
   common: {
     learnMore: 'Learn more',
@@ -432,6 +446,18 @@ const fr = {
     copyright: '© 2025 ScanToSell. Tous droits réservés.',
     madeWith: 'Fait avec ❤️ en Europe',
   },
+  posterGallery: {
+    sectionLabel: 'Exemples Réels',
+    title: 'Designs d\'affiches professionnels',
+    subtitle: 'Parcourez notre collection de designs d\'affiches prêts à l\'emploi pour tout type de bien et format.',
+    viewDetails: 'Cliquez pour agrandir',
+    colorLabel: 'Palette de couleurs',
+    formats: {
+      poster: 'Affiche',
+      banner: 'Bâche',
+      sticker: 'Autocollant',
+    },
+  },
   common: {
     learnMore: 'En savoir plus',
     getStarted: 'Commencer',
@@ -638,6 +664,18 @@ const es = {
     },
     copyright: '© 2025 ScanToSell. Todos los derechos reservados.',
     madeWith: 'Hecho con ❤️ en Europa',
+  },
+  posterGallery: {
+    sectionLabel: 'Ejemplos Reales',
+    title: 'Diseños de carteles profesionales',
+    subtitle: 'Explora nuestra colección de diseños de carteles listos para usar para cualquier tipo de propiedad y formato.',
+    viewDetails: 'Clic para ampliar',
+    colorLabel: 'Paleta de colores',
+    formats: {
+      poster: 'Cartel',
+      banner: 'Lona',
+      sticker: 'Pegatina',
+    },
   },
   common: {
     learnMore: 'Saber más',
@@ -846,6 +884,18 @@ const de = {
     copyright: '© 2025 ScanToSell. Alle Rechte vorbehalten.',
     madeWith: 'Mit ❤️ in Europa gemacht',
   },
+  posterGallery: {
+    sectionLabel: 'Echte Beispiele',
+    title: 'Professionelle Plakatdesigns',
+    subtitle: 'Durchstöbere unsere Kollektion gebrauchsfertiger Plakatdesigns für jeden Immobilientyp und jedes Format.',
+    viewDetails: 'Zum Vergrößern klicken',
+    colorLabel: 'Farbschema',
+    formats: {
+      poster: 'Plakat',
+      banner: 'Banner',
+      sticker: 'Aufkleber',
+    },
+  },
   common: {
     learnMore: 'Mehr erfahren',
     getStarted: 'Loslegen',
@@ -1052,6 +1102,18 @@ const it = {
     },
     copyright: '© 2025 ScanToSell. Tutti i diritti riservati.',
     madeWith: 'Fatto con ❤️ in Europa',
+  },
+  posterGallery: {
+    sectionLabel: 'Esempi Reali',
+    title: 'Design di cartelloni professionali',
+    subtitle: 'Sfoglia la nostra collezione di design di cartelloni pronti all\'uso per qualsiasi tipo di proprietà e formato.',
+    viewDetails: 'Clicca per ingrandire',
+    colorLabel: 'Schema colori',
+    formats: {
+      poster: 'Poster',
+      banner: 'Striscione',
+      sticker: 'Adesivo',
+    },
   },
   common: {
     learnMore: 'Scopri di più',
@@ -1260,6 +1322,18 @@ const pt = {
     copyright: '© 2025 ScanToSell. Todos os direitos reservados.',
     madeWith: 'Feito com ❤️ na Europa',
   },
+  posterGallery: {
+    sectionLabel: 'Exemplos Reais',
+    title: 'Designs de cartazes profissionais',
+    subtitle: 'Navegue pela nossa coleção de designs de cartazes prontos a usar para qualquer tipo de propriedade e formato.',
+    viewDetails: 'Clique para ampliar',
+    colorLabel: 'Esquema de cores',
+    formats: {
+      poster: 'Cartaz',
+      banner: 'Faixa',
+      sticker: 'Autocolante',
+    },
+  },
   common: {
     learnMore: 'Saber mais',
     getStarted: 'Começar',
@@ -1466,6 +1540,18 @@ const pl = {
     },
     copyright: '© 2025 ScanToSell. Wszelkie prawa zastrzeżone.',
     madeWith: 'Zrobione z ❤️ w Europie',
+  },
+  posterGallery: {
+    sectionLabel: 'Prawdziwe Przykłady',
+    title: 'Profesjonalne projekty plakatów',
+    subtitle: 'Przeglądaj naszą kolekcję gotowych projektów plakatów dla każdego typu nieruchomości i formatu.',
+    viewDetails: 'Kliknij aby powiększyć',
+    colorLabel: 'Schemat kolorów',
+    formats: {
+      poster: 'Plakat',
+      banner: 'Baner',
+      sticker: 'Naklejka',
+    },
   },
   common: {
     learnMore: 'Dowiedz się więcej',
