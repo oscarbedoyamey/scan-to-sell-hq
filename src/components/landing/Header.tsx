@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/i18n/LanguageContext';
+import zignoLogo from '@/assets/zigno-logo.png';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,18 +20,10 @@ export const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50">
       <div className="container-wide">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo - ZIGNO wordmark with red QR module on 'i' */}
-          <a href="/" className="flex items-center gap-1">
-            <span className="font-display font-bold text-2xl text-foreground tracking-tight">Z</span>
-            <span className="font-display font-bold text-2xl text-foreground tracking-tight">I</span>
-            <span className="relative font-display font-bold text-2xl text-foreground tracking-tight">
-              <span className="invisible">G</span>
-              <span className="absolute inset-0 flex items-center justify-center">G</span>
-            </span>
-            <span className="font-display font-bold text-2xl text-foreground tracking-tight">N</span>
-            <span className="font-display font-bold text-2xl text-foreground tracking-tight">O</span>
-            {/* Red QR module as dot of 'i' is integrated into the typography */}
-          </a>
+           {/* Logo - ZIGNO official logo */}
+           <a href="/" className="flex items-center">
+             <img src={zignoLogo} alt="ZIGNO" className="h-10 w-auto" />
+           </a>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
