@@ -7,120 +7,124 @@
    All colors in HSL format
 */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@500;600;700;800&family=Montserrat+Alternates:wght@500;600;700;800&display=swap');
 
 @layer base {
   :root {
-    /* Core brand colors */
-    --background: 210 20% 99%;
-    --foreground: 220 25% 12%;
+    /* ZIGNO Brand Colors */
+    /* Off White #F7F7F5 → hsl(60, 8%, 96%) */
+    --background: 60 8% 96%;
+    /* Graphite Gray #111827 → hsl(222, 47%, 11%) */
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 12%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 12%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Primary: Teal - Trust, technology, European feel */
-    --primary: 190 85% 42%;
-    --primary-foreground: 0 0% 100%;
-    --primary-light: 190 85% 95%;
-    --primary-dark: 190 85% 32%;
+    /* Primary: ZIGNO Navy #0B1F3A → hsl(214, 72%, 14%) */
+    --primary: 214 72% 14%;
+    --primary-foreground: 60 8% 96%;
+    --primary-light: 214 72% 95%;
+    --primary-dark: 214 72% 10%;
 
-    /* Secondary: Soft slate */
-    --secondary: 215 25% 96%;
-    --secondary-foreground: 220 25% 25%;
+    /* Secondary: Light gray variant */
+    --secondary: 60 5% 93%;
+    --secondary-foreground: 214 72% 14%;
 
     /* Muted surfaces */
-    --muted: 215 20% 96%;
-    --muted-foreground: 215 15% 50%;
+    --muted: 60 5% 94%;
+    --muted-foreground: 222 20% 45%;
 
-    /* Accent: Warm coral for CTAs */
-    --accent: 12 90% 58%;
+    /* Accent: Signal Red #D7263D → hsl(352, 71%, 49%) */
+    --accent: 352 71% 49%;
     --accent-foreground: 0 0% 100%;
-    --accent-hover: 12 90% 52%;
+    --accent-hover: 352 71% 43%;
 
     /* Success green */
     --success: 152 75% 42%;
     --success-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 352 71% 49%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 215 25% 90%;
-    --input: 215 25% 90%;
-    --ring: 190 85% 42%;
+    --border: 60 5% 88%;
+    --input: 60 5% 88%;
+    --ring: 214 72% 14%;
 
     --radius: 0.75rem;
 
-    /* Custom gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(190 85% 42%) 0%, hsl(210 80% 55%) 100%);
-    --gradient-hero-subtle: linear-gradient(180deg, hsl(190 85% 97%) 0%, hsl(210 20% 99%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(12 90% 58%) 0%, hsl(25 95% 55%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(215 25% 98%) 100%);
+    /* Custom gradients - Updated for ZIGNO */
+    --gradient-hero: linear-gradient(135deg, hsl(214 72% 14%) 0%, hsl(214 72% 22%) 100%);
+    --gradient-hero-subtle: linear-gradient(180deg, hsl(60 8% 98%) 0%, hsl(60 8% 96%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(352 71% 49%) 0%, hsl(352 71% 55%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(60 5% 97%) 100%);
     
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(220 25% 12% / 0.03);
-    --shadow-md: 0 4px 6px -1px hsl(220 25% 12% / 0.05), 0 2px 4px -2px hsl(220 25% 12% / 0.03);
-    --shadow-lg: 0 10px 15px -3px hsl(220 25% 12% / 0.08), 0 4px 6px -4px hsl(220 25% 12% / 0.03);
-    --shadow-xl: 0 20px 25px -5px hsl(220 25% 12% / 0.08), 0 8px 10px -6px hsl(220 25% 12% / 0.03);
-    --shadow-hero: 0 25px 50px -12px hsl(190 85% 42% / 0.2);
-    --shadow-card-hover: 0 20px 40px -15px hsl(220 25% 12% / 0.12);
+    /* Shadows - Updated for ZIGNO Navy */
+    --shadow-sm: 0 1px 2px 0 hsl(214 72% 14% / 0.03);
+    --shadow-md: 0 4px 6px -1px hsl(214 72% 14% / 0.05), 0 2px 4px -2px hsl(214 72% 14% / 0.03);
+    --shadow-lg: 0 10px 15px -3px hsl(214 72% 14% / 0.08), 0 4px 6px -4px hsl(214 72% 14% / 0.03);
+    --shadow-xl: 0 20px 25px -5px hsl(214 72% 14% / 0.08), 0 8px 10px -6px hsl(214 72% 14% / 0.03);
+    --shadow-hero: 0 25px 50px -12px hsl(214 72% 14% / 0.2);
+    --shadow-card-hover: 0 20px 40px -15px hsl(214 72% 14% / 0.12);
 
     /* Sidebar (keeping for compatibility) */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 60 8% 98%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 214 72% 14%;
+    --sidebar-primary-foreground: 60 8% 96%;
+    --sidebar-accent: 60 5% 94%;
+    --sidebar-accent-foreground: 214 72% 14%;
+    --sidebar-border: 60 5% 88%;
+    --sidebar-ring: 214 72% 14%;
   }
 
   .dark {
-    --background: 220 25% 8%;
-    --foreground: 210 20% 98%;
+    /* ZIGNO Navy as background in dark mode */
+    --background: 214 72% 8%;
+    --foreground: 60 8% 96%;
 
-    --card: 220 25% 10%;
-    --card-foreground: 210 20% 98%;
+    --card: 214 72% 11%;
+    --card-foreground: 60 8% 96%;
 
-    --popover: 220 25% 10%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 214 72% 11%;
+    --popover-foreground: 60 8% 96%;
 
-    --primary: 190 85% 50%;
-    --primary-foreground: 220 25% 8%;
-    --primary-light: 190 50% 15%;
-    --primary-dark: 190 85% 60%;
+    --primary: 60 8% 96%;
+    --primary-foreground: 214 72% 14%;
+    --primary-light: 214 50% 20%;
+    --primary-dark: 60 8% 90%;
 
-    --secondary: 220 25% 15%;
-    --secondary-foreground: 210 20% 98%;
+    --secondary: 214 50% 18%;
+    --secondary-foreground: 60 8% 96%;
 
-    --muted: 220 25% 15%;
-    --muted-foreground: 215 15% 60%;
+    --muted: 214 50% 18%;
+    --muted-foreground: 60 5% 60%;
 
-    --accent: 12 90% 58%;
+    /* Signal Red stays same in dark mode */
+    --accent: 352 71% 55%;
     --accent-foreground: 0 0% 100%;
-    --accent-hover: 12 90% 65%;
+    --accent-hover: 352 71% 60%;
 
     --success: 152 75% 50%;
-    --success-foreground: 220 25% 8%;
+    --success-foreground: 214 72% 8%;
 
-    --destructive: 0 62% 45%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive: 352 71% 50%;
+    --destructive-foreground: 60 8% 96%;
 
-    --border: 220 25% 18%;
-    --input: 220 25% 18%;
-    --ring: 190 85% 50%;
+    --border: 214 50% 20%;
+    --input: 214 50% 20%;
+    --ring: 60 8% 96%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 214 72% 10%;
+    --sidebar-foreground: 60 8% 96%;
+    --sidebar-primary: 60 8% 96%;
+    --sidebar-primary-foreground: 214 72% 14%;
+    --sidebar-accent: 214 50% 18%;
+    --sidebar-accent-foreground: 60 8% 96%;
+    --sidebar-border: 214 50% 20%;
+    --sidebar-ring: 60 8% 96%;
   }
 }
 
@@ -139,7 +143,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    font-family: 'Inter Tight', 'Montserrat Alternates', 'Inter', system-ui, sans-serif;
     @apply font-bold tracking-tight;
   }
 }
@@ -196,7 +200,7 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      hsl(190 85% 42% / 0.1) 50%,
+      hsl(352 71% 49% / 0.1) 50%,
       transparent 100%
     );
     animation: shimmer 2s infinite;
