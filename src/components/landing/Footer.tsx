@@ -1,7 +1,7 @@
 import { useLanguage } from '@/i18n/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import zignoLogo from '@/assets/zigno-logo.png';
+import zignoLogoDark from '@/assets/zigno-logo-dark.png';
 
 export const Footer = () => {
   const { t } = useLanguage();
@@ -12,7 +12,7 @@ export const Footer = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
           <div className="lg:col-span-2">
              <div className="flex items-center mb-4">
-               <img src={zignoLogo} alt="ZIGNO" className="h-10 w-auto" />
+               <img src={zignoLogoDark} alt="ZIGNO" className="h-10 w-auto" />
              </div>
             <p className="text-background/70 mb-6 max-w-sm">{t.footer.description}</p>
             <div className="flex gap-2">
