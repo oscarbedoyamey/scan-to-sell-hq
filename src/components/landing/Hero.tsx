@@ -73,7 +73,7 @@ export const Hero = () => {
               <div className="relative rounded-2xl overflow-hidden shadow-hero animate-float">
                 <img
                   src={heroPoster}
-                  alt="ScanToSell QR Code Poster"
+                  alt="Zigno QR Code Poster"
                   className="w-full h-auto"
                 />
               </div>

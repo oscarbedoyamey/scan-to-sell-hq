@@ -5,9 +5,9 @@ import testimonial2 from '@/assets/testimonial-2.jpg';
 import testimonial3 from '@/assets/testimonial-3.jpg';
 
 const testimonials = [
-  { image: testimonial1, name: 'Marco García', role: 'Property Owner', location: 'Madrid, Spain', rating: 5, text: 'ScanToSell helped me sell my apartment in just 3 weeks. The QR code got over 200 scans!' },
+  { image: testimonial1, name: 'Marco García', role: 'Property Owner', location: 'Madrid, Spain', rating: 5, text: 'Zigno helped me sell my apartment in just 3 weeks. The QR code got over 200 scans!' },
   { image: testimonial2, name: 'Sophie Müller', role: 'Real Estate Agent', location: 'Munich, Germany', rating: 5, text: 'My clients love the modern approach. It sets my listings apart from the competition.' },
-  { image: testimonial3, name: 'Pierre Dubois', role: 'Agency Director', location: 'Paris, France', rating: 5, text: 'We use ScanToSell for all our 50+ listings. The analytics are invaluable.' },
+  { image: testimonial3, name: 'Pierre Dubois', role: 'Agency Director', location: 'Paris, France', rating: 5, text: 'We use Zigno for all our 50+ listings. The analytics are invaluable.' },
 ];
 
 export const Testimonials = () => {

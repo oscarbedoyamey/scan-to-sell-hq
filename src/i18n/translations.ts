@@ -1,4 +1,4 @@
-// ScanToSell Multi-language Translation System
+// Zigno Multi-language Translation System
 // Supports: English, French, Spanish, German, Italian, Portuguese, Polish
 
 export type Language = 'en' | 'fr' | 'es' | 'de' | 'it' | 'pt' | 'pl';
@@ -111,7 +111,7 @@ const en = {
     free: {
       name: 'Free',
       price: '€0',
-      description: 'Perfect for trying ScanToSell',
+      description: 'Perfect for trying Zigno',
       features: [
         '1 property listing',
         'QR code valid for 7 days',
@@ -159,14 +159,14 @@ const en = {
     sectionLabel: 'Success Stories',
     title: 'Loved by property owners',
     titleHighlight: 'across Europe',
-    subtitle: 'See why thousands of property owners and agents trust ScanToSell.',
+    subtitle: 'See why thousands of property owners and agents trust Zigno.',
   },
 
   // FAQ
   faq: {
     sectionLabel: 'Questions & Answers',
     title: 'Frequently asked questions',
-    subtitle: "Everything you need to know about ScanToSell. Can't find an answer? Contact us.",
+    subtitle: "Everything you need to know about Zigno. Can't find an answer? Contact us.",
     items: [
       {
         question: 'What if I already have my own printer?',
@@ -186,7 +186,7 @@ const en = {
       },
       {
         question: 'Which countries do you support?',
-        answer: "ScanToSell works in all European Union countries plus the UK, Switzerland, and Norway. Our printing partners cover 15+ countries.",
+        answer: "Zigno works in all European Union countries plus the UK, Switzerland, and Norway. Our printing partners cover 15+ countries.",
       },
       {
         question: 'Can I cancel my subscription anytime?',
@@ -220,7 +220,7 @@ const en = {
       placeholder: 'Enter your email',
       cta: 'Subscribe',
     },
-    copyright: '© 2025 ScanToSell. All rights reserved.',
+    copyright: '© 2025 Zigno LLC. All rights reserved.',
     madeWith: 'Made with ❤️ in Europe',
   },
 
@@ -340,7 +340,7 @@ const fr = {
     free: {
       name: 'Gratuit',
       price: '0 €',
-      description: 'Parfait pour essayer ScanToSell',
+      description: 'Parfait pour essayer Zigno',
       features: [
         '1 annonce immobilière',
         'QR code valide 7 jours',
@@ -386,12 +386,12 @@ const fr = {
     sectionLabel: 'Témoignages',
     title: 'Adoré par les propriétaires',
     titleHighlight: 'à travers l\'Europe',
-    subtitle: 'Découvrez pourquoi des milliers de propriétaires et agents font confiance à ScanToSell.',
+    subtitle: 'Découvrez pourquoi des milliers de propriétaires et agents font confiance à Zigno.',
   },
   faq: {
     sectionLabel: 'Questions & Réponses',
     title: 'Questions fréquentes',
-    subtitle: 'Tout ce que vous devez savoir sur ScanToSell. Pas de réponse? Contactez-nous.',
+    subtitle: 'Tout ce que vous devez savoir sur Zigno. Pas de réponse? Contactez-nous.',
     items: [
       {
         question: 'Et si j\'ai déjà mon propre imprimeur?',
@@ -411,7 +411,7 @@ const fr = {
       },
       {
         question: 'Quels pays supportez-vous?',
-        answer: 'ScanToSell fonctionne dans tous les pays de l\'UE plus le Royaume-Uni, la Suisse et la Norvège. Nos partenaires d\'impression couvrent 15+ pays.',
+        answer: 'Zigno fonctionne dans tous les pays de l\'UE plus le Royaume-Uni, la Suisse et la Norvège. Nos partenaires d\'impression couvrent 15+ pays.',
       },
       {
         question: 'Puis-je annuler mon abonnement à tout moment?',
@@ -443,7 +443,7 @@ const fr = {
       placeholder: 'Entrez votre email',
       cta: 'S\'abonner',
     },
-    copyright: '© 2025 ScanToSell. Tous droits réservés.',
+    copyright: '© 2025 Zigno LLC. Tous droits réservés.',
     madeWith: 'Fait avec ❤️ en Europe',
   },
   posterGallery: {
@@ -559,7 +559,7 @@ const es = {
     free: {
       name: 'Gratis',
       price: '0 €',
-      description: 'Perfecto para probar ScanToSell',
+      description: 'Perfecto para probar Zigno',
       features: [
         '1 anuncio de propiedad',
         'Código QR válido 7 días',
@@ -605,12 +605,12 @@ const es = {
     sectionLabel: 'Casos de Éxito',
     title: 'Amado por propietarios',
     titleHighlight: 'en toda Europa',
-    subtitle: 'Descubre por qué miles de propietarios y agentes confían en ScanToSell.',
+    subtitle: 'Descubre por qué miles de propietarios y agentes confían en Zigno.',
   },
   faq: {
     sectionLabel: 'Preguntas y Respuestas',
     title: 'Preguntas frecuentes',
-    subtitle: 'Todo lo que necesitas saber sobre ScanToSell. ¿No encuentras respuesta? Contáctanos.',
+    subtitle: 'Todo lo que necesitas saber sobre Zigno. ¿No encuentras respuesta? Contáctanos.',
     items: [
       {
         question: '¿Y si ya tengo mi propia imprenta?',
@@ -630,7 +630,7 @@ const es = {
       },
       {
         question: '¿Qué países soportáis?',
-        answer: 'ScanToSell funciona en todos los países de la UE más Reino Unido, Suiza y Noruega. Nuestras imprentas asociadas cubren 15+ países.',
+        answer: 'Zigno funciona en todos los países de la UE más Reino Unido, Suiza y Noruega. Nuestras imprentas asociadas cubren 15+ países.',
       },
       {
         question: '¿Puedo cancelar mi suscripción en cualquier momento?',
@@ -662,7 +662,7 @@ const es = {
       placeholder: 'Introduce tu email',
       cta: 'Suscribirse',
     },
-    copyright: '© 2025 ScanToSell. Todos los derechos reservados.',
+    copyright: '© 2025 Zigno LLC. Todos los derechos reservados.',
     madeWith: 'Hecho con ❤️ en Europa',
   },
   posterGallery: {
@@ -824,12 +824,12 @@ const de = {
     sectionLabel: 'Erfolgsgeschichten',
     title: 'Geliebt von Immobilienbesitzern',
     titleHighlight: 'in ganz Europa',
-    subtitle: 'Erfahre, warum Tausende von Eigentümern und Maklern ScanToSell vertrauen.',
+    subtitle: 'Erfahre, warum Tausende von Eigentümern und Maklern Zigno vertrauen.',
   },
   faq: {
     sectionLabel: 'Fragen & Antworten',
     title: 'Häufig gestellte Fragen',
-    subtitle: 'Alles, was du über ScanToSell wissen musst. Keine Antwort gefunden? Kontaktiere uns.',
+    subtitle: 'Alles, was du über Zigno wissen musst. Keine Antwort gefunden? Kontaktiere uns.',
     items: [
       {
         question: 'Was ist, wenn ich schon eine eigene Druckerei habe?',
@@ -849,7 +849,7 @@ const de = {
       },
       {
         question: 'Welche Länder unterstützt ihr?',
-        answer: 'ScanToSell funktioniert in allen EU-Ländern plus UK, Schweiz und Norwegen. Unsere Druckpartner decken 15+ Länder ab.',
+        answer: 'Zigno funktioniert in allen EU-Ländern plus UK, Schweiz und Norwegen. Unsere Druckpartner decken 15+ Länder ab.',
       },
       {
         question: 'Kann ich mein Abo jederzeit kündigen?',
@@ -881,7 +881,7 @@ const de = {
       placeholder: 'E-Mail eingeben',
       cta: 'Abonnieren',
     },
-    copyright: '© 2025 ScanToSell. Alle Rechte vorbehalten.',
+    copyright: '© 2025 Zigno LLC. Alle Rechte vorbehalten.',
     madeWith: 'Mit ❤️ in Europa gemacht',
   },
   posterGallery: {
@@ -997,7 +997,7 @@ const it = {
     free: {
       name: 'Gratuito',
       price: '0 €',
-      description: 'Perfetto per provare ScanToSell',
+      description: 'Perfetto per provare Zigno',
       features: [
         '1 annuncio immobiliare',
         'Codice QR valido 7 giorni',
@@ -1043,12 +1043,12 @@ const it = {
     sectionLabel: 'Storie di Successo',
     title: 'Amato dai proprietari',
     titleHighlight: 'in tutta Europa',
-    subtitle: 'Scopri perché migliaia di proprietari e agenti si fidano di ScanToSell.',
+    subtitle: 'Scopri perché migliaia di proprietari e agenti si fidano di Zigno.',
   },
   faq: {
     sectionLabel: 'Domande e Risposte',
     title: 'Domande frequenti',
-    subtitle: 'Tutto quello che devi sapere su ScanToSell. Non trovi risposta? Contattaci.',
+    subtitle: 'Tutto quello che devi sapere su Zigno. Non trovi risposta? Contattaci.',
     items: [
       {
         question: 'E se ho già la mia tipografia?',
@@ -1068,7 +1068,7 @@ const it = {
       },
       {
         question: 'Quali paesi supportate?',
-        answer: 'ScanToSell funziona in tutti i paesi UE più UK, Svizzera e Norvegia. I nostri partner di stampa coprono 15+ paesi.',
+        answer: 'Zigno funziona in tutti i paesi UE più UK, Svizzera e Norvegia. I nostri partner di stampa coprono 15+ paesi.',
       },
       {
         question: 'Posso cancellare l\'abbonamento in qualsiasi momento?',
@@ -1100,7 +1100,7 @@ const it = {
       placeholder: 'Inserisci la tua email',
       cta: 'Iscriviti',
     },
-    copyright: '© 2025 ScanToSell. Tutti i diritti riservati.',
+    copyright: '© 2025 Zigno LLC. Tutti i diritti riservati.',
     madeWith: 'Fatto con ❤️ in Europa',
   },
   posterGallery: {
@@ -1216,7 +1216,7 @@ const pt = {
     free: {
       name: 'Grátis',
       price: '0 €',
-      description: 'Perfeito para experimentar ScanToSell',
+      description: 'Perfeito para experimentar Zigno',
       features: [
         '1 anúncio de imóvel',
         'Código QR válido por 7 dias',
@@ -1262,12 +1262,12 @@ const pt = {
     sectionLabel: 'Histórias de Sucesso',
     title: 'Amado por proprietários',
     titleHighlight: 'em toda a Europa',
-    subtitle: 'Descubra por que milhares de proprietários e agentes confiam no ScanToSell.',
+    subtitle: 'Descubra por que milhares de proprietários e agentes confiam no Zigno.',
   },
   faq: {
     sectionLabel: 'Perguntas e Respostas',
     title: 'Perguntas frequentes',
-    subtitle: 'Tudo o que precisa saber sobre o ScanToSell. Não encontrou resposta? Contacte-nos.',
+    subtitle: 'Tudo o que precisa saber sobre o Zigno. Não encontrou resposta? Contacte-nos.',
     items: [
       {
         question: 'E se já tenho minha própria gráfica?',
@@ -1287,7 +1287,7 @@ const pt = {
       },
       {
         question: 'Quais países vocês suportam?',
-        answer: 'ScanToSell funciona em todos os países da UE mais Reino Unido, Suíça e Noruega. Nossos parceiros de impressão cobrem 15+ países.',
+        answer: 'Zigno funciona em todos os países da UE mais Reino Unido, Suíça e Noruega. Nossos parceiros de impressão cobrem 15+ países.',
       },
       {
         question: 'Posso cancelar minha assinatura a qualquer momento?',
@@ -1319,7 +1319,7 @@ const pt = {
       placeholder: 'Digite seu email',
       cta: 'Subscrever',
     },
-    copyright: '© 2025 ScanToSell. Todos os direitos reservados.',
+    copyright: '© 2025 Zigno LLC. Todos os direitos reservados.',
     madeWith: 'Feito com ❤️ na Europa',
   },
   posterGallery: {
@@ -1435,7 +1435,7 @@ const pl = {
     free: {
       name: 'Darmowy',
       price: '0 €',
-      description: 'Idealny do wypróbowania ScanToSell',
+      description: 'Idealny do wypróbowania Zigno',
       features: [
         '1 ogłoszenie nieruchomości',
         'Kod QR ważny 7 dni',
@@ -1481,12 +1481,12 @@ const pl = {
     sectionLabel: 'Historie Sukcesu',
     title: 'Kochany przez właścicieli',
     titleHighlight: 'w całej Europie',
-    subtitle: 'Zobacz dlaczego tysiące właścicieli i agentów ufa ScanToSell.',
+    subtitle: 'Zobacz dlaczego tysiące właścicieli i agentów ufa Zigno.',
   },
   faq: {
     sectionLabel: 'Pytania i Odpowiedzi',
     title: 'Często zadawane pytania',
-    subtitle: 'Wszystko co musisz wiedzieć o ScanToSell. Nie znalazłeś odpowiedzi? Skontaktuj się z nami.',
+    subtitle: 'Wszystko co musisz wiedzieć o Zigno. Nie znalazłeś odpowiedzi? Skontaktuj się z nami.',
     items: [
       {
         question: 'A co jeśli mam już swoją drukarnię?',
@@ -1506,7 +1506,7 @@ const pl = {
       },
       {
         question: 'Jakie kraje wspieracie?',
-        answer: 'ScanToSell działa we wszystkich krajach UE plus UK, Szwajcaria i Norwegia. Nasi partnerzy drukarni obejmują 15+ krajów.',
+        answer: 'Zigno działa we wszystkich krajach UE plus UK, Szwajcaria i Norwegia. Nasi partnerzy drukarni obejmują 15+ krajów.',
       },
       {
         question: 'Czy mogę anulować subskrypcję w dowolnym momencie?',
@@ -1538,7 +1538,7 @@ const pl = {
       placeholder: 'Wpisz swój email',
       cta: 'Subskrybuj',
     },
-    copyright: '© 2025 ScanToSell. Wszelkie prawa zastrzeżone.',
+    copyright: '© 2025 Zigno LLC. Wszelkie prawa zastrzeżone.',
     madeWith: 'Zrobione z ❤️ w Europie',
   },
   posterGallery: {
