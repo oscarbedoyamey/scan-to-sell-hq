@@ -1,47 +1,211 @@
-import { useLanguage } from '@/i18n/LanguageContext';
-import { useSearchParams, Link } from 'react-router-dom';
-import { ArrowLeft, FileText } from 'lucide-react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Loader2, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useWizardLabels } from '@/components/wizard/wizardLabels';
+import { WizardStepper } from '@/components/wizard/WizardStepper';
+import { StepProperty } from '@/components/wizard/StepProperty';
+import { StepMedia } from '@/components/wizard/StepMedia';
+import { StepContact } from '@/components/wizard/StepContact';
+import type { Tables } from '@/integrations/supabase/types';
 
-const labels: Record<string, Record<string, string>> = {
-  title: { en: 'Create new listing', es: 'Crear nuevo anuncio', fr: 'Créer une annonce', de: 'Neues Inserat erstellen', it: 'Crea nuovo annuncio', pt: 'Criar novo anúncio', pl: 'Utwórz ogłoszenie' },
-  comingSoon: { en: 'The listing wizard will be available in the next phase.', es: 'El asistente de creación estará disponible en la siguiente fase.', fr: 'L\'assistant de création sera disponible dans la prochaine phase.', de: 'Der Erstellungsassistent wird in der nächsten Phase verfügbar sein.', it: 'La procedura guidata sarà disponibile nella prossima fase.', pt: 'O assistente de criação estará disponível na próxima fase.', pl: 'Kreator ogłoszenia będzie dostępny w następnej fazie.' },
-  selectedPlan: { en: 'Selected plan', es: 'Plan seleccionado', fr: 'Plan sélectionné', de: 'Ausgewählter Plan', it: 'Piano selezionato', pt: 'Plano selecionado', pl: 'Wybrany plan' },
-  back: { en: 'Back to listings', es: 'Volver a anuncios', fr: 'Retour aux annonces', de: 'Zurück zu Inseraten', it: 'Torna agli annunci', pt: 'Voltar aos anúncios', pl: 'Wróć do ogłoszeń' },
-};
+type Listing = Partial<Tables<'listings'>>;
 
-const planNames: Record<string, string> = {
-  plan_3m: '3 months — €49',
-  plan_6m: '6 months — €64',
-  plan_12m: '12 months — €94',
-};
+const STEPS = ['step1', 'step2', 'step3'] as const;
 
 const ListingNew = () => {
-  const { language } = useLanguage();
+  const t = useWizardLabels();
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  const selectedPackage = searchParams.get('package');
-  const t = (key: string) => labels[key]?.[language] || labels[key]?.en || key;
+  const purchaseId = searchParams.get('purchase_id');
+
+  const [step, setStep] = useState(0);
+  const [listingId, setListingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [data, setData] = useState<Listing>({
+    operation_type: null,
+    property_type: null,
+    title: '',
+    description: '',
+    price_sale: null,
+    price_rent: null,
+    currency: 'EUR',
+    bedrooms: null,
+    bathrooms: null,
+    built_area_m2: null,
+    plot_area_m2: null,
+    street: '',
+    city: '',
+    postal_code: '',
+    region: '',
+    country: '',
+    condition: null,
+    year_built: null,
+    elevator: false,
+    parking: false,
+    cover_image_url: null,
+    gallery_urls: [],
+    video_url: null,
+    contact_name: profile?.full_name || '',
+    contact_phone: profile?.phone || '',
+    contact_email: profile?.email || '',
+    contact_whatsapp: '',
+    agency_name: '',
+    show_phone: true,
+    show_email: true,
+    show_whatsapp: false,
+  });
+
+  const stepLabels = STEPS.map((s) => t(s));
+
+  // Debounced auto-save
+  const autoSave = useCallback(
+    async (current: Listing, id: string | null) => {
+      if (!user) return;
+      setSaving(true);
+      try {
+        const payload: any = { ...current, owner_user_id: user.id, status: 'draft' };
+        delete payload.id;
+        delete payload.created_at;
+        delete payload.updated_at;
+
+        if (id) {
+          await (supabase as any).from('listings').update(payload).eq('id', id);
+        } else {
+          const { data: inserted, error } = await (supabase as any)
+            .from('listings')
+            .insert(payload)
+            .select('id')
+            .single();
+          if (error) throw error;
+          setListingId(inserted.id);
+
+          // Auto-link purchase
+          if (purchaseId) {
+            await (supabase as any)
+              .from('purchases')
+              .update({ listing_id: inserted.id })
+              .eq('id', purchaseId)
+              .eq('user_id', user.id);
+          }
+        }
+      } catch (err: any) {
+        console.error('Auto-save error:', err);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [user, purchaseId]
+  );
+
+  const handleChange = useCallback(
+    (patch: Listing) => {
+      setData((prev) => {
+        const next = { ...prev, ...patch };
+        // Debounce save
+        if (saveTimer.current) clearTimeout(saveTimer.current);
+        saveTimer.current = setTimeout(() => autoSave(next, listingId), 1200);
+        return next;
+      });
+    },
+    [autoSave, listingId]
+  );
+
+  const canAdvance = () => {
+    if (step === 0) {
+      return !!data.operation_type && !!data.property_type && !!data.title?.trim();
+    }
+    return true;
+  };
+
+  const handleNext = async () => {
+    // Force save before advancing
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    await autoSave(data, listingId);
+    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+  };
+
+  const handleBack = () => setStep((s) => Math.max(s - 1, 0));
+
+  const handlePublish = async () => {
+    if (!listingId || !data.contact_name?.trim()) {
+      toast({ title: t('required'), description: t('contactName'), variant: 'destructive' });
+      return;
+    }
+    setPublishing(true);
+    try {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      await (supabase as any)
+        .from('listings')
+        .update({ ...data, status: 'active', owner_user_id: user!.id })
+        .eq('id', listingId);
+      toast({ title: '✅', description: t('saved') });
+      navigate('/app/listings');
+    } catch (err: any) {
+      console.error('Publish error:', err);
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setPublishing(false);
+    }
+  };
 
   return (
-    <div className="max-w-3xl">
-      <Link to="/app/listings" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+    <div className="max-w-3xl mx-auto">
+      <Link
+        to="/app/listings"
+        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+      >
         <ArrowLeft className="h-4 w-4" />
         {t('back')}
       </Link>
 
-      <h1 className="font-display text-2xl font-bold text-foreground mb-6">{t('title')}</h1>
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="font-display text-2xl font-bold text-foreground">{t('title')}</h1>
+        {saving && (
+          <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <Loader2 className="w-3 h-3 animate-spin" /> {t('saving')}
+          </span>
+        )}
+        {!saving && listingId && (
+          <span className="text-xs text-success flex items-center gap-1">
+            <Check className="w-3 h-3" /> {t('saved')}
+          </span>
+        )}
+      </div>
 
-      {selectedPackage && planNames[selectedPackage] && (
-        <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-6">
-          <p className="text-sm text-muted-foreground">{t('selectedPlan')}</p>
-          <p className="font-display font-bold text-foreground">{planNames[selectedPackage]}</p>
-        </div>
-      )}
+      <WizardStepper steps={stepLabels} currentStep={step} />
 
-      <div className="bg-card rounded-2xl border border-border p-12 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-4">
-          <FileText className="h-8 w-8 text-muted-foreground" />
+      <div className="bg-card rounded-2xl border border-border p-6 sm:p-8">
+        {step === 0 && <StepProperty data={data} onChange={handleChange} />}
+        {step === 1 && <StepMedia data={data} listingId={listingId} onChange={handleChange} />}
+        {step === 2 && <StepContact data={data} onChange={handleChange} />}
+      </div>
+
+      {/* Navigation buttons */}
+      <div className="flex justify-between mt-6">
+        <Button variant="outline" onClick={handleBack} disabled={step === 0}>
+          {t('prev')}
+        </Button>
+        <div className="flex gap-3">
+          {step < STEPS.length - 1 ? (
+            <Button onClick={handleNext} disabled={!canAdvance() || saving}>
+              {t('next')}
+            </Button>
+          ) : (
+            <Button variant="hero" onClick={handlePublish} disabled={publishing || saving}>
+              {publishing && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              {t('publish')}
+            </Button>
+          )}
         </div>
-        <p className="text-muted-foreground">{t('comingSoon')}</p>
       </div>
     </div>
   );
