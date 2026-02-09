@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -66,11 +67,11 @@ export const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button variant="ghost" size="sm">
-              {t.nav.login}
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/auth">{t.nav.login}</Link>
             </Button>
-            <Button variant="default" size="sm">
-              {t.nav.signup}
+            <Button asChild variant="default" size="sm">
+              <Link to="/auth">{t.nav.signup}</Link>
             </Button>
           </div>
 
@@ -100,11 +101,11 @@ export const Header = () => {
                 {t.nav.faq}
               </a>
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                <Button variant="ghost" className="justify-start">
-                  {t.nav.login}
+                <Button asChild variant="ghost" className="justify-start">
+                  <Link to="/auth">{t.nav.login}</Link>
                 </Button>
-                <Button variant="default">
-                  {t.nav.signup}
+                <Button asChild variant="default">
+                  <Link to="/auth">{t.nav.signup}</Link>
                 </Button>
               </div>
               {/* Mobile Language Selector */}
