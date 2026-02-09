@@ -78,7 +78,7 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [{ price: pkg.stripe_price_id, quantity: 1 }],
       mode: "payment",
-      success_url: `${origin}/app/listings/new?purchase_id=${purchase.id}&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/payment-success?purchase_id=${purchase.id}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/pricing`,
       metadata: {
         purchase_id: purchase.id,
