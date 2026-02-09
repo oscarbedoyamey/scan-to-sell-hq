@@ -106,7 +106,7 @@ export const Demo = () => {
               {/* Footer branding */}
               <div className="mt-6 pt-4 border-t border-border flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <div className="w-4 h-4 rounded bg-primary" />
-                <span>ScanToSell.eu</span>
+                <span>Zigno.eu</span>
               </div>
             </div>
           </div>
