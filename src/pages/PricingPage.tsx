@@ -1,7 +1,11 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Check, ArrowLeft } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import zignoLogo from '@/assets/zigno-logo.png';
 
 const labels: Record<string, Record<string, string>> = {
@@ -12,6 +16,7 @@ const labels: Record<string, Record<string, string>> = {
   popular: { en: 'Best value', es: 'Mejor precio', fr: 'Meilleur prix', de: 'Bester Preis', it: 'Miglior prezzo', pt: 'Melhor preço', pl: 'Najlepsza cena' },
   back: { en: '← Back to home', es: '← Volver al inicio', fr: '← Retour', de: '← Zurück', it: '← Torna alla home', pt: '← Voltar', pl: '← Wróć' },
   includedTitle: { en: 'Every plan includes', es: 'Todos los planes incluyen', fr: 'Chaque plan inclut', de: 'Jeder Plan enthält', it: 'Ogni piano include', pt: 'Todos os planos incluem', pl: 'Każdy plan zawiera' },
+  loginFirst: { en: 'Please log in first', es: 'Inicia sesión primero', fr: 'Connectez-vous d\'abord', de: 'Bitte zuerst anmelden', it: 'Accedi prima', pt: 'Faça login primeiro', pl: 'Zaloguj się najpierw' },
 };
 
 const features: Record<string, Record<string, string>> = {
@@ -31,12 +36,41 @@ const plans = [
 
 const PricingPage = () => {
   const { language } = useLanguage();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
   const t = (key: string, dict: Record<string, Record<string, string>> = labels) =>
     dict[key]?.[language] || dict[key]?.en || key;
 
+  const handleCheckout = async (packageId: string) => {
+    if (!user) {
+      toast({ title: t('loginFirst'), variant: 'destructive' });
+      navigate('/auth?redirect=/pricing');
+      return;
+    }
+
+    setLoadingPlan(packageId);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { package_id: packageId },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="container-wide flex items-center justify-between h-16">
           <Link to="/">
@@ -50,7 +84,6 @@ const PricingPage = () => {
 
       <div className="section-padding">
         <div className="container-wide">
-          {/* Title */}
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4">
               {t('title')}
@@ -58,7 +91,6 @@ const PricingPage = () => {
             <p className="text-lg text-muted-foreground">{t('subtitle')}</p>
           </div>
 
-          {/* Plans */}
           <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto mb-16">
             {plans.map((plan) => (
               <div
@@ -89,18 +121,21 @@ const PricingPage = () => {
                 </div>
 
                 <Button
-                  asChild
                   variant={plan.popular ? 'hero' : 'default'}
                   size="lg"
                   className="w-full"
+                  disabled={loadingPlan !== null}
+                  onClick={() => handleCheckout(plan.id)}
                 >
-                  <Link to={`/app/listings/new?package=${plan.id}`}>{t('cta')}</Link>
+                  {loadingPlan === plan.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : null}
+                  {t('cta')}
                 </Button>
               </div>
             ))}
           </div>
 
-          {/* Features included */}
           <div className="max-w-2xl mx-auto">
             <h2 className="font-display text-xl font-bold text-foreground text-center mb-6">
               {t('includedTitle')}
