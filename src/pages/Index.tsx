@@ -1,4 +1,3 @@
-import { LanguageProvider } from '@/i18n/LanguageContext';
 import { Header } from '@/components/landing/Header';
 import { Hero } from '@/components/landing/Hero';
 import { HowItWorks } from '@/components/landing/HowItWorks';
@@ -12,22 +11,20 @@ import { Footer } from '@/components/landing/Footer';
 
 const Index = () => {
   return (
-    <LanguageProvider>
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main>
-          <Hero />
-          <HowItWorks />
-          <Demo />
-          <PosterGallery />
-          <PrintingOptions />
-          <Pricing />
-          <Testimonials />
-          <FAQ />
-        </main>
-        <Footer />
-      </div>
-    </LanguageProvider>
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main>
+        <Hero />
+        <HowItWorks />
+        <Demo />
+        <PosterGallery />
+        <PrintingOptions />
+        <Pricing />
+        <Testimonials />
+        <FAQ />
+      </main>
+      <Footer />
+    </div>
   );
 };
 
