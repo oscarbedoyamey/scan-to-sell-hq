@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { useSearchParams, useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +16,40 @@ type Listing = Partial<Tables<'listings'>>;
 
 const STEPS = ['step1', 'step2', 'step3'] as const;
 
+const INITIAL_DATA: Listing = {
+  operation_type: null,
+  property_type: null,
+  title: '',
+  description: '',
+  price_sale: null,
+  price_rent: null,
+  currency: 'EUR',
+  bedrooms: null,
+  bathrooms: null,
+  built_area_m2: null,
+  plot_area_m2: null,
+  street: '',
+  city: '',
+  postal_code: '',
+  region: '',
+  country: '',
+  condition: null,
+  year_built: null,
+  elevator: false,
+  parking: false,
+  cover_image_url: null,
+  gallery_urls: [],
+  video_url: null,
+  contact_name: '',
+  contact_phone: '',
+  contact_email: '',
+  contact_whatsapp: '',
+  agency_name: '',
+  show_phone: true,
+  show_email: true,
+  show_whatsapp: false,
+};
+
 const ListingNew = () => {
   const t = useWizardLabels();
   const { user, profile } = useAuth();
@@ -23,46 +57,75 @@ const ListingNew = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const purchaseId = searchParams.get('purchase_id');
+  const editId = searchParams.get('listing_id');
+  const isNew = searchParams.get('new') === '1';
 
   const [step, setStep] = useState(0);
-  const [listingId, setListingId] = useState<string | null>(null);
+  const [listingId, setListingId] = useState<string | null>(editId);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [loading, setLoading] = useState(!isNew && !!editId);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLoad = useRef(false);
 
   const [data, setData] = useState<Listing>({
-    operation_type: null,
-    property_type: null,
-    title: '',
-    description: '',
-    price_sale: null,
-    price_rent: null,
-    currency: 'EUR',
-    bedrooms: null,
-    bathrooms: null,
-    built_area_m2: null,
-    plot_area_m2: null,
-    street: '',
-    city: '',
-    postal_code: '',
-    region: '',
-    country: '',
-    condition: null,
-    year_built: null,
-    elevator: false,
-    parking: false,
-    cover_image_url: null,
-    gallery_urls: [],
-    video_url: null,
+    ...INITIAL_DATA,
     contact_name: profile?.full_name || '',
     contact_phone: profile?.phone || '',
     contact_email: profile?.email || '',
-    contact_whatsapp: '',
-    agency_name: '',
-    show_phone: true,
-    show_email: true,
-    show_whatsapp: false,
   });
+
+  // Load existing draft for resume
+  useEffect(() => {
+    if (didLoad.current || !user || isNew) return;
+    didLoad.current = true;
+    setLoading(true);
+
+    const loadDraft = async () => {
+      try {
+        let query;
+        if (editId) {
+          // Resume a specific listing
+          query = (supabase as any)
+            .from('listings')
+            .select('*')
+            .eq('id', editId)
+            .eq('owner_user_id', user.id)
+            .single();
+        } else {
+          // Find most recent draft to resume
+          query = (supabase as any)
+            .from('listings')
+            .select('*')
+            .eq('owner_user_id', user.id)
+            .eq('status', 'draft')
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+        }
+
+        const { data: existing } = await query;
+        if (existing) {
+          setListingId(existing.id);
+          const { id, created_at, updated_at, owner_user_id, status, ...rest } = existing;
+          setData((prev) => ({ ...prev, ...rest }));
+
+          // Determine wizard step based on filled data
+          if (existing.cover_image_url || (existing.gallery_urls as any[])?.length > 0 || existing.video_url) {
+            setStep(2); // has media → go to contact/review
+          } else if (existing.title && existing.operation_type && existing.property_type) {
+            setStep(1); // has property data → go to media
+          }
+        }
+      } catch (err) {
+        console.error('Load draft error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDraft();
+  }, [user, editId]);
 
   const stepLabels = STEPS.map((s) => t(s));
 
@@ -156,6 +219,14 @@ const ListingNew = () => {
       setPublishing(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="max-w-3xl mx-auto flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto">
