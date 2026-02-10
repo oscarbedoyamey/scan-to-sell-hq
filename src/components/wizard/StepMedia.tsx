@@ -32,13 +32,30 @@ export const StepMedia = ({ data, listingId, onChange }: StepMediaProps) => {
   };
 
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !listingId) return;
+    const files = e.target.files;
+    if (!files || files.length === 0 || !listingId) return;
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop();
-      const url = await uploadFile(file, `${listingId}/cover.${ext}`);
-      onChange({ cover_image_url: url });
+      // First file becomes cover
+      const coverFile = files[0];
+      const coverExt = coverFile.name.split('.').pop();
+      const coverUrl = await uploadFile(coverFile, `${listingId}/cover.${coverExt}`);
+      onChange({ cover_image_url: coverUrl });
+
+      // Remaining files go to gallery
+      if (files.length > 1) {
+        const currentUrls = (data.gallery_urls as string[]) || [];
+        const newUrls: string[] = [];
+        for (let i = 1; i < files.length && currentUrls.length + newUrls.length < 30; i++) {
+          const file = files[i];
+          const ext = file.name.split('.').pop();
+          const url = await uploadFile(file, `${listingId}/gallery/${Date.now()}-${i}.${ext}`);
+          newUrls.push(url);
+        }
+        if (newUrls.length > 0) {
+          onChange({ gallery_urls: [...currentUrls, ...newUrls] as any });
+        }
+      }
     } catch (err) {
       console.error('Cover upload error:', err);
     } finally {
@@ -78,7 +95,7 @@ export const StepMedia = ({ data, listingId, onChange }: StepMediaProps) => {
       {/* Cover image */}
       <div className="space-y-3">
         <Label className="text-sm font-semibold">{t('coverImage')}</Label>
-        <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
+        <input ref={coverInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleCoverUpload} />
         {data.cover_image_url ? (
           <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-border">
             <img src={data.cover_image_url} alt="Cover" className="w-full h-full object-cover" />

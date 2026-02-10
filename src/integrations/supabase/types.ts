@@ -121,6 +121,7 @@ export type Database = {
         Row: {
           agency_logo_url: string | null
           agency_name: string | null
+          auto_renew: boolean
           base_language: string | null
           bathrooms: number | null
           bedrooms: number | null
@@ -174,6 +175,7 @@ export type Database = {
         Insert: {
           agency_logo_url?: string | null
           agency_name?: string | null
+          auto_renew?: boolean
           base_language?: string | null
           bathrooms?: number | null
           bedrooms?: number | null
@@ -227,6 +229,7 @@ export type Database = {
         Update: {
           agency_logo_url?: string | null
           agency_name?: string | null
+          auto_renew?: boolean
           base_language?: string | null
           bathrooms?: number | null
           bedrooms?: number | null
