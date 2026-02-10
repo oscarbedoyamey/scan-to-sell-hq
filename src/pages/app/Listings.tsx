@@ -18,6 +18,7 @@ const labels: Record<string, Record<string, string>> = {
   paused: { en: 'Paused', es: 'Pausado', fr: 'En pause', de: 'Pausiert', it: 'In pausa', pt: 'Pausado', pl: 'Wstrzymane' },
   expired: { en: 'Expired', es: 'Expirado', fr: 'Expiré', de: 'Abgelaufen', it: 'Scaduto', pt: 'Expirado', pl: 'Wygasłe' },
   resume: { en: 'Resume', es: 'Continuar', fr: 'Reprendre', de: 'Fortsetzen', it: 'Riprendi', pt: 'Retomar', pl: 'Wznów' },
+  edit: { en: 'Edit', es: 'Editar', fr: 'Modifier', de: 'Bearbeiten', it: 'Modifica', pt: 'Editar', pl: 'Edytuj' },
 };
 
 const statusVariant: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
@@ -108,9 +109,15 @@ const Listings = () => {
                     )}
                   </div>
                 </div>
-                {isDraft && (
+                {isDraft ? (
                   <Button variant="outline" size="sm" className="flex-shrink-0" asChild>
                     <span><Pencil className="w-3 h-3 mr-1" />{t('resume')}</span>
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" className="flex-shrink-0" asChild>
+                    <Link to={`/app/listings/new?listing_id=${l.id}`} onClick={(e) => e.stopPropagation()}>
+                      <Pencil className="w-3 h-3 mr-1" />{t('edit')}
+                    </Link>
                   </Button>
                 )}
               </Link>
