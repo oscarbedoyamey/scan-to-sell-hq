@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, ChevronDown } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/i18n/LanguageContext';
 import zignoLogo from '@/assets/zigno-logo.png';
@@ -14,6 +15,7 @@ import {
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { language, setLanguage, t, languages } = useLanguage();
+  const { user } = useAuth();
 
   const currentLanguage = languages.find(l => l.code === language);
 
@@ -67,12 +69,20 @@ export const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/auth">{t.nav.login}</Link>
-            </Button>
-            <Button asChild variant="default" size="sm">
-              <Link to="/auth">{t.nav.signup}</Link>
-            </Button>
+            {user ? (
+              <Button asChild variant="default" size="sm">
+                <Link to="/app">Dashboard</Link>
+              </Button>
+            ) : (
+              <>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/auth">{t.nav.login}</Link>
+                </Button>
+                <Button asChild variant="default" size="sm">
+                  <Link to="/auth">{t.nav.signup}</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -100,14 +110,20 @@ export const Header = () => {
               <a href="#faq" className="text-sm font-medium text-muted-foreground hover:text-foreground">
                 {t.nav.faq}
               </a>
-              <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                <Button asChild variant="ghost" className="justify-start">
-                  <Link to="/auth">{t.nav.login}</Link>
-                </Button>
+              {user ? (
                 <Button asChild variant="default">
-                  <Link to="/auth">{t.nav.signup}</Link>
+                  <Link to="/app">Dashboard</Link>
                 </Button>
-              </div>
+              ) : (
+                <>
+                  <Button asChild variant="ghost" className="justify-start">
+                    <Link to="/auth">{t.nav.login}</Link>
+                  </Button>
+                  <Button asChild variant="default">
+                    <Link to="/auth">{t.nav.signup}</Link>
+                  </Button>
+                </>
+              )}
               {/* Mobile Language Selector */}
               <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
                 {languages.map((lang) => (
