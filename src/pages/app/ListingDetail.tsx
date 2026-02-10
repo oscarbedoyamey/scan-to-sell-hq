@@ -1,13 +1,15 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { ArrowLeft, QrCode, FileText, Download, RefreshCw, ExternalLink, Loader2, Eye, CreditCard } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { ArrowLeft, QrCode, FileText, Download, RefreshCw, ExternalLink, Loader2, Eye, CreditCard, BarChart3 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Tables } from '@/integrations/supabase/types';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 type Listing = Tables<'listings'>;
 type Sign = Tables<'signs'>;
@@ -28,7 +30,36 @@ const labels: Record<string, Record<string, string>> = {
   noPurchase: { en: 'No active plan. Purchase one to activate this listing.', es: 'Sin plan activo. Compra uno para activar este anuncio.', fr: 'Pas de plan actif. Achetez-en un.', de: 'Kein aktiver Plan. Kaufen Sie einen.', it: 'Nessun piano attivo. Acquistane uno.', pt: 'Sem plano ativo. Compre um.', pl: 'Brak planu. Kup jeden.' },
   paid: { en: 'Paid', es: 'Pagado', fr: 'Payé', de: 'Bezahlt', it: 'Pagato', pt: 'Pago', pl: 'Opłacone' },
   assetsGenerated: { en: 'Assets generated successfully', es: 'Activos generados correctamente', fr: 'Fichiers générés', de: 'Assets erstellt', it: 'File generati', pt: 'Ativos gerados', pl: 'Zasoby wygenerowane' },
+  visits: { en: 'Visits', es: 'Visitas', fr: 'Visites', de: 'Besuche', it: 'Visite', pt: 'Visitas', pl: 'Wizyty' },
+  day: { en: 'Daily', es: 'Diario', fr: 'Jour', de: 'Täglich', it: 'Giornaliero', pt: 'Diário', pl: 'Dziennie' },
+  week: { en: 'Weekly', es: 'Semanal', fr: 'Semaine', de: 'Wöchentlich', it: 'Settimanale', pt: 'Semanal', pl: 'Tygodniowo' },
+  month: { en: 'Monthly', es: 'Mensual', fr: 'Mois', de: 'Monatlich', it: 'Mensile', pt: 'Mensal', pl: 'Miesięcznie' },
+  noVisits: { en: 'No visits yet', es: 'Sin visitas aún', fr: 'Pas de visites', de: 'Keine Besuche', it: 'Nessuna visita', pt: 'Sem visitas', pl: 'Brak wizyt' },
 };
+
+function aggregateScans(scans: { occurred_at: string | null }[], granularity: 'day' | 'week' | 'month') {
+  const map = new Map<string, number>();
+  for (const s of scans) {
+    if (!s.occurred_at) continue;
+    const d = new Date(s.occurred_at);
+    let key: string;
+    if (granularity === 'day') {
+      key = d.toISOString().slice(0, 10);
+    } else if (granularity === 'week') {
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(d);
+      monday.setDate(diff);
+      key = monday.toISOString().slice(0, 10);
+    } else {
+      key = d.toISOString().slice(0, 7);
+    }
+    map.set(key, (map.get(key) || 0) + 1);
+  }
+  return Array.from(map.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, count]) => ({ date, count }));
+}
 
 const ListingDetail = () => {
   const { id } = useParams();
@@ -41,24 +72,30 @@ const ListingDetail = () => {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState<string | null>(null);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [scans, setScans] = useState<{ occurred_at: string | null }[]>([]);
+  const [scanGranularity, setScanGranularity] = useState<'day' | 'week' | 'month'>('day');
 
   const t = (key: string) => labels[key]?.[language] || labels[key]?.en || key;
 
   useEffect(() => {
     if (!id) return;
     const load = async () => {
-      const [{ data: l }, { data: s }, { data: p }] = await Promise.all([
+      const [{ data: l }, { data: s }, { data: p }, { data: sc }] = await Promise.all([
         supabase.from('listings').select('*').eq('id', id).single(),
         supabase.from('signs').select('*').eq('listing_id', id).order('created_at', { ascending: false }),
         (supabase as any).from('purchases').select('*').eq('listing_id', id).eq('status', 'paid').order('end_at', { ascending: false }).limit(1).maybeSingle(),
+        (supabase as any).from('scans').select('occurred_at').eq('listing_id', id).order('occurred_at', { ascending: true }),
       ]);
       setListing(l);
       setSigns(s || []);
       setPurchase(p);
+      setScans(sc || []);
       setLoading(false);
     };
     load();
   }, [id]);
+
+  const scanChartData = useMemo(() => aggregateScans(scans, scanGranularity), [scans, scanGranularity]);
 
   const generateAssets = async (signId: string) => {
     setGenerating(signId);
@@ -188,6 +225,41 @@ const ListingDetail = () => {
                 </Button>
               ))}
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Visits chart */}
+      <div className="bg-card rounded-2xl border border-border p-6 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3">
+            <BarChart3 className="h-5 w-5 text-primary" />
+            <span className="font-medium text-foreground">{t('visits')}</span>
+            <span className="text-2xl font-bold text-foreground">{scans.length}</span>
+          </div>
+          <Select value={scanGranularity} onValueChange={(v) => setScanGranularity(v as any)}>
+            <SelectTrigger className="w-[110px] h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="day">{t('day')}</SelectItem>
+              <SelectItem value="week">{t('week')}</SelectItem>
+              <SelectItem value="month">{t('month')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {scanChartData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={scanChartData}>
+              <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={30} />
+              <Tooltip />
+              <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-32 flex items-center justify-center text-muted-foreground text-sm">
+            {t('noVisits')}
           </div>
         )}
       </div>
