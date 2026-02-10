@@ -33,7 +33,7 @@ export const FAQ = () => {
 
         <div className="text-center mt-12">
           <p className="text-muted-foreground mb-4">{t.faq.contact}</p>
-          <Button variant="outline">{t.faq.contactCta}</Button>
+          <Button variant="outline" asChild><a href="mailto:info@qrzigno.com">{t.faq.contactCta}</a></Button>
         </div>
       </div>
     </section>
