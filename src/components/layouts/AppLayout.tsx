@@ -11,6 +11,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useState } from 'react';
 import zignoLogo from '@/assets/zigno-logo.png';
 
@@ -31,7 +32,7 @@ const labels: Record<string, Record<string, string>> = {
 
 export const AppLayout = () => {
   const { profile, isAdmin, signOut } = useAuth();
-  const { language } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -87,8 +88,9 @@ export const AppLayout = () => {
       </nav>
 
       {/* User section */}
-      <div className="p-4 border-t border-border">
-        <div className="mb-3">
+      <div className="p-4 border-t border-border space-y-3">
+        <LanguageSwitcher current={language} onChange={(c) => setLanguage(c as any)} compact />
+        <div>
           <p className="text-sm font-medium text-foreground truncate">
             {profile?.full_name || profile?.email || '—'}
           </p>
