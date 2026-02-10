@@ -1,8 +1,5 @@
-import { MapPin, BedDouble, Bath, Square, MessageCircle, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
-import propertyMockup from '@/assets/property-listing-mockup.jpg';
 
 export const Demo = () => {
   const { t } = useLanguage();
@@ -24,9 +21,8 @@ export const Demo = () => {
           </p>
         </div>
 
-        {/* Demo Area */}
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-          {/* Poster mockup */}
+        {/* Demo Area — Centered QR */}
+        <div className="flex justify-center">
           <div className="relative">
             <div className="bg-white rounded-2xl shadow-xl p-8 max-w-sm mx-auto">
               {/* Poster header */}
@@ -92,7 +88,7 @@ export const Demo = () => {
                   {/* Hover overlay */}
                   <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors flex items-center justify-center">
                     <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-medium">
-                      Click to preview
+                      {t.demo.scanMe} →
                     </span>
                   </div>
                 </div>
@@ -107,70 +103,6 @@ export const Demo = () => {
               <div className="mt-6 pt-4 border-t border-border flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <div className="w-4 h-4 rounded bg-primary" />
                 <span>Zigno.eu</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Property listing preview */}
-          <div className="opacity-100">
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-border">
-              {/* Property image */}
-              <div className="relative h-56 bg-gradient-to-br from-primary/10 to-primary/5">
-                <img
-                  src={propertyMockup}
-                  alt="Property"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-4 right-4 bg-accent text-accent-foreground px-3 py-1 rounded-full text-sm font-bold">
-                  {t.demo.propertyCard.price}
-                </div>
-              </div>
-
-              {/* Property details */}
-              <div className="p-6">
-                <h3 className="font-display text-xl font-bold text-foreground mb-2">
-                  {t.demo.propertyCard.title}
-                </h3>
-                
-                <div className="flex items-center gap-2 text-muted-foreground mb-4">
-                  <MapPin className="w-4 h-4" />
-                  <span className="text-sm">{t.demo.propertyCard.location}</span>
-                </div>
-
-                {/* Features */}
-                <div className="flex gap-4 mb-4">
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <BedDouble className="w-4 h-4" />
-                    <span>{t.demo.propertyCard.beds}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <Bath className="w-4 h-4" />
-                    <span>{t.demo.propertyCard.baths}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <Square className="w-4 h-4" />
-                    <span>{t.demo.propertyCard.size}</span>
-                  </div>
-                </div>
-
-                <p className="text-muted-foreground text-sm mb-6">
-                  {t.demo.propertyCard.description}
-                </p>
-
-                {/* Actions */}
-                <div className="flex gap-3">
-                  <Button
-                    className="flex-1 bg-[hsl(142,70%,45%)] text-white hover:bg-[hsl(142,70%,38%)]"
-                    onClick={() => navigate('/demo')}
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    {t.demo.propertyCard.contactWhatsapp}
-                  </Button>
-                  <Button variant="outline" className="flex-1" onClick={() => navigate('/demo')}>
-                    <ExternalLink className="w-4 h-4" />
-                    {t.demo.propertyCard.viewMore}
-                  </Button>
-                </div>
               </div>
             </div>
           </div>
