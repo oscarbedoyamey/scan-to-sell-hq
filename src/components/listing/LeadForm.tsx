@@ -7,14 +7,17 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Send, CheckCircle2 } from 'lucide-react';
+import { publicListingT, type PublicListingLang } from '@/i18n/publicListingTranslations';
 
 interface LeadFormProps {
   listingId: string;
   signId: string | null;
+  lang?: PublicListingLang;
 }
 
-export const LeadForm = ({ listingId, signId }: LeadFormProps) => {
+export const LeadForm = ({ listingId, signId, lang = 'en' }: LeadFormProps) => {
   const { toast } = useToast();
+  const t = publicListingT[lang].leadForm;
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -53,8 +56,8 @@ export const LeadForm = ({ listingId, signId }: LeadFormProps) => {
     return (
       <div className="text-center py-8">
         <CheckCircle2 className="w-12 h-12 text-success mx-auto mb-3" />
-        <h3 className="font-display text-lg font-bold text-foreground mb-1">Message sent!</h3>
-        <p className="text-sm text-muted-foreground">We'll get back to you soon.</p>
+        <h3 className="font-display text-lg font-bold text-foreground mb-1">{t.sent}</h3>
+        <p className="text-sm text-muted-foreground">{t.sentSub}</p>
       </div>
     );
   }
@@ -63,7 +66,7 @@ export const LeadForm = ({ listingId, signId }: LeadFormProps) => {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="lead-name">Name *</Label>
+          <Label htmlFor="lead-name">{t.name} *</Label>
           <Input
             id="lead-name"
             value={form.name}
@@ -72,7 +75,7 @@ export const LeadForm = ({ listingId, signId }: LeadFormProps) => {
           />
         </div>
         <div>
-          <Label htmlFor="lead-email">Email *</Label>
+          <Label htmlFor="lead-email">{t.email} *</Label>
           <Input
             id="lead-email"
             type="email"
@@ -83,7 +86,7 @@ export const LeadForm = ({ listingId, signId }: LeadFormProps) => {
         </div>
       </div>
       <div>
-        <Label htmlFor="lead-phone">Phone</Label>
+        <Label htmlFor="lead-phone">{t.phone}</Label>
         <Input
           id="lead-phone"
           type="tel"
@@ -92,13 +95,13 @@ export const LeadForm = ({ listingId, signId }: LeadFormProps) => {
         />
       </div>
       <div>
-        <Label htmlFor="lead-message">Message</Label>
+        <Label htmlFor="lead-message">{t.message}</Label>
         <Textarea
           id="lead-message"
           rows={3}
           value={form.message}
           onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-          placeholder="I'm interested in this property..."
+          placeholder={t.placeholder}
         />
       </div>
       <div className="flex items-start gap-2">
@@ -108,12 +111,12 @@ export const LeadForm = ({ listingId, signId }: LeadFormProps) => {
           onCheckedChange={(v) => setForm((f) => ({ ...f, consent: !!v }))}
         />
         <Label htmlFor="lead-consent" className="text-xs text-muted-foreground leading-tight">
-          I agree to be contacted regarding this property
+          {t.consent}
         </Label>
       </div>
       <Button type="submit" className="w-full" disabled={loading || !form.name.trim() || !form.email.trim()}>
         {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
-        Send message
+        {t.send}
       </Button>
     </form>
   );
