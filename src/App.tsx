@@ -15,6 +15,7 @@ import AuthCallback from "./pages/AuthCallback";
 
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PublicListing from "./pages/PublicListing";
+import DemoListing from "./pages/DemoListing";
 import Dashboard from "./pages/app/Dashboard";
 import Listings from "./pages/app/Listings";
 import ListingNew from "./pages/app/ListingNew";
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/s/:signCode" element={<PublicListing />} />
+              <Route path="/demo" element={<DemoListing />} />
 
               {/* Protected app routes */}
               <Route
