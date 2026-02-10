@@ -1,26 +1,72 @@
 import { useState } from 'react';
-import { Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+const labels: Record<string, Record<string, string>> = {
+  sectionLabel: { en: 'Simple Pricing', es: 'Precio Simple', fr: 'Tarif Simple', de: 'Einfache Preise', it: 'Prezzo Semplice', pt: 'Preço Simples', pl: 'Prosty Cennik' },
+  title: { en: 'Simple pricing, per listing', es: 'Precio simple, por anuncio', fr: 'Tarif simple, par annonce', de: 'Einfache Preise, pro Inserat', it: 'Prezzo semplice, per annuncio', pt: 'Preço simples, por anúncio', pl: 'Prosta cena, za ogłoszenie' },
+  subtitle: { en: 'One listing = one QR code = one print-ready poster. Choose the duration that fits your needs.', es: 'Un anuncio = un código QR = un cartel listo para imprimir. Elige la duración que necesites.', fr: 'Une annonce = un QR code = une affiche prête à imprimer. Choisissez la durée adaptée.', de: 'Ein Inserat = ein QR-Code = ein druckfertiges Plakat. Wählen Sie die passende Dauer.', it: 'Un annuncio = un QR code = un poster pronto per la stampa. Scegli la durata giusta.', pt: 'Um anúncio = um QR code = um cartaz pronto. Escolha a duração ideal.', pl: 'Jedno ogłoszenie = jeden kod QR = jeden gotowy plakat. Wybierz odpowiedni czas.' },
+  months: { en: 'months', es: 'meses', fr: 'mois', de: 'Monate', it: 'mesi', pt: 'meses', pl: 'miesięcy' },
+  cta: { en: 'Create my listing', es: 'Crear mi anuncio', fr: 'Créer mon annonce', de: 'Mein Inserat erstellen', it: 'Crea il mio annuncio', pt: 'Criar meu anúncio', pl: 'Utwórz ogłoszenie' },
+  popular: { en: 'Best value', es: 'Mejor precio', fr: 'Meilleur prix', de: 'Bester Preis', it: 'Miglior prezzo', pt: 'Melhor preço', pl: 'Najlepsza cena' },
+  includedTitle: { en: 'Every plan includes', es: 'Todos los planes incluyen', fr: 'Chaque plan inclut', de: 'Jeder Plan enthält', it: 'Ogni piano include', pt: 'Todos os planos incluem', pl: 'Każdy plan zawiera' },
+  loginFirst: { en: 'Please log in first', es: 'Inicia sesión primero', fr: 'Connectez-vous d\'abord', de: 'Bitte zuerst anmelden', it: 'Accedi prima', pt: 'Faça login primeiro', pl: 'Zaloguj się najpierw' },
+};
+
+const features: Record<string, Record<string, string>> = {
+  f1: { en: 'Professional public landing page', es: 'Landing pública profesional', fr: 'Page publique professionnelle', de: 'Professionelle Landingpage', it: 'Landing page professionale', pt: 'Página pública profissional', pl: 'Profesjonalna strona publiczna' },
+  f2: { en: 'Unique QR code (PNG)', es: 'Código QR único (PNG)', fr: 'QR code unique (PNG)', de: 'Einzigartiger QR-Code (PNG)', it: 'Codice QR unico (PNG)', pt: 'QR code único (PNG)', pl: 'Unikalny kod QR (PNG)' },
+  f3: { en: 'Print-ready poster (PDF)', es: 'Cartel listo para imprimir (PDF)', fr: 'Affiche prête à imprimer (PDF)', de: 'Druckfertiges Plakat (PDF)', it: 'Poster pronto per la stampa (PDF)', pt: 'Cartaz pronto (PDF)', pl: 'Plakat gotowy do druku (PDF)' },
+  f4: { en: 'Up to 30 photos + video', es: 'Hasta 30 fotos + vídeo', fr: 'Jusqu\'à 30 photos + vidéo', de: 'Bis zu 30 Fotos + Video', it: 'Fino a 30 foto + video', pt: 'Até 30 fotos + vídeo', pl: 'Do 30 zdjęć + wideo' },
+  f5: { en: 'Lead capture form', es: 'Formulario de captación de leads', fr: 'Formulaire de capture de leads', de: 'Lead-Erfassungsformular', it: 'Modulo acquisizione lead', pt: 'Formulário de captação', pl: 'Formularz kontaktowy' },
+  f6: { en: 'Basic scan analytics', es: 'Analíticas básicas de escaneos', fr: 'Analytiques de scans', de: 'Scan-Analysen', it: 'Analisi scansioni', pt: 'Análises de scans', pl: 'Analityka skanów' },
+};
+
+const plans = [
+  { id: 'plan_3m', months: 3, price: 49, popular: false },
+  { id: 'plan_6m', months: 6, price: 64, popular: true },
+  { id: 'plan_12m', months: 12, price: 94, popular: false },
+];
 
 export const Pricing = () => {
-  const { t } = useLanguage();
-  const [isYearly, setIsYearly] = useState(false);
+  const { language } = useLanguage();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
-  const plans = [
-    {
-      ...t.pricing.free,
-      popular: false,
-    },
-    {
-      ...t.pricing.pro,
-      popular: true,
-    },
-    {
-      ...t.pricing.agency,
-      popular: false,
-    },
-  ];
+  const t = (key: string, dict: Record<string, Record<string, string>> = labels) =>
+    dict[key]?.[language] || dict[key]?.en || key;
+
+  const handleCheckout = async (packageId: string) => {
+    if (!user) {
+      toast({ title: t('loginFirst'), variant: 'destructive' });
+      navigate('/auth?redirect=/#pricing');
+      return;
+    }
+
+    setLoadingPlan(packageId);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { package_id: packageId },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
 
   return (
     <section id="pricing" className="section-padding bg-secondary/30">
@@ -28,105 +74,77 @@ export const Pricing = () => {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-12">
           <span className="inline-block text-sm font-semibold text-primary uppercase tracking-wider mb-4">
-            {t.pricing.sectionLabel}
+            {t('sectionLabel')}
           </span>
           <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-6">
-            {t.pricing.title}
+            {t('title')}
           </h2>
-          <p className="text-lg text-muted-foreground mb-8">
-            {t.pricing.subtitle}
+          <p className="text-lg text-muted-foreground">
+            {t('subtitle')}
           </p>
-
-          {/* Toggle */}
-          <div className="inline-flex items-center gap-4 p-1.5 bg-secondary rounded-full">
-            <button
-              onClick={() => setIsYearly(false)}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
-                !isYearly
-                  ? 'bg-white shadow-md text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {t.pricing.monthly}
-            </button>
-            <button
-              onClick={() => setIsYearly(true)}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
-                isYearly
-                  ? 'bg-white shadow-md text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {t.pricing.yearly}
-              <span className="bg-success text-success-foreground text-xs px-2 py-0.5 rounded-full">
-                {t.pricing.yearlyDiscount}
-              </span>
-            </button>
-          </div>
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
-          {plans.map((plan, index) => (
+        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto mb-16">
+          {plans.map((plan) => (
             <div
-              key={index}
+              key={plan.id}
               className={`relative rounded-2xl p-8 transition-all duration-300 ${
                 plan.popular
-                  ? 'bg-white shadow-xl border-2 border-primary scale-105 z-10'
-                  : 'bg-white shadow-md border border-border hover:shadow-lg'
+                  ? 'bg-card shadow-xl border-2 border-primary scale-105 z-10'
+                  : 'bg-card shadow-md border border-border hover:shadow-lg'
               }`}
             >
-              {/* Popular badge */}
-              {plan.popular && 'popular' in plan && (
+              {plan.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="inline-block bg-primary text-primary-foreground text-sm font-bold px-4 py-1 rounded-full shadow-lg">
-                    {plan.popular}
+                  <span className="bg-accent text-accent-foreground text-sm font-bold px-4 py-1 rounded-full shadow-lg">
+                    {t('popular')}
                   </span>
                 </div>
               )}
 
-              {/* Plan name */}
-              <h3 className="font-display text-xl font-bold text-foreground mb-2">
-                {plan.name}
-              </h3>
-              <p className="text-muted-foreground text-sm mb-6">
-                {plan.description}
-              </p>
-
-              {/* Price */}
-              <div className="mb-6">
-                <span className="font-display text-4xl font-bold text-foreground">
-                  {isYearly && 'priceYearly' in plan ? plan.priceYearly : plan.price}
-                </span>
-                <span className="text-muted-foreground">
-                  {isYearly ? t.pricing.perYear : t.pricing.perMonth}
-                </span>
+              <div className="text-center mb-6">
+                <p className="text-5xl font-display font-bold text-foreground mb-1">
+                  {plan.months}
+                </p>
+                <p className="text-muted-foreground font-medium">{t('months')}</p>
               </div>
 
-              {/* Features */}
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                      plan.popular ? 'bg-primary/10 text-primary' : 'bg-success/10 text-success'
-                    }`}>
-                      <Check className="w-3 h-3" />
-                    </div>
-                    <span className="text-sm text-muted-foreground">{feature}</span>
-                  </li>
-                ))}
-              </ul>
+              <div className="text-center mb-8">
+                <span className="text-4xl font-display font-bold text-foreground">€{plan.price}</span>
+              </div>
 
-              {/* CTA */}
               <Button
-                variant={plan.popular ? 'hero' : 'outline'}
-                className="w-full"
+                variant={plan.popular ? 'hero' : 'default'}
                 size="lg"
+                className="w-full"
+                disabled={loadingPlan !== null}
+                onClick={() => handleCheckout(plan.id)}
               >
-                {plan.cta}
+                {loadingPlan === plan.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                {t('cta')}
               </Button>
             </div>
           ))}
+        </div>
+
+        {/* Included features */}
+        <div className="max-w-2xl mx-auto">
+          <h3 className="font-display text-xl font-bold text-foreground text-center mb-6">
+            {t('includedTitle')}
+          </h3>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {Object.keys(features).map((key) => (
+              <div key={key} className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full bg-success/10 text-success flex items-center justify-center flex-shrink-0">
+                  <Check className="w-3 h-3" />
+                </div>
+                <span className="text-sm text-muted-foreground">{t(key, features)}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
