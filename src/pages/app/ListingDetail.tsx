@@ -1,11 +1,12 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
-import { ArrowLeft, QrCode, FileText, Download, RefreshCw, ExternalLink, Loader2, Eye, CreditCard, BarChart3 } from 'lucide-react';
+import { ArrowLeft, QrCode, FileText, Download, RefreshCw, ExternalLink, Loader2, Eye, CreditCard, BarChart3, Power, ToggleLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Tables } from '@/integrations/supabase/types';
@@ -35,6 +36,12 @@ const labels: Record<string, Record<string, string>> = {
   week: { en: 'Weekly', es: 'Semanal', fr: 'Semaine', de: 'Wöchentlich', it: 'Settimanale', pt: 'Semanal', pl: 'Tygodniowo' },
   month: { en: 'Monthly', es: 'Mensual', fr: 'Mois', de: 'Monatlich', it: 'Mensile', pt: 'Mensal', pl: 'Miesięcznie' },
   noVisits: { en: 'No visits yet', es: 'Sin visitas aún', fr: 'Pas de visites', de: 'Keine Besuche', it: 'Nessuna visita', pt: 'Sem visitas', pl: 'Brak wizyt' },
+  autoRenew: { en: 'Auto-renew', es: 'Renovación automática', fr: 'Renouvellement auto', de: 'Auto-Verlängerung', it: 'Rinnovo auto', pt: 'Renovação auto', pl: 'Auto-odnowienie' },
+  deactivate: { en: 'Deactivate listing', es: 'Desactivar anuncio', fr: 'Désactiver', de: 'Deaktivieren', it: 'Disattiva', pt: 'Desativar', pl: 'Dezaktywuj' },
+  reactivate: { en: 'Reactivate listing', es: 'Reactivar anuncio', fr: 'Réactiver', de: 'Reaktivieren', it: 'Riattiva', pt: 'Reativar', pl: 'Reaktywuj' },
+  deactivated: { en: 'Listing deactivated', es: 'Anuncio desactivado', fr: 'Annonce désactivée', de: 'Inserat deaktiviert', it: 'Annuncio disattivato', pt: 'Anúncio desativado', pl: 'Ogłoszenie dezaktywowane' },
+  reactivated: { en: 'Listing reactivated', es: 'Anuncio reactivado', fr: 'Annonce réactivée', de: 'Inserat reaktiviert', it: 'Annuncio riattivato', pt: 'Anúncio reativado', pl: 'Ogłoszenie reaktywowane' },
+  settings: { en: 'Settings', es: 'Ajustes', fr: 'Paramètres', de: 'Einstellungen', it: 'Impostazioni', pt: 'Configurações', pl: 'Ustawienia' },
 };
 
 function aggregateScans(scans: { occurred_at: string | null }[], granularity: 'day' | 'week' | 'month') {
@@ -74,6 +81,8 @@ const ListingDetail = () => {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [scans, setScans] = useState<{ occurred_at: string | null }[]>([]);
   const [scanGranularity, setScanGranularity] = useState<'day' | 'week' | 'month'>('day');
+  const [togglingStatus, setTogglingStatus] = useState(false);
+  const [togglingRenew, setTogglingRenew] = useState(false);
 
   const t = (key: string) => labels[key]?.[language] || labels[key]?.en || key;
 
@@ -224,7 +233,64 @@ const ListingDetail = () => {
                   <span className="font-bold">{plan.months} mo — €{plan.price}</span>
                 </Button>
               ))}
+      </div>
+
+      {/* Listing settings: auto-renew + deactivate */}
+      {listing && (
+        <div className="bg-card rounded-2xl border border-border p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <ToggleLeft className="h-5 w-5 text-primary" />
+            <span className="font-medium text-foreground">{t('settings')}</span>
+          </div>
+
+          <div className="space-y-4">
+            {/* Auto-renew toggle */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-foreground">{t('autoRenew')}</p>
+              </div>
+              <Switch
+                checked={(listing as any).auto_renew ?? true}
+                disabled={togglingRenew}
+                onCheckedChange={async (checked) => {
+                  setTogglingRenew(true);
+                  await supabase.from('listings').update({ auto_renew: checked } as any).eq('id', listing.id);
+                  setListing((prev) => prev ? { ...prev, auto_renew: checked } as any : prev);
+                  setTogglingRenew(false);
+                }}
+              />
             </div>
+
+            {/* Deactivate / Reactivate */}
+            {purchase && !isExpired && (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    {listing.status === 'active' ? t('deactivate') : t('reactivate')}
+                  </p>
+                </div>
+                <Button
+                  variant={listing.status === 'active' ? 'destructive' : 'default'}
+                  size="sm"
+                  disabled={togglingStatus}
+                  onClick={async () => {
+                    setTogglingStatus(true);
+                    const newStatus = listing.status === 'active' ? 'paused' : 'active';
+                    await supabase.from('listings').update({ status: newStatus }).eq('id', listing.id);
+                    setListing((prev) => prev ? { ...prev, status: newStatus } : prev);
+                    toast({ title: '✅', description: newStatus === 'paused' ? t('deactivated') : t('reactivated') });
+                    setTogglingStatus(false);
+                  }}
+                >
+                  {togglingStatus && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
+                  <Power className="h-4 w-4 mr-1" />
+                  {listing.status === 'active' ? t('deactivate') : t('reactivate')}
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
           </div>
         )}
       </div>
