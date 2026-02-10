@@ -1,1 +1,4 @@
 project_id = "yufifhkmybiasnzmjgsk"
+
+[functions.generate-sign-assets]
+verify_jwt = false
