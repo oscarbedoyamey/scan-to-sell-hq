@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
-import { ArrowLeft, QrCode, FileText, Download, RefreshCw, ExternalLink, Loader2, Eye, CreditCard, BarChart3, Power, ToggleLeft } from 'lucide-react';
+import { ArrowLeft, QrCode, FileText, Download, RefreshCw, ExternalLink, Loader2, Eye, CreditCard, BarChart3, Power, ToggleLeft, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +37,7 @@ const labels: Record<string, Record<string, string>> = {
   month: { en: 'Monthly', es: 'Mensual', fr: 'Mois', de: 'Monatlich', it: 'Mensile', pt: 'Mensal', pl: 'Miesięcznie' },
   noVisits: { en: 'No visits yet', es: 'Sin visitas aún', fr: 'Pas de visites', de: 'Keine Besuche', it: 'Nessuna visita', pt: 'Sem visitas', pl: 'Brak wizyt' },
   autoRenew: { en: 'Auto-renew', es: 'Renovación automática', fr: 'Renouvellement auto', de: 'Auto-Verlängerung', it: 'Rinnovo auto', pt: 'Renovação auto', pl: 'Auto-odnowienie' },
+  edit: { en: 'Edit listing', es: 'Editar anuncio', fr: 'Modifier', de: 'Bearbeiten', it: 'Modifica', pt: 'Editar', pl: 'Edytuj' },
   deactivate: { en: 'Deactivate listing', es: 'Desactivar anuncio', fr: 'Désactiver', de: 'Deaktivieren', it: 'Disattiva', pt: 'Desativar', pl: 'Dezaktywuj' },
   reactivate: { en: 'Reactivate listing', es: 'Reactivar anuncio', fr: 'Réactiver', de: 'Reaktivieren', it: 'Riattiva', pt: 'Reativar', pl: 'Reaktywuj' },
   deactivated: { en: 'Listing deactivated', es: 'Anuncio desactivado', fr: 'Annonce désactivée', de: 'Inserat deaktiviert', it: 'Annuncio disattivato', pt: 'Anúncio desativado', pl: 'Ogłoszenie dezaktywowane' },
@@ -187,9 +188,16 @@ const ListingDetail = () => {
             {[listing.city, listing.region].filter(Boolean).join(', ') || 'No location'}
           </p>
         </div>
-        <Badge variant={listing.status === 'active' ? 'default' : 'secondary'} className="uppercase text-xs">
-          {listing.status}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link to={`/app/listings/new?listing_id=${listing.id}`}>
+              <Pencil className="h-3 w-3 mr-1" /> {t('edit')}
+            </Link>
+          </Button>
+          <Badge variant={listing.status === 'active' ? 'default' : 'secondary'} className="uppercase text-xs">
+            {listing.status}
+          </Badge>
+        </div>
       </div>
 
       {/* Purchase info / Renewal */}

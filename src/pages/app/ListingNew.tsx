@@ -63,6 +63,8 @@ const planLabels: Record<string, Record<string, string>> = {
   months: { en: 'months', es: 'meses', fr: 'mois', de: 'Monate', it: 'mesi', pt: 'meses', pl: 'miesięcy' },
   activate: { en: 'Activate & Pay', es: 'Activar y Pagar', fr: 'Activer & Payer', de: 'Aktivieren & Bezahlen', it: 'Attiva & Paga', pt: 'Ativar & Pagar', pl: 'Aktywuj & Zapłać' },
   bestValue: { en: 'Best value', es: 'Mejor precio', fr: 'Meilleur prix', de: 'Bester Preis', it: 'Miglior prezzo', pt: 'Melhor preço', pl: 'Najlepsza cena' },
+  saveChanges: { en: 'Save changes', es: 'Guardar cambios', fr: 'Enregistrer', de: 'Speichern', it: 'Salva', pt: 'Salvar', pl: 'Zapisz' },
+  changesSaved: { en: 'Changes saved successfully', es: 'Cambios guardados correctamente', fr: 'Modifications enregistrées', de: 'Änderungen gespeichert', it: 'Modifiche salvate', pt: 'Alterações salvas', pl: 'Zmiany zapisane' },
 };
 
 const ListingNew = () => {
@@ -82,6 +84,7 @@ const ListingNew = () => {
   const [showPlanSelection, setShowPlanSelection] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isNew && !!editId);
+  const [originalStatus, setOriginalStatus] = useState<string | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didLoad = useRef(false);
 
@@ -124,6 +127,7 @@ const ListingNew = () => {
         const { data: existing } = await query;
         if (existing) {
           setListingId(existing.id);
+          setOriginalStatus(existing.status);
           const { id, created_at, updated_at, owner_user_id, status, ...rest } = existing;
           setData((prev) => ({ ...prev, ...rest }));
 
@@ -150,7 +154,8 @@ const ListingNew = () => {
       if (!user) return id;
       setSaving(true);
       try {
-        const payload: any = { ...current, owner_user_id: user.id, status: 'draft' };
+        const statusToSave = originalStatus && originalStatus !== 'draft' ? originalStatus : 'draft';
+        const payload: any = { ...current, owner_user_id: user.id, status: statusToSave };
         delete payload.id;
         delete payload.created_at;
         delete payload.updated_at;
@@ -357,6 +362,17 @@ const ListingNew = () => {
               {step < STEPS.length - 1 ? (
                 <Button onClick={handleNext} disabled={!canAdvance() || saving}>
                   {t('next')}
+                </Button>
+              ) : originalStatus && originalStatus !== 'draft' ? (
+                <Button variant="hero" onClick={async () => {
+                  setPublishing(true);
+                  if (saveTimer.current) clearTimeout(saveTimer.current);
+                  await autoSave(data, listingId);
+                  toast({ title: '✅', description: tp('changesSaved') });
+                  navigate(`/app/listings/${listingId}`);
+                }} disabled={publishing || saving}>
+                  {publishing && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                  {tp('saveChanges')}
                 </Button>
               ) : (
                 <Button variant="hero" onClick={handlePublish} disabled={publishing || saving}>
