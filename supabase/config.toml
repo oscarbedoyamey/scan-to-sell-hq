@@ -2,3 +2,6 @@ project_id = "yufifhkmybiasnzmjgsk"
 
 [functions.generate-sign-assets]
 verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = false
