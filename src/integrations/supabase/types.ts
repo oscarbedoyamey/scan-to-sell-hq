@@ -57,6 +57,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "leads_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "leads_sign_id_fkey"
             columns: ["sign_id"]
             isOneToOne: false
@@ -99,6 +106,13 @@ export type Database = {
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_translations_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings_public"
             referencedColumns: ["id"]
           },
         ]
@@ -371,6 +385,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "purchases_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "purchases_package_id_fkey"
             columns: ["package_id"]
             isOneToOne: false
@@ -422,6 +443,13 @@ export type Database = {
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scans_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings_public"
             referencedColumns: ["id"]
           },
           {
@@ -505,6 +533,13 @@ export type Database = {
             referencedRelation: "listings"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "signs_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       templates: {
@@ -557,7 +592,174 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      listings_public: {
+        Row: {
+          agency_logo_url: string | null
+          agency_name: string | null
+          base_language: string | null
+          bathrooms: number | null
+          bedrooms: number | null
+          built_area_m2: number | null
+          city: string | null
+          condition: Database["public"]["Enums"]["property_condition"] | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          contact_whatsapp: string | null
+          country: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          elevator: boolean | null
+          energy_rating: string | null
+          features: Json | null
+          floor: string | null
+          floorplan_url: string | null
+          gallery_urls: Json | null
+          hide_exact_address: boolean | null
+          id: string | null
+          lead_form_enabled: boolean | null
+          number: string | null
+          operation_type: Database["public"]["Enums"]["operation_type"] | null
+          owner_user_id: string | null
+          parking: boolean | null
+          plot_area_m2: number | null
+          postal_code: string | null
+          price_rent: number | null
+          price_sale: number | null
+          property_type: Database["public"]["Enums"]["property_type"] | null
+          public_lat: number | null
+          public_lng: number | null
+          public_number: string | null
+          public_street: string | null
+          reference_code: string | null
+          region: string | null
+          show_email: boolean | null
+          show_phone: boolean | null
+          show_price: boolean | null
+          show_whatsapp: boolean | null
+          status: Database["public"]["Enums"]["listing_status"] | null
+          street: string | null
+          title: string | null
+          updated_at: string | null
+          video_url: string | null
+          virtual_tour_url: string | null
+          website_url: string | null
+          year_built: number | null
+        }
+        Insert: {
+          agency_logo_url?: string | null
+          agency_name?: string | null
+          base_language?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          built_area_m2?: number | null
+          city?: string | null
+          condition?: Database["public"]["Enums"]["property_condition"] | null
+          contact_email?: never
+          contact_name?: string | null
+          contact_phone?: never
+          contact_whatsapp?: never
+          country?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          elevator?: boolean | null
+          energy_rating?: string | null
+          features?: Json | null
+          floor?: string | null
+          floorplan_url?: string | null
+          gallery_urls?: Json | null
+          hide_exact_address?: boolean | null
+          id?: string | null
+          lead_form_enabled?: boolean | null
+          number?: string | null
+          operation_type?: Database["public"]["Enums"]["operation_type"] | null
+          owner_user_id?: string | null
+          parking?: boolean | null
+          plot_area_m2?: number | null
+          postal_code?: string | null
+          price_rent?: number | null
+          price_sale?: number | null
+          property_type?: Database["public"]["Enums"]["property_type"] | null
+          public_lat?: never
+          public_lng?: never
+          public_number?: never
+          public_street?: never
+          reference_code?: string | null
+          region?: string | null
+          show_email?: boolean | null
+          show_phone?: boolean | null
+          show_price?: boolean | null
+          show_whatsapp?: boolean | null
+          status?: Database["public"]["Enums"]["listing_status"] | null
+          street?: string | null
+          title?: string | null
+          updated_at?: string | null
+          video_url?: string | null
+          virtual_tour_url?: string | null
+          website_url?: string | null
+          year_built?: number | null
+        }
+        Update: {
+          agency_logo_url?: string | null
+          agency_name?: string | null
+          base_language?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          built_area_m2?: number | null
+          city?: string | null
+          condition?: Database["public"]["Enums"]["property_condition"] | null
+          contact_email?: never
+          contact_name?: string | null
+          contact_phone?: never
+          contact_whatsapp?: never
+          country?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          elevator?: boolean | null
+          energy_rating?: string | null
+          features?: Json | null
+          floor?: string | null
+          floorplan_url?: string | null
+          gallery_urls?: Json | null
+          hide_exact_address?: boolean | null
+          id?: string | null
+          lead_form_enabled?: boolean | null
+          number?: string | null
+          operation_type?: Database["public"]["Enums"]["operation_type"] | null
+          owner_user_id?: string | null
+          parking?: boolean | null
+          plot_area_m2?: number | null
+          postal_code?: string | null
+          price_rent?: number | null
+          price_sale?: number | null
+          property_type?: Database["public"]["Enums"]["property_type"] | null
+          public_lat?: never
+          public_lng?: never
+          public_number?: never
+          public_street?: never
+          reference_code?: string | null
+          region?: string | null
+          show_email?: boolean | null
+          show_phone?: boolean | null
+          show_price?: boolean | null
+          show_whatsapp?: boolean | null
+          status?: Database["public"]["Enums"]["listing_status"] | null
+          street?: string | null
+          title?: string | null
+          updated_at?: string | null
+          video_url?: string | null
+          virtual_tour_url?: string | null
+          website_url?: string | null
+          year_built?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
