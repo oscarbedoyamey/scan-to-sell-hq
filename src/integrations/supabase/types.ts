@@ -619,7 +619,9 @@ export type Database = {
           gallery_urls: Json | null
           hide_exact_address: boolean | null
           id: string | null
+          lat: number | null
           lead_form_enabled: boolean | null
+          lng: number | null
           number: string | null
           operation_type: Database["public"]["Enums"]["operation_type"] | null
           owner_user_id: string | null
@@ -629,10 +631,6 @@ export type Database = {
           price_rent: number | null
           price_sale: number | null
           property_type: Database["public"]["Enums"]["property_type"] | null
-          public_lat: number | null
-          public_lng: number | null
-          public_number: string | null
-          public_street: string | null
           reference_code: string | null
           region: string | null
           show_email: boolean | null
@@ -674,8 +672,10 @@ export type Database = {
           gallery_urls?: Json | null
           hide_exact_address?: boolean | null
           id?: string | null
+          lat?: never
           lead_form_enabled?: boolean | null
-          number?: string | null
+          lng?: never
+          number?: never
           operation_type?: Database["public"]["Enums"]["operation_type"] | null
           owner_user_id?: string | null
           parking?: boolean | null
@@ -684,10 +684,6 @@ export type Database = {
           price_rent?: number | null
           price_sale?: number | null
           property_type?: Database["public"]["Enums"]["property_type"] | null
-          public_lat?: never
-          public_lng?: never
-          public_number?: never
-          public_street?: never
           reference_code?: string | null
           region?: string | null
           show_email?: boolean | null
@@ -695,7 +691,7 @@ export type Database = {
           show_price?: boolean | null
           show_whatsapp?: boolean | null
           status?: Database["public"]["Enums"]["listing_status"] | null
-          street?: string | null
+          street?: never
           title?: string | null
           updated_at?: string | null
           video_url?: string | null
@@ -729,8 +725,10 @@ export type Database = {
           gallery_urls?: Json | null
           hide_exact_address?: boolean | null
           id?: string | null
+          lat?: never
           lead_form_enabled?: boolean | null
-          number?: string | null
+          lng?: never
+          number?: never
           operation_type?: Database["public"]["Enums"]["operation_type"] | null
           owner_user_id?: string | null
           parking?: boolean | null
@@ -739,10 +737,6 @@ export type Database = {
           price_rent?: number | null
           price_sale?: number | null
           property_type?: Database["public"]["Enums"]["property_type"] | null
-          public_lat?: never
-          public_lng?: never
-          public_number?: never
-          public_street?: never
           reference_code?: string | null
           region?: string | null
           show_email?: boolean | null
@@ -750,7 +744,7 @@ export type Database = {
           show_price?: boolean | null
           show_whatsapp?: boolean | null
           status?: Database["public"]["Enums"]["listing_status"] | null
-          street?: string | null
+          street?: never
           title?: string | null
           updated_at?: string | null
           video_url?: string | null

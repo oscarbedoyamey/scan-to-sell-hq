@@ -55,7 +55,7 @@ const PublicListing = () => {
         setSign(signData);
 
         const { data: listingData } = await (supabase as any)
-          .from('listings')
+          .from('listings_public')
           .select('*')
           .eq('id', signData.listing_id)
           .maybeSingle();
