@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { MapPin, BedDouble, Bath, Square, Phone, ExternalLink } from 'lucide-react';
+import { MapPin, BedDouble, Bath, Square, MessageCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import propertyMockup from '@/assets/property-listing-mockup.jpg';
 
 export const Demo = () => {
   const { t } = useLanguage();
-  const [showListing, setShowListing] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <section id="examples" className="section-padding bg-secondary/30">
@@ -39,7 +39,7 @@ export const Demo = () => {
 
               {/* QR Code */}
               <button
-                onClick={() => setShowListing(true)}
+                onClick={() => navigate('/demo')}
                 className="w-full aspect-square bg-white rounded-xl border-4 border-primary/10 p-4 hover:border-primary/30 transition-colors cursor-pointer qr-shimmer group"
               >
                 <div className="w-full h-full bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg flex items-center justify-center relative overflow-hidden">
@@ -112,75 +112,67 @@ export const Demo = () => {
           </div>
 
           {/* Property listing preview */}
-          <div className={`transition-all duration-500 ${showListing ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            {showListing ? (
-              <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-border">
-                {/* Property image */}
-                <div className="relative h-56 bg-gradient-to-br from-primary/10 to-primary/5">
-                  <img
-                    src={propertyMockup}
-                    alt="Property"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-4 right-4 bg-accent text-accent-foreground px-3 py-1 rounded-full text-sm font-bold">
-                    {t.demo.propertyCard.price}
-                  </div>
-                </div>
-
-                {/* Property details */}
-                <div className="p-6">
-                  <h3 className="font-display text-xl font-bold text-foreground mb-2">
-                    {t.demo.propertyCard.title}
-                  </h3>
-                  
-                  <div className="flex items-center gap-2 text-muted-foreground mb-4">
-                    <MapPin className="w-4 h-4" />
-                    <span className="text-sm">{t.demo.propertyCard.location}</span>
-                  </div>
-
-                  {/* Features */}
-                  <div className="flex gap-4 mb-4">
-                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <BedDouble className="w-4 h-4" />
-                      <span>{t.demo.propertyCard.beds}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <Bath className="w-4 h-4" />
-                      <span>{t.demo.propertyCard.baths}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <Square className="w-4 h-4" />
-                      <span>{t.demo.propertyCard.size}</span>
-                    </div>
-                  </div>
-
-                  <p className="text-muted-foreground text-sm mb-6">
-                    {t.demo.propertyCard.description}
-                  </p>
-
-                  {/* Actions */}
-                  <div className="flex gap-3">
-                    <Button variant="hero" className="flex-1">
-                      <Phone className="w-4 h-4" />
-                      {t.demo.propertyCard.contact}
-                    </Button>
-                    <Button variant="outline" className="flex-1">
-                      <ExternalLink className="w-4 h-4" />
-                      {t.demo.propertyCard.viewMore}
-                    </Button>
-                  </div>
+          <div className="opacity-100">
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-border">
+              {/* Property image */}
+              <div className="relative h-56 bg-gradient-to-br from-primary/10 to-primary/5">
+                <img
+                  src={propertyMockup}
+                  alt="Property"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-4 right-4 bg-accent text-accent-foreground px-3 py-1 rounded-full text-sm font-bold">
+                  {t.demo.propertyCard.price}
                 </div>
               </div>
-            ) : (
-              <div className="bg-secondary/50 rounded-2xl p-12 text-center border-2 border-dashed border-border">
-                <div className="w-16 h-16 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
-                  <ExternalLink className="w-8 h-8 text-muted-foreground" />
+
+              {/* Property details */}
+              <div className="p-6">
+                <h3 className="font-display text-xl font-bold text-foreground mb-2">
+                  {t.demo.propertyCard.title}
+                </h3>
+                
+                <div className="flex items-center gap-2 text-muted-foreground mb-4">
+                  <MapPin className="w-4 h-4" />
+                  <span className="text-sm">{t.demo.propertyCard.location}</span>
                 </div>
-                <p className="text-muted-foreground">
-                  Click the QR code to see the property listing
+
+                {/* Features */}
+                <div className="flex gap-4 mb-4">
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <BedDouble className="w-4 h-4" />
+                    <span>{t.demo.propertyCard.beds}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <Bath className="w-4 h-4" />
+                    <span>{t.demo.propertyCard.baths}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <Square className="w-4 h-4" />
+                    <span>{t.demo.propertyCard.size}</span>
+                  </div>
+                </div>
+
+                <p className="text-muted-foreground text-sm mb-6">
+                  {t.demo.propertyCard.description}
                 </p>
+
+                {/* Actions */}
+                <div className="flex gap-3">
+                  <Button
+                    className="flex-1 bg-[hsl(142,70%,45%)] text-white hover:bg-[hsl(142,70%,38%)]"
+                    onClick={() => navigate('/demo')}
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    {t.demo.propertyCard.contactWhatsapp}
+                  </Button>
+                  <Button variant="outline" className="flex-1" onClick={() => navigate('/demo')}>
+                    <ExternalLink className="w-4 h-4" />
+                    {t.demo.propertyCard.viewMore}
+                  </Button>
+                </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
