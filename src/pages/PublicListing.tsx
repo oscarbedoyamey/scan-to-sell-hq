@@ -1,11 +1,12 @@
 import { useParams } from 'react-router-dom';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, MapPin, Bed, Bath, Ruler, Phone, Mail, MessageCircle, Calendar, Zap, Car, ArrowUpFromDot } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { PropertyGallery } from '@/components/listing/PropertyGallery';
 import { LeadForm } from '@/components/listing/LeadForm';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import zignoLogo from '@/assets/zigno-logo.png';
 import { detectPublicLang, publicListingT, type PublicListingLang } from '@/i18n/publicListingTranslations';
 import type { Tables } from '@/integrations/supabase/types';
@@ -26,7 +27,7 @@ const PublicListing = () => {
   const [notFound, setNotFound] = useState(false);
   const [translation, setTranslation] = useState<{ title?: string | null; description?: string | null } | null>(null);
 
-  const lang = useMemo<PublicListingLang>(() => detectPublicLang(), []);
+  const [lang, setLang] = useState<PublicListingLang>(() => detectPublicLang());
   const t = publicListingT[lang];
 
   useEffect(() => {
@@ -70,7 +71,9 @@ const PublicListing = () => {
             .eq('listing_id', listingData.id)
             .eq('language', lang)
             .maybeSingle();
-          if (trans) setTranslation(trans);
+          setTranslation(trans);
+        } else {
+          setTranslation(null);
         }
 
         recordScan(signData.id, listingData.id);
@@ -135,14 +138,17 @@ const PublicListing = () => {
       <header className="border-b border-border bg-card sticky top-0 z-40">
         <div className="container-wide flex items-center justify-between h-14">
           <a href="/"><img src={zignoLogo} alt="ZIGNO" className="h-7 w-auto" /></a>
-          {listing.agency_name && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              {listing.agency_logo_url && (
-                <img src={listing.agency_logo_url} alt={listing.agency_name} className="h-6 w-auto" />
-              )}
-              <span>{listing.agency_name}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            {listing.agency_name && (
+              <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+                {listing.agency_logo_url && (
+                  <img src={listing.agency_logo_url} alt={listing.agency_name} className="h-6 w-auto" />
+                )}
+                <span>{listing.agency_name}</span>
+              </div>
+            )}
+            <LanguageSwitcher current={lang} onChange={(c) => setLang(c as PublicListingLang)} compact />
+          </div>
         </div>
       </header>
 
