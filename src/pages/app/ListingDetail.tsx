@@ -1,33 +1,60 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, QrCode, FileText, Download, RefreshCw, ExternalLink, Loader2, Plus } from 'lucide-react';
+import { ArrowLeft, QrCode, FileText, Download, RefreshCw, ExternalLink, Loader2, Eye, CreditCard } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/i18n/LanguageContext';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Listing = Tables<'listings'>;
 type Sign = Tables<'signs'>;
+type Purchase = Tables<'purchases'>;
+
+const labels: Record<string, Record<string, string>> = {
+  back: { en: 'Back to listings', es: 'Volver a anuncios', fr: 'Retour', de: 'Zurück', it: 'Torna', pt: 'Voltar', pl: 'Wróć' },
+  signs: { en: 'Signs & QR Codes', es: 'Carteles y QR', fr: 'Affiches & QR', de: 'Plakate & QR', it: 'Cartelli & QR', pt: 'Cartazes & QR', pl: 'Plakaty & QR' },
+  noSigns: { en: 'No signs created yet.', es: 'Aún no hay carteles.', fr: 'Aucune affiche.', de: 'Keine Plakate.', it: 'Nessun cartello.', pt: 'Nenhum cartaz.', pl: 'Brak plakatów.' },
+  noSignsHint: { en: 'Signs are created when you purchase a plan.', es: 'Los carteles se crean al comprar un plan.', fr: 'Les affiches sont créées lors de l\'achat.', de: 'Plakate werden beim Kauf erstellt.', it: 'I cartelli vengono creati con l\'acquisto.', pt: 'Cartazes são criados ao comprar.', pl: 'Plakaty są tworzone po zakupie.' },
+  regenerate: { en: 'Regenerate', es: 'Regenerar', fr: 'Régénérer', de: 'Neu generieren', it: 'Rigenera', pt: 'Regenerar', pl: 'Regeneruj' },
+  generate: { en: 'Generate assets', es: 'Generar activos', fr: 'Générer', de: 'Generieren', it: 'Genera', pt: 'Gerar', pl: 'Generuj' },
+  preview: { en: 'Preview landing', es: 'Ver landing', fr: 'Voir la page', de: 'Vorschau', it: 'Anteprima', pt: 'Pré-visualizar', pl: 'Podgląd' },
+  purchase: { en: 'Purchase', es: 'Compra', fr: 'Achat', de: 'Kauf', it: 'Acquisto', pt: 'Compra', pl: 'Zakup' },
+  expiresAt: { en: 'Expires', es: 'Expira', fr: 'Expire', de: 'Läuft ab', it: 'Scade', pt: 'Expira', pl: 'Wygasa' },
+  renew: { en: 'Renew listing', es: 'Renovar anuncio', fr: 'Renouveler', de: 'Erneuern', it: 'Rinnova', pt: 'Renovar', pl: 'Odnów' },
+  activate: { en: 'Activate listing', es: 'Activar anuncio', fr: 'Activer', de: 'Aktivieren', it: 'Attiva', pt: 'Ativar', pl: 'Aktywuj' },
+  noPurchase: { en: 'No active plan. Purchase one to activate this listing.', es: 'Sin plan activo. Compra uno para activar este anuncio.', fr: 'Pas de plan actif. Achetez-en un.', de: 'Kein aktiver Plan. Kaufen Sie einen.', it: 'Nessun piano attivo. Acquistane uno.', pt: 'Sem plano ativo. Compre um.', pl: 'Brak planu. Kup jeden.' },
+  paid: { en: 'Paid', es: 'Pagado', fr: 'Payé', de: 'Bezahlt', it: 'Pagato', pt: 'Pago', pl: 'Opłacone' },
+  assetsGenerated: { en: 'Assets generated successfully', es: 'Activos generados correctamente', fr: 'Fichiers générés', de: 'Assets erstellt', it: 'File generati', pt: 'Ativos gerados', pl: 'Zasoby wygenerowane' },
+};
 
 const ListingDetail = () => {
   const { id } = useParams();
   const { toast } = useToast();
+  const { language } = useLanguage();
+  const navigate = useNavigate();
   const [listing, setListing] = useState<Listing | null>(null);
   const [signs, setSigns] = useState<Sign[]>([]);
+  const [purchase, setPurchase] = useState<Purchase | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState<string | null>(null);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  const t = (key: string) => labels[key]?.[language] || labels[key]?.en || key;
 
   useEffect(() => {
     if (!id) return;
     const load = async () => {
-      const [{ data: l }, { data: s }] = await Promise.all([
+      const [{ data: l }, { data: s }, { data: p }] = await Promise.all([
         supabase.from('listings').select('*').eq('id', id).single(),
         supabase.from('signs').select('*').eq('listing_id', id).order('created_at', { ascending: false }),
+        (supabase as any).from('purchases').select('*').eq('listing_id', id).eq('status', 'paid').order('end_at', { ascending: false }).limit(1).maybeSingle(),
       ]);
       setListing(l);
       setSigns(s || []);
+      setPurchase(p);
       setLoading(false);
     };
     load();
@@ -36,24 +63,33 @@ const ListingDetail = () => {
   const generateAssets = async (signId: string) => {
     setGenerating(signId);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
-
       const res = await supabase.functions.invoke('generate-sign-assets', {
         body: { sign_id: signId },
       });
-
       if (res.error) throw new Error(res.error.message);
-
-      toast({ title: 'Assets generated', description: 'QR and PDF have been created successfully.' });
-
-      // Refresh signs
+      toast({ title: '✅', description: t('assetsGenerated') });
       const { data: updated } = await supabase.from('signs').select('*').eq('listing_id', id!).order('created_at', { ascending: false });
       setSigns(updated || []);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
       setGenerating(null);
+    }
+  };
+
+  const handleCheckout = async (packageId: string) => {
+    if (!id) return;
+    setLoadingPlan(packageId);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { package_id: packageId, listing_id: id },
+      });
+      if (error) throw error;
+      if (data?.url) window.location.href = data.url;
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setLoadingPlan(null);
     }
   };
 
@@ -75,17 +111,26 @@ const ListingDetail = () => {
     return (
       <div className="max-w-5xl">
         <Link to="/app/listings" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-          <ArrowLeft className="h-4 w-4" /> Back to listings
+          <ArrowLeft className="h-4 w-4" /> {t('back')}
         </Link>
         <p className="text-muted-foreground">Listing not found.</p>
       </div>
     );
   }
 
+  const isExpired = purchase?.end_at ? new Date(purchase.end_at) < new Date() : false;
+  const needsPayment = !purchase || isExpired;
+
+  const plans = [
+    { id: 'plan_3m', months: 3, price: 49 },
+    { id: 'plan_6m', months: 6, price: 64 },
+    { id: 'plan_12m', months: 12, price: 94 },
+  ];
+
   return (
     <div className="max-w-5xl">
       <Link to="/app/listings" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
-        <ArrowLeft className="h-4 w-4" /> Back to listings
+        <ArrowLeft className="h-4 w-4" /> {t('back')}
       </Link>
 
       {/* Listing header */}
@@ -101,21 +146,67 @@ const ListingDetail = () => {
         </Badge>
       </div>
 
-      <Separator className="mb-8" />
+      {/* Purchase info / Renewal */}
+      <div className="bg-card rounded-2xl border border-border p-6 mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <CreditCard className="h-5 w-5 text-primary" />
+          <span className="font-medium text-foreground">{t('purchase')}</span>
+        </div>
+
+        {purchase && !isExpired ? (
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Badge variant="default">{t('paid')}</Badge>
+                <span className="text-sm text-muted-foreground">€{purchase.amount_eur}</span>
+              </div>
+              {purchase.end_at && (
+                <p className="text-sm text-muted-foreground">
+                  {t('expiresAt')}: {new Date(purchase.end_at).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+            <Button variant="outline" size="sm" onClick={() => handleCheckout('plan_6m')} disabled={loadingPlan !== null}>
+              {loadingPlan && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
+              {t('renew')}
+            </Button>
+          </div>
+        ) : (
+          <div>
+            <p className="text-sm text-muted-foreground mb-4">{t('noPurchase')}</p>
+            <div className="grid sm:grid-cols-3 gap-3">
+              {plans.map((plan) => (
+                <Button
+                  key={plan.id}
+                  variant="outline"
+                  className="flex flex-col h-auto py-3"
+                  onClick={() => handleCheckout(plan.id)}
+                  disabled={loadingPlan !== null}
+                >
+                  {loadingPlan === plan.id && <Loader2 className="w-3 h-3 animate-spin" />}
+                  <span className="font-bold">{plan.months} mo — €{plan.price}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <Separator className="mb-6" />
 
       {/* Signs section */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-lg font-bold text-foreground flex items-center gap-2">
-            <QrCode className="h-5 w-5" /> Signs & QR Codes
+            <QrCode className="h-5 w-5" /> {t('signs')}
           </h2>
         </div>
 
         {signs.length === 0 ? (
           <div className="bg-card rounded-2xl border border-border p-12 text-center">
             <QrCode className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground mb-1">No signs created yet for this listing.</p>
-            <p className="text-xs text-muted-foreground">Signs are created when you purchase a plan.</p>
+            <p className="text-muted-foreground mb-1">{t('noSigns')}</p>
+            <p className="text-xs text-muted-foreground">{t('noSignsHint')}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -155,7 +246,7 @@ const ListingDetail = () => {
                           href={sign.public_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs text-primary hover:underline flex items-center gap-1"
+                          className="text-xs text-primary hover:underline flex items-center gap-1 mb-1"
                         >
                           <ExternalLink className="h-3 w-3" /> {sign.public_url.replace('https://', '')}
                         </a>
@@ -163,6 +254,15 @@ const ListingDetail = () => {
 
                       {/* Action buttons */}
                       <div className="flex flex-wrap gap-2 mt-4">
+                        {/* Preview landing page */}
+                        {sign.public_url && (
+                          <Button size="sm" variant="outline" asChild>
+                            <a href={sign.public_url} target="_blank" rel="noopener noreferrer">
+                              <Eye className="h-4 w-4 mr-1" /> {t('preview')}
+                            </a>
+                          </Button>
+                        )}
+
                         <Button
                           size="sm"
                           onClick={() => generateAssets(sign.id)}
@@ -175,7 +275,7 @@ const ListingDetail = () => {
                           ) : (
                             <QrCode className="h-4 w-4 mr-1" />
                           )}
-                          {sign.qr_image_path ? 'Regenerate' : 'Generate assets'}
+                          {sign.qr_image_path ? t('regenerate') : t('generate')}
                         </Button>
 
                         {qrUrl && (

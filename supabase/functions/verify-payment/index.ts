@@ -8,6 +8,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const PUBLISHED_URL = "https://scan-to-sell-hq.lovable.app";
+
+function generateSignCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -15,7 +26,7 @@ serve(async (req) => {
 
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? ""
+    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
   );
 
   try {
@@ -40,10 +51,10 @@ serve(async (req) => {
     );
 
     if (session.payment_status === "paid") {
-      // Get package duration
+      // Get purchase with package info
       const { data: purchase } = await supabaseAdmin
         .from("purchases")
-        .select("package_id")
+        .select("package_id, listing_id")
         .eq("id", purchase_id)
         .single();
 
@@ -67,7 +78,104 @@ serve(async (req) => {
         })
         .eq("id", purchase_id);
 
-      return new Response(JSON.stringify({ verified: true, status: "paid" }), {
+      const listingId = purchase?.listing_id;
+
+      if (listingId) {
+        // Activate the listing
+        await supabaseAdmin
+          .from("listings")
+          .update({ status: "active" })
+          .eq("id", listingId);
+
+        // Check if a sign already exists for this listing
+        const { data: existingSigns } = await supabaseAdmin
+          .from("signs")
+          .select("id")
+          .eq("listing_id", listingId)
+          .limit(1);
+
+        let signId: string | null = existingSigns?.[0]?.id || null;
+
+        if (!signId) {
+          // Get listing data for sign defaults
+          const { data: listing } = await supabaseAdmin
+            .from("listings")
+            .select("operation_type, base_language")
+            .eq("id", listingId)
+            .single();
+
+          // Generate a unique sign_code
+          let signCode = generateSignCode();
+          let attempts = 0;
+          while (attempts < 10) {
+            const { data: existing } = await supabaseAdmin
+              .from("signs")
+              .select("id")
+              .eq("sign_code", signCode)
+              .maybeSingle();
+            if (!existing) break;
+            signCode = generateSignCode();
+            attempts++;
+          }
+
+          // Determine headline based on operation type and language
+          const headlineMap: Record<string, Record<string, string>> = {
+            sale: { es: "SE VENDE", en: "FOR SALE", fr: "À VENDRE", de: "ZU VERKAUFEN", it: "IN VENDITA", pt: "VENDE-SE", pl: "NA SPRZEDAŻ" },
+            rent: { es: "SE ALQUILA", en: "FOR RENT", fr: "À LOUER", de: "ZU VERMIETEN", it: "IN AFFITTO", pt: "ALUGA-SE", pl: "DO WYNAJĘCIA" },
+          };
+          const lang = listing?.base_language || "es";
+          const opType = listing?.operation_type || "sale";
+          const headline = headlineMap[opType]?.[lang] || headlineMap[opType]?.en || "FOR SALE";
+
+          const publicUrl = `${PUBLISHED_URL}/s/${signCode}`;
+
+          const { data: newSign, error: signError } = await supabaseAdmin
+            .from("signs")
+            .insert({
+              listing_id: listingId,
+              sign_code: signCode,
+              language: lang,
+              headline_text: headline,
+              show_sale_rent_badge: true,
+              show_phone: true,
+              show_price: true,
+              public_url: publicUrl,
+            })
+            .select("id")
+            .single();
+
+          if (signError) {
+            console.error("Error creating sign:", signError);
+          } else {
+            signId = newSign.id;
+          }
+        }
+
+        // Auto-generate assets if we have a sign
+        if (signId) {
+          try {
+            const functionsUrl = Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", ".supabase.co/functions/v1");
+            const response = await fetch(`${functionsUrl}/generate-sign-assets`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+              },
+              body: JSON.stringify({ sign_id: signId }),
+            });
+
+            if (!response.ok) {
+              const errText = await response.text();
+              console.error("Asset generation failed:", errText);
+            }
+          } catch (genErr) {
+            console.error("Asset generation error:", genErr);
+            // Non-blocking: payment is still verified even if asset gen fails
+          }
+        }
+      }
+
+      return new Response(JSON.stringify({ verified: true, status: "paid", listing_id: listingId }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
