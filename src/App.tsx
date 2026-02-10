@@ -12,7 +12,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
-import PricingPage from "./pages/PricingPage";
+
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PublicListing from "./pages/PublicListing";
 import Dashboard from "./pages/app/Dashboard";
@@ -39,7 +39,7 @@ const App = () => (
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
-              <Route path="/pricing" element={<PricingPage />} />
+              
               <Route path="/payment-success" element={<PaymentSuccess />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
