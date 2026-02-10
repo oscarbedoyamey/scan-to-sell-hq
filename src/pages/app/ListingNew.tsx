@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useSearchParams, useParams, Link, useNavigate } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,7 @@ import { WizardStepper } from '@/components/wizard/WizardStepper';
 import { StepProperty } from '@/components/wizard/StepProperty';
 import { StepMedia } from '@/components/wizard/StepMedia';
 import { StepContact } from '@/components/wizard/StepContact';
+import { useLanguage } from '@/i18n/LanguageContext';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Listing = Partial<Tables<'listings'>>;
@@ -50,13 +51,27 @@ const INITIAL_DATA: Listing = {
   show_whatsapp: false,
 };
 
+const plans = [
+  { id: 'plan_3m', months: 3, price: 49, popular: false },
+  { id: 'plan_6m', months: 6, price: 64, popular: true },
+  { id: 'plan_12m', months: 12, price: 94, popular: false },
+];
+
+const planLabels: Record<string, Record<string, string>> = {
+  choosePlan: { en: 'Choose your plan', es: 'Elige tu plan', fr: 'Choisissez votre plan', de: 'Wählen Sie Ihren Plan', it: 'Scegli il tuo piano', pt: 'Escolha seu plano', pl: 'Wybierz plan' },
+  choosePlanDesc: { en: 'Your listing is ready! Select a plan to activate it.', es: 'Tu anuncio está listo. Selecciona un plan para activarlo.', fr: 'Votre annonce est prête ! Sélectionnez un plan.', de: 'Ihr Inserat ist fertig! Wählen Sie einen Plan.', it: 'Il tuo annuncio è pronto! Seleziona un piano.', pt: 'Seu anúncio está pronto! Selecione um plano.', pl: 'Ogłoszenie jest gotowe! Wybierz plan.' },
+  months: { en: 'months', es: 'meses', fr: 'mois', de: 'Monate', it: 'mesi', pt: 'meses', pl: 'miesięcy' },
+  activate: { en: 'Activate & Pay', es: 'Activar y Pagar', fr: 'Activer & Payer', de: 'Aktivieren & Bezahlen', it: 'Attiva & Paga', pt: 'Ativar & Pagar', pl: 'Aktywuj & Zapłać' },
+  bestValue: { en: 'Best value', es: 'Mejor precio', fr: 'Meilleur prix', de: 'Bester Preis', it: 'Miglior prezzo', pt: 'Melhor preço', pl: 'Najlepsza cena' },
+};
+
 const ListingNew = () => {
   const t = useWizardLabels();
+  const { language } = useLanguage();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  const purchaseId = searchParams.get('purchase_id');
   const editId = searchParams.get('listing_id');
   const isNew = searchParams.get('new') === '1';
 
@@ -64,9 +79,13 @@ const ListingNew = () => {
   const [listingId, setListingId] = useState<string | null>(editId);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [showPlanSelection, setShowPlanSelection] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isNew && !!editId);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didLoad = useRef(false);
+
+  const tp = (key: string) => planLabels[key]?.[language] || planLabels[key]?.en || key;
 
   const [data, setData] = useState<Listing>({
     ...INITIAL_DATA,
@@ -85,7 +104,6 @@ const ListingNew = () => {
       try {
         let query;
         if (editId) {
-          // Resume a specific listing
           query = (supabase as any)
             .from('listings')
             .select('*')
@@ -93,7 +111,6 @@ const ListingNew = () => {
             .eq('owner_user_id', user.id)
             .single();
         } else {
-          // Find most recent draft to resume
           query = (supabase as any)
             .from('listings')
             .select('*')
@@ -110,11 +127,10 @@ const ListingNew = () => {
           const { id, created_at, updated_at, owner_user_id, status, ...rest } = existing;
           setData((prev) => ({ ...prev, ...rest }));
 
-          // Determine wizard step based on filled data
           if (existing.cover_image_url || (existing.gallery_urls as any[])?.length > 0 || existing.video_url) {
-            setStep(2); // has media → go to contact/review
+            setStep(2);
           } else if (existing.title && existing.operation_type && existing.property_type) {
-            setStep(1); // has property data → go to media
+            setStep(1);
           }
         }
       } catch (err) {
@@ -129,10 +145,9 @@ const ListingNew = () => {
 
   const stepLabels = STEPS.map((s) => t(s));
 
-  // Debounced auto-save
   const autoSave = useCallback(
     async (current: Listing, id: string | null) => {
-      if (!user) return;
+      if (!user) return id;
       setSaving(true);
       try {
         const payload: any = { ...current, owner_user_id: user.id, status: 'draft' };
@@ -142,6 +157,7 @@ const ListingNew = () => {
 
         if (id) {
           await (supabase as any).from('listings').update(payload).eq('id', id);
+          return id;
         } else {
           const { data: inserted, error } = await (supabase as any)
             .from('listings')
@@ -150,30 +166,22 @@ const ListingNew = () => {
             .single();
           if (error) throw error;
           setListingId(inserted.id);
-
-          // Auto-link purchase
-          if (purchaseId) {
-            await (supabase as any)
-              .from('purchases')
-              .update({ listing_id: inserted.id })
-              .eq('id', purchaseId)
-              .eq('user_id', user.id);
-          }
+          return inserted.id;
         }
       } catch (err: any) {
         console.error('Auto-save error:', err);
+        return id;
       } finally {
         setSaving(false);
       }
     },
-    [user, purchaseId]
+    [user]
   );
 
   const handleChange = useCallback(
     (patch: Listing) => {
       setData((prev) => {
         const next = { ...prev, ...patch };
-        // Debounce save
         if (saveTimer.current) clearTimeout(saveTimer.current);
         saveTimer.current = setTimeout(() => autoSave(next, listingId), 1200);
         return next;
@@ -190,33 +198,56 @@ const ListingNew = () => {
   };
 
   const handleNext = async () => {
-    // Force save before advancing
     if (saveTimer.current) clearTimeout(saveTimer.current);
     await autoSave(data, listingId);
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   };
 
-  const handleBack = () => setStep((s) => Math.max(s - 1, 0));
+  const handleBack = () => {
+    if (showPlanSelection) {
+      setShowPlanSelection(false);
+      return;
+    }
+    setStep((s) => Math.max(s - 1, 0));
+  };
 
   const handlePublish = async () => {
-    if (!listingId || !data.contact_name?.trim()) {
+    if (!data.contact_name?.trim()) {
       toast({ title: t('required'), description: t('contactName'), variant: 'destructive' });
       return;
     }
     setPublishing(true);
     try {
       if (saveTimer.current) clearTimeout(saveTimer.current);
-      await (supabase as any)
-        .from('listings')
-        .update({ ...data, status: 'active', owner_user_id: user!.id })
-        .eq('id', listingId);
-      toast({ title: '✅', description: t('saved') });
-      navigate('/app/listings');
+      const savedId = await autoSave(data, listingId);
+      if (savedId) {
+        setListingId(savedId);
+      }
+      // Show plan selection instead of directly publishing
+      setShowPlanSelection(true);
     } catch (err: any) {
-      console.error('Publish error:', err);
+      console.error('Save error:', err);
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
       setPublishing(false);
+    }
+  };
+
+  const handleCheckout = async (packageId: string) => {
+    if (!listingId) return;
+    setLoadingPlan(packageId);
+    try {
+      const { data: checkoutData, error } = await supabase.functions.invoke('create-checkout', {
+        body: { package_id: packageId, listing_id: listingId },
+      });
+      if (error) throw error;
+      if (checkoutData?.url) {
+        window.location.href = checkoutData.url;
+      }
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setLoadingPlan(null);
     }
   };
 
@@ -238,46 +269,105 @@ const ListingNew = () => {
         {t('back')}
       </Link>
 
-      <div className="flex items-center justify-between mb-2">
-        <h1 className="font-display text-2xl font-bold text-foreground">{t('title')}</h1>
-        {saving && (
-          <span className="text-xs text-muted-foreground flex items-center gap-1">
-            <Loader2 className="w-3 h-3 animate-spin" /> {t('saving')}
-          </span>
-        )}
-        {!saving && listingId && (
-          <span className="text-xs text-success flex items-center gap-1">
-            <Check className="w-3 h-3" /> {t('saved')}
-          </span>
-        )}
-      </div>
+      {showPlanSelection ? (
+        /* Plan selection screen */
+        <div>
+          <div className="text-center mb-8">
+            <h1 className="font-display text-2xl font-bold text-foreground mb-2">{tp('choosePlan')}</h1>
+            <p className="text-muted-foreground">{tp('choosePlanDesc')}</p>
+          </div>
 
-      <WizardStepper steps={stepLabels} currentStep={step} />
+          <div className="grid sm:grid-cols-3 gap-4">
+            {plans.map((plan) => (
+              <div
+                key={plan.id}
+                className={`relative rounded-2xl p-6 transition-all ${
+                  plan.popular
+                    ? 'bg-card shadow-xl border-2 border-primary scale-105 z-10'
+                    : 'bg-card shadow-md border border-border hover:shadow-lg'
+                }`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="bg-accent text-accent-foreground text-xs font-bold px-3 py-0.5 rounded-full shadow">
+                      {tp('bestValue')}
+                    </span>
+                  </div>
+                )}
 
-      <div className="bg-card rounded-2xl border border-border p-6 sm:p-8">
-        {step === 0 && <StepProperty data={data} onChange={handleChange} />}
-        {step === 1 && <StepMedia data={data} listingId={listingId} onChange={handleChange} />}
-        {step === 2 && <StepContact data={data} onChange={handleChange} />}
-      </div>
+                <div className="text-center mb-4">
+                  <p className="text-4xl font-display font-bold text-foreground mb-1">{plan.months}</p>
+                  <p className="text-sm text-muted-foreground">{tp('months')}</p>
+                </div>
 
-      {/* Navigation buttons */}
-      <div className="flex justify-between mt-6">
-        <Button variant="outline" onClick={handleBack} disabled={step === 0}>
-          {t('prev')}
-        </Button>
-        <div className="flex gap-3">
-          {step < STEPS.length - 1 ? (
-            <Button onClick={handleNext} disabled={!canAdvance() || saving}>
-              {t('next')}
+                <div className="text-center mb-4">
+                  <span className="text-3xl font-display font-bold text-foreground">€{plan.price}</span>
+                </div>
+
+                <Button
+                  variant={plan.popular ? 'hero' : 'default'}
+                  size="lg"
+                  className="w-full"
+                  disabled={loadingPlan !== null}
+                  onClick={() => handleCheckout(plan.id)}
+                >
+                  {loadingPlan === plan.id && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                  {tp('activate')}
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6">
+            <Button variant="outline" onClick={handleBack}>
+              {t('prev')}
             </Button>
-          ) : (
-            <Button variant="hero" onClick={handlePublish} disabled={publishing || saving}>
-              {publishing && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              {t('publish')}
-            </Button>
-          )}
+          </div>
         </div>
-      </div>
+      ) : (
+        /* Wizard steps */
+        <>
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="font-display text-2xl font-bold text-foreground">{t('title')}</h1>
+            {saving && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" /> {t('saving')}
+              </span>
+            )}
+            {!saving && listingId && (
+              <span className="text-xs text-success flex items-center gap-1">
+                <Check className="w-3 h-3" /> {t('saved')}
+              </span>
+            )}
+          </div>
+
+          <WizardStepper steps={stepLabels} currentStep={step} />
+
+          <div className="bg-card rounded-2xl border border-border p-6 sm:p-8">
+            {step === 0 && <StepProperty data={data} onChange={handleChange} />}
+            {step === 1 && <StepMedia data={data} listingId={listingId} onChange={handleChange} />}
+            {step === 2 && <StepContact data={data} onChange={handleChange} />}
+          </div>
+
+          <div className="flex justify-between mt-6">
+            <Button variant="outline" onClick={handleBack} disabled={step === 0}>
+              {t('prev')}
+            </Button>
+            <div className="flex gap-3">
+              {step < STEPS.length - 1 ? (
+                <Button onClick={handleNext} disabled={!canAdvance() || saving}>
+                  {t('next')}
+                </Button>
+              ) : (
+                <Button variant="hero" onClick={handlePublish} disabled={publishing || saving}>
+                  {publishing && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                  {t('publish')}
+                </Button>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
