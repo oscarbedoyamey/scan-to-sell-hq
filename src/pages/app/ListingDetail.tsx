@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
-import { ArrowLeft, QrCode, FileText, Download, RefreshCw, ExternalLink, Loader2, Eye, CreditCard, BarChart3, Power, ToggleLeft, Pencil } from 'lucide-react';
+import { ArrowLeft, QrCode, FileText, Download, RefreshCw, ExternalLink, Loader2, Eye, CreditCard, BarChart3, Power, ToggleLeft, Pencil, Link2, Copy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +43,8 @@ const labels: Record<string, Record<string, string>> = {
   deactivated: { en: 'Listing deactivated', es: 'Anuncio desactivado', fr: 'Annonce désactivée', de: 'Inserat deaktiviert', it: 'Annuncio disattivato', pt: 'Anúncio desativado', pl: 'Ogłoszenie dezaktywowane' },
   reactivated: { en: 'Listing reactivated', es: 'Anuncio reactivado', fr: 'Annonce réactivée', de: 'Inserat reaktiviert', it: 'Annuncio riattivato', pt: 'Anúncio reativado', pl: 'Ogłoszenie reaktywowane' },
   settings: { en: 'Settings', es: 'Ajustes', fr: 'Paramètres', de: 'Einstellungen', it: 'Impostazioni', pt: 'Configurações', pl: 'Ustawienia' },
+  directLink: { en: 'Direct Link', es: 'Enlace directo', fr: 'Lien direct', de: 'Direktlink', it: 'Link diretto', pt: 'Link direto', pl: 'Link bezpośredni' },
+  copied: { en: 'Copied!', es: '¡Copiado!', fr: 'Copié !', de: 'Kopiert!', it: 'Copiato!', pt: 'Copiado!', pl: 'Skopiowano!' },
 };
 
 function aggregateScans(scans: { occurred_at: string | null }[], granularity: 'day' | 'week' | 'month') {
@@ -199,6 +201,36 @@ const ListingDetail = () => {
           </Badge>
         </div>
       </div>
+
+      {/* Direct listing link */}
+      {(listing as any).listing_code && (
+        <div className="bg-card rounded-2xl border border-border p-6 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Link2 className="h-5 w-5 text-primary" />
+            <span className="font-medium text-foreground">{t('directLink')}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <code className="bg-secondary px-3 py-1.5 rounded-lg text-sm font-mono flex-1 truncate">
+              {window.location.origin}/l/{(listing as any).listing_code}
+            </code>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/l/${(listing as any).listing_code}`);
+                toast({ title: '✅', description: t('copied') });
+              }}
+            >
+              <Copy className="h-3 w-3 mr-1" /> Copy
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <a href={`/l/${(listing as any).listing_code}`} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-3 w-3 mr-1" /> Open
+              </a>
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Purchase info / Renewal */}
       <div className="bg-card rounded-2xl border border-border p-6 mb-6">

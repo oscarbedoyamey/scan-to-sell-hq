@@ -1,0 +1,1 @@
+ALTER VIEW public.listings_public SET (security_invoker = on);
