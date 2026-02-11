@@ -63,6 +63,7 @@ const DistributionSection = ({
 
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showUnassignModal, setShowUnassignModal] = useState<string | null>(null);
+  const [showReassignConfirm, setShowReassignConfirm] = useState<string | null>(null);
   const [availableSigns, setAvailableSigns] = useState<Sign[]>([]);
   const [loadingAvailable, setLoadingAvailable] = useState(false);
   const [assigning, setAssigning] = useState<string | null>(null);
@@ -72,24 +73,12 @@ const DistributionSection = ({
   const loadAvailableSigns = async () => {
     if (!user) return;
     setLoadingAvailable(true);
-    // Fetch all signs owned by this user (via listings they own) that are unassigned
-    const { data } = await (supabase as any)
-      .from('signs')
-      .select('*, listings!inner(owner_user_id)')
-      .is('listing_id', null)
-      .order('created_at', { ascending: false });
-
-    // Filter to user's signs - signs with null listing_id won't join via inner,
-    // so we need a different approach: fetch signs where listing_id is null
-    // These are pool signs - they don't have a listing_id so we can't join
-    // We need to query differently: all user's signs that are unassigned
-    // Since signs.listing_id is nullable, unassigned signs have null listing_id
-    // We can't use inner join. Let's just get all signs with null listing_id.
-    // For now, since only the owner can see their own signs (RLS), this is safe.
+    // Fetch all signs owned by this user (via listings they own) that are either unassigned
+    // or assigned to a different listing (available for reassignment)
     const { data: poolSigns } = await (supabase as any)
       .from('signs')
       .select('*')
-      .is('listing_id', null)
+      .or('listing_id.is.null,listing_id.neq.' + listingId)
       .order('created_at', { ascending: false });
 
     setAvailableSigns(poolSigns || []);
@@ -97,17 +86,15 @@ const DistributionSection = ({
   };
 
   const handleAssign = async (sign: Sign) => {
+    // Check if sign is currently assigned to another listing
+    if (sign.listing_id && sign.listing_id !== listingId) {
+      setShowReassignConfirm(sign.id);
+      return;
+    }
+
+    // If sign is in pool (no listing_id), assign directly
     setAssigning(sign.id);
     try {
-      // If sign was previously assigned to another listing, record unassignment
-      if (sign.listing_id && sign.listing_id !== listingId) {
-        await (supabase as any)
-          .from('sign_assignments')
-          .update({ unassigned_at: new Date().toISOString() })
-          .eq('sign_id', sign.id)
-          .is('unassigned_at', null);
-      }
-
       // Update sign's listing_id
       await (supabase as any)
         .from('signs')
@@ -132,6 +119,60 @@ const DistributionSection = ({
       onSignsChange(updated || []);
 
       toast({ title: '✅', description: t('assigned') });
+      setShowAssignModal(false);
+      setReassignConfirmed(false);
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setAssigning(null);
+    }
+  };
+
+  const handleConfirmReassign = async (signId: string) => {
+    if (!reassignConfirmed) {
+      toast({ title: 'Error', description: 'Please confirm you moved the physical sign', variant: 'destructive' });
+      return;
+    }
+
+    setAssigning(signId);
+    try {
+      const sign = availableSigns.find(s => s.id === signId);
+      if (!sign) return;
+
+      // If sign was previously assigned to another listing, record unassignment
+      if (sign.listing_id && sign.listing_id !== listingId) {
+        await (supabase as any)
+          .from('sign_assignments')
+          .update({ unassigned_at: new Date().toISOString() })
+          .eq('sign_id', signId)
+          .is('unassigned_at', null);
+      }
+
+      // Update sign's listing_id
+      await (supabase as any)
+        .from('signs')
+        .update({ listing_id: listingId })
+        .eq('id', signId);
+
+      // Record new assignment
+      await (supabase as any)
+        .from('sign_assignments')
+        .insert({
+          sign_id: signId,
+          listing_id: listingId,
+          assigned_by: user?.id,
+        });
+
+      // Refresh signs list
+      const { data: updated } = await (supabase as any)
+        .from('signs')
+        .select('*')
+        .eq('listing_id', listingId)
+        .order('created_at', { ascending: false });
+      onSignsChange(updated || []);
+
+      toast({ title: '✅', description: t('assigned') });
+      setShowReassignConfirm(null);
       setShowAssignModal(false);
       setReassignConfirmed(false);
     } catch (err: any) {
@@ -344,6 +385,48 @@ const DistributionSection = ({
               ))}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reassignment confirmation dialog */}
+      <Dialog open={!!showReassignConfirm} onOpenChange={() => { setShowReassignConfirm(null); setReassignConfirmed(false); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              {t('reassignWarning')}
+            </DialogTitle>
+            <DialogDescription>{t('reassignWarning')}</DialogDescription>
+          </DialogHeader>
+          
+          <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 text-sm text-destructive">
+            {t('reassignDesc')}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="reassign-confirm"
+              checked={reassignConfirmed}
+              onCheckedChange={(checked) => setReassignConfirmed(checked as boolean)}
+            />
+            <label htmlFor="reassign-confirm" className="text-sm font-medium cursor-pointer">
+              {t('reassignCheckbox')}
+            </label>
+          </div>
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">{t('cancel')}</Button>
+            </DialogClose>
+            <Button
+              variant="destructive"
+              disabled={!reassignConfirmed || assigning !== null}
+              onClick={() => showReassignConfirm && handleConfirmReassign(showReassignConfirm)}
+            >
+              {assigning && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+              {t('assignToListing')}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
