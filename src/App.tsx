@@ -25,6 +25,7 @@ import Settings from "./pages/app/Settings";
 import MySigns from "./pages/app/MySigns";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminUserDetail from "./pages/admin/AdminUserDetail";
 import AdminListings from "./pages/admin/AdminListings";
 import AdminPurchases from "./pages/admin/AdminPurchases";
 import AdminTemplates from "./pages/admin/AdminTemplates";
@@ -78,6 +79,7 @@ const App = () => (
               >
                 <Route index element={<AdminDashboard />} />
                 <Route path="users" element={<AdminUsers />} />
+                <Route path="users/:userId" element={<AdminUserDetail />} />
                 <Route path="listings" element={<AdminListings />} />
                 <Route path="purchases" element={<AdminPurchases />} />
                 <Route path="templates" element={<AdminTemplates />} />
