@@ -5,55 +5,43 @@ import { Loader2 } from 'lucide-react';
 import zignoLogo from '@/assets/zigno-logo.png';
 import { detectPublicLang, publicListingT, type PublicListingLang } from '@/i18n/publicListingTranslations';
 import PublicListingView from '@/components/listing/PublicListingView';
-import type { Tables } from '@/integrations/supabase/types';
 
-type Listing = Tables<'listings'>;
-type Sign = Tables<'signs'>;
-
-const PublicListing = () => {
-  const { signCode } = useParams();
+/**
+ * /l/{listingCode} — Direct listing page (QR-only, no sign involved).
+ * Resolves a listing by its unique listing_code.
+ */
+const PublicListingDirect = () => {
+  const { listingCode } = useParams();
   const [loading, setLoading] = useState(true);
-  const [listing, setListing] = useState<Listing | null>(null);
-  const [sign, setSign] = useState<Sign | null>(null);
+  const [listing, setListing] = useState<any>(null);
   const [notFound, setNotFound] = useState(false);
   const [translation, setTranslation] = useState<{ title?: string | null; description?: string | null } | null>(null);
-
-  const [lang, setLang] = useState<PublicListingLang>(() => detectPublicLang());
+  const [lang, setLang] = useState(() => detectPublicLang());
   const t = publicListingT[lang];
 
   useEffect(() => {
-    if (!signCode) return;
-
+    if (!listingCode) return;
     const load = async () => {
-      const recordScan = async (signId: string, listingId: string) => {
-        await (supabase as any).from('scans').insert({
-          sign_id: signId,
-          listing_id: listingId,
-          user_agent: navigator.userAgent,
-          referrer: document.referrer || null,
-          device: /Mobi/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
-        });
-      };
-
       try {
-        const { data: signData } = await (supabase as any)
-          .from('signs')
-          .select('*')
-          .eq('sign_code', signCode)
-          .maybeSingle();
-
-        if (!signData) { setNotFound(true); setLoading(false); return; }
-        setSign(signData);
-
         const { data: listingData } = await (supabase as any)
           .from('listings_public')
           .select('*')
-          .eq('id', signData.listing_id)
+          .eq('listing_code', listingCode)
           .maybeSingle();
 
         if (!listingData) { setNotFound(true); setLoading(false); return; }
         setListing(listingData);
 
+        // Record scan without a sign_id
+        await (supabase as any).from('scans').insert({
+          sign_id: null,
+          listing_id: listingData.id,
+          user_agent: navigator.userAgent,
+          referrer: document.referrer || null,
+          device: /Mobi/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+        });
+
+        // Fetch translation
         if (lang !== (listingData.base_language || 'es')) {
           const { data: trans } = await (supabase as any)
             .from('listing_translations')
@@ -62,11 +50,7 @@ const PublicListing = () => {
             .eq('language', lang)
             .maybeSingle();
           setTranslation(trans);
-        } else {
-          setTranslation(null);
         }
-
-        recordScan(signData.id, listingData.id);
       } catch (err) {
         console.error('Load listing error:', err);
         setNotFound(true);
@@ -75,7 +59,7 @@ const PublicListing = () => {
       }
     };
     load();
-  }, [signCode, lang]);
+  }, [listingCode, lang]);
 
   if (loading) {
     return (
@@ -106,7 +90,7 @@ const PublicListing = () => {
   return (
     <PublicListingView
       listing={listing}
-      sign={sign}
+      sign={null}
       translation={translation}
       lang={lang}
       onLangChange={(l) => setLang(l as PublicListingLang)}
@@ -114,4 +98,4 @@ const PublicListing = () => {
   );
 };
 
-export default PublicListing;
+export default PublicListingDirect;
