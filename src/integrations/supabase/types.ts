@@ -676,6 +676,7 @@ export type Database = {
           id: string | null
           lat: number | null
           lead_form_enabled: boolean | null
+          listing_code: string | null
           lng: number | null
           number: string | null
           operation_type: Database["public"]["Enums"]["operation_type"] | null
@@ -729,6 +730,7 @@ export type Database = {
           id?: string | null
           lat?: never
           lead_form_enabled?: boolean | null
+          listing_code?: string | null
           lng?: never
           number?: never
           operation_type?: Database["public"]["Enums"]["operation_type"] | null
@@ -782,6 +784,7 @@ export type Database = {
           id?: string | null
           lat?: never
           lead_form_enabled?: boolean | null
+          listing_code?: string | null
           lng?: never
           number?: never
           operation_type?: Database["public"]["Enums"]["operation_type"] | null
