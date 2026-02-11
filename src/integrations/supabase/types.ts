@@ -147,6 +147,7 @@ export type Database = {
           id: string
           lat: number | null
           lead_form_enabled: boolean | null
+          listing_code: string | null
           lng: number | null
           number: string | null
           operation_type: Database["public"]["Enums"]["operation_type"] | null
@@ -201,6 +202,7 @@ export type Database = {
           id?: string
           lat?: number | null
           lead_form_enabled?: boolean | null
+          listing_code?: string | null
           lng?: number | null
           number?: string | null
           operation_type?: Database["public"]["Enums"]["operation_type"] | null
@@ -255,6 +257,7 @@ export type Database = {
           id?: string
           lat?: number | null
           lead_form_enabled?: boolean | null
+          listing_code?: string | null
           lng?: number | null
           number?: string | null
           operation_type?: Database["public"]["Enums"]["operation_type"] | null
@@ -464,13 +467,62 @@ export type Database = {
           },
         ]
       }
+      sign_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          listing_id: string
+          sign_id: string
+          unassigned_at: string | null
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          listing_id: string
+          sign_id: string
+          unassigned_at?: string | null
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          listing_id?: string
+          sign_id?: string
+          unassigned_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sign_assignments_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sign_assignments_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sign_assignments_sign_id_fkey"
+            columns: ["sign_id"]
+            isOneToOne: false
+            referencedRelation: "signs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signs: {
         Row: {
           created_at: string | null
           headline_text: string | null
           id: string
           language: string | null
-          listing_id: string
+          listing_id: string | null
           orientation: Database["public"]["Enums"]["sign_orientation"] | null
           public_url: string | null
           qr_image_path: string | null
@@ -491,7 +543,7 @@ export type Database = {
           headline_text?: string | null
           id?: string
           language?: string | null
-          listing_id: string
+          listing_id?: string | null
           orientation?: Database["public"]["Enums"]["sign_orientation"] | null
           public_url?: string | null
           qr_image_path?: string | null
@@ -512,7 +564,7 @@ export type Database = {
           headline_text?: string | null
           id?: string
           language?: string | null
-          listing_id?: string
+          listing_id?: string | null
           orientation?: Database["public"]["Enums"]["sign_orientation"] | null
           public_url?: string | null
           qr_image_path?: string | null
