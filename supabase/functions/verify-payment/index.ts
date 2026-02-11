@@ -148,6 +148,15 @@ serve(async (req) => {
             console.error("Error creating sign:", signError);
           } else {
             signId = newSign.id;
+
+            // Record assignment in sign_assignments history
+            await supabaseAdmin
+              .from("sign_assignments")
+              .insert({
+                sign_id: newSign.id,
+                listing_id: listingId,
+                assigned_by: user.id,
+              });
           }
         }
 

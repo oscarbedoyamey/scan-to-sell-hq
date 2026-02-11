@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Tables } from '@/integrations/supabase/types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import DistributionSection from '@/components/listing/DistributionSection';
 
 type Listing = Tables<'listings'>;
 type Sign = Tables<'signs'>;
@@ -370,116 +371,16 @@ const ListingDetail = () => {
         )}
       </div>
 
+      {/* Distribution section (replaces old Signs section) */}
       <Separator className="mb-6" />
-
-      {/* Signs section */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-lg font-bold text-foreground flex items-center gap-2">
-            <QrCode className="h-5 w-5" /> {t('signs')}
-          </h2>
-        </div>
-
-        {signs.length === 0 ? (
-          <div className="bg-card rounded-2xl border border-border p-12 text-center">
-            <QrCode className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground mb-1">{t('noSigns')}</p>
-            <p className="text-xs text-muted-foreground">{t('noSignsHint')}</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {signs.map((sign) => {
-              const qrUrl = getPublicUrl(sign.qr_image_path);
-              const pdfUrl = getPublicUrl(sign.sign_pdf_path);
-              const isGenerating = generating === sign.id;
-
-              return (
-                <div key={sign.id} className="bg-card rounded-2xl border border-border p-6">
-                  <div className="flex flex-col sm:flex-row gap-6">
-                    {/* QR preview */}
-                    <div className="shrink-0">
-                      {qrUrl ? (
-                        <img src={qrUrl} alt="QR Code" className="w-32 h-32 rounded-xl border border-border" />
-                      ) : (
-                        <div className="w-32 h-32 rounded-xl border border-dashed border-border flex items-center justify-center bg-muted/50">
-                          <QrCode className="h-8 w-8 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Sign info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <code className="bg-secondary px-2 py-0.5 rounded text-xs font-mono">{sign.sign_code}</code>
-                        <Badge variant="outline" className="text-xs">{sign.size || 'A4'}</Badge>
-                        <Badge variant="outline" className="text-xs">{sign.orientation || 'portrait'}</Badge>
-                      </div>
-
-                      {sign.headline_text && (
-                        <p className="text-sm font-semibold text-foreground mb-1">{sign.headline_text}</p>
-                      )}
-
-                      {sign.public_url && (
-                        <a
-                          href={sign.public_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-primary hover:underline flex items-center gap-1 mb-1"
-                        >
-                          <ExternalLink className="h-3 w-3" /> {sign.public_url.replace('https://', '')}
-                        </a>
-                      )}
-
-                      {/* Action buttons */}
-                      <div className="flex flex-wrap gap-2 mt-4">
-                        {/* Preview landing page */}
-                        {sign.public_url && (
-                          <Button size="sm" variant="outline" asChild>
-                            <a href={sign.public_url} target="_blank" rel="noopener noreferrer">
-                              <Eye className="h-4 w-4 mr-1" /> {t('preview')}
-                            </a>
-                          </Button>
-                        )}
-
-                        <Button
-                          size="sm"
-                          onClick={() => generateAssets(sign.id)}
-                          disabled={isGenerating}
-                        >
-                          {isGenerating ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                          ) : sign.qr_image_path ? (
-                            <RefreshCw className="h-4 w-4 mr-1" />
-                          ) : (
-                            <QrCode className="h-4 w-4 mr-1" />
-                          )}
-                          {sign.qr_image_path ? t('regenerate') : t('generate')}
-                        </Button>
-
-                        {qrUrl && (
-                          <Button size="sm" variant="outline" asChild>
-                            <a href={qrUrl} download={`qr-${sign.sign_code}.png`}>
-                              <Download className="h-4 w-4 mr-1" /> QR PNG
-                            </a>
-                          </Button>
-                        )}
-
-                        {pdfUrl && (
-                          <Button size="sm" variant="outline" asChild>
-                            <a href={pdfUrl} download={`sign-${sign.sign_code}.pdf`}>
-                              <FileText className="h-4 w-4 mr-1" /> PDF
-                            </a>
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      <DistributionSection
+        listingId={listing.id}
+        signs={signs}
+        onSignsChange={setSigns}
+        getPublicUrl={getPublicUrl}
+        onGenerateAssets={generateAssets}
+        generating={generating}
+      />
     </div>
   );
 };
