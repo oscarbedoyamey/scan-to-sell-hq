@@ -23,7 +23,7 @@ interface SignWithAssignment extends Sign {
 const translations = {
   mySignsTitle: {
     en: 'My Signs',
-    es: 'Mis Señales',
+    es: 'Mis Carteles',
     fr: 'Mes Panneaux',
     de: 'Meine Schilder',
     it: 'I Miei Cartelli',
@@ -32,7 +32,7 @@ const translations = {
   },
   mySignsDescription: {
     en: 'Manage your sign pool and track assignments',
-    es: 'Gestiona tu pool de señales y rastrear asignaciones',
+    es: 'Gestiona tu pool de carteles y rastrear asignaciones',
     fr: 'Gérez votre pool de panneaux et suivez les affectations',
     de: 'Verwalten Sie Ihren Schild-Pool und verfolgen Sie Zuweisungen',
     it: 'Gestisci il tuo pool di cartelli e traccia gli incarichi',
@@ -41,7 +41,7 @@ const translations = {
   },
   noSigns: {
     en: 'No signs yet',
-    es: 'Sin señales aún',
+    es: 'Sin carteles aún',
     fr: 'Pas de panneaux encore',
     de: 'Noch keine Schilder',
     it: 'Nessun cartello ancora',
@@ -50,7 +50,7 @@ const translations = {
   },
   noSignsDescription: {
     en: 'Create a new listing and purchase a sign to get started',
-    es: 'Crea un nuevo anuncio y compra una señal para comenzar',
+    es: 'Crea un nuevo anuncio y compra un cartel para comenzar',
     fr: 'Créez une nouvelle annonce et achetez un panneau pour commencer',
     de: 'Erstellen Sie ein neues Inserat und kaufen Sie ein Schild, um zu beginnen',
     it: 'Crea un nuovo annuncio e acquista un cartello per iniziare',
@@ -59,7 +59,7 @@ const translations = {
   },
   signCode: {
     en: 'Sign Code',
-    es: 'Código de Señal',
+    es: 'Código de Cartel',
     fr: 'Code du Panneau',
     de: 'Schildcode',
     it: 'Codice del Cartello',
