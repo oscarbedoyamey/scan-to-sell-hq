@@ -1,7 +1,8 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState, useCallback } from 'react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, MapPin, Bed, Bath, Ruler, Phone, Mail, MessageCircle, Calendar, Zap, Car, ArrowUpFromDot } from 'lucide-react';
+import { Loader2, MapPin, Bed, Bath, Ruler, Phone, Mail, MessageCircle, Calendar, Zap, Car, ArrowUpFromDot, Play } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { PropertyGallery } from '@/components/listing/PropertyGallery';
@@ -13,6 +14,56 @@ import type { Tables } from '@/integrations/supabase/types';
 
 type Listing = Tables<'listings'>;
 type Sign = Tables<'signs'>;
+
+/** Extracts a YouTube/Vimeo embed URL, or returns null */
+const getEmbedUrl = (url: string): string | null => {
+  // YouTube
+  const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+  // Vimeo
+  const vmMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vmMatch) return `https://player.vimeo.com/video/${vmMatch[1]}`;
+  return null;
+};
+
+const VideoSection = ({ url, label }: { url: string; label: string }) => {
+  const [open, setOpen] = useState(false);
+  const embedUrl = getEmbedUrl(url);
+
+  return (
+    <>
+      <Separator />
+      <div>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors"
+        >
+          <Play className="w-4 h-4" /> {label}
+        </button>
+      </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-3xl p-0 overflow-hidden">
+          <DialogTitle className="sr-only">{label}</DialogTitle>
+          {embedUrl ? (
+            <div className="aspect-video w-full">
+              <iframe
+                src={embedUrl + '?autoplay=1'}
+                allow="autoplay; fullscreen"
+                allowFullScreen
+                className="w-full h-full border-0"
+              />
+            </div>
+          ) : (
+            <div className="aspect-video w-full">
+              <video src={url} controls autoPlay className="w-full h-full" />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
 
 const formatPrice = (price: number | null, currency: string | null) => {
   if (!price) return null;
@@ -240,6 +291,27 @@ const PublicListing = () => {
                   <div className="text-muted-foreground whitespace-pre-line leading-relaxed">
                     {displayDescription}
                   </div>
+                </div>
+              </>
+            )}
+
+            {/* Video */}
+            {listing.video_url && <VideoSection url={listing.video_url} label={t.watchVideo} />}
+
+            {/* Virtual tour */}
+            {listing.virtual_tour_url && (
+              <>
+                <Separator />
+                <div>
+                  <h2 className="font-display text-lg font-bold text-foreground mb-3">{t.virtualTour}</h2>
+                  <a
+                    href={listing.virtual_tour_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border text-foreground font-medium text-sm hover:bg-muted transition-colors"
+                  >
+                    {t.virtualTour} ↗
+                  </a>
                 </div>
               </>
             )}

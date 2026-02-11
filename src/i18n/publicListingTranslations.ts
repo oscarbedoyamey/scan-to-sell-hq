@@ -13,7 +13,7 @@ export const publicListingT = {
     bedrooms: 'Bedrooms', bathrooms: 'Bathrooms', builtArea: 'Built area', plot: 'Plot',
     yearBuilt: 'Year built', energy: 'Energy', elevator: 'Elevator', parking: 'Parking', yes: 'Yes',
     description: 'Description', ref: 'Ref', notFound: 'Property not found', notFoundSub: 'This listing may no longer be available.',
-    noPhotos: 'No photos available', requestInfo: 'Request information',
+    noPhotos: 'No photos available', requestInfo: 'Request information', watchVideo: 'Watch video', virtualTour: 'Virtual tour',
     propertyTypes: { apartment: 'Apartment', house: 'House', villa: 'Villa', land: 'Land', commercial: 'Commercial', office: 'Office', garage: 'Garage', other: 'Other' },
     conditions: { new: 'New build', good: 'Good condition', needs_renovation: 'Needs renovation' },
     leadForm: {
@@ -27,7 +27,7 @@ export const publicListingT = {
     bedrooms: 'Habitaciones', bathrooms: 'Baños', builtArea: 'Superficie construida', plot: 'Parcela',
     yearBuilt: 'Año construcción', energy: 'Energía', elevator: 'Ascensor', parking: 'Parking', yes: 'Sí',
     description: 'Descripción', ref: 'Ref', notFound: 'Inmueble no encontrado', notFoundSub: 'Este anuncio ya no está disponible.',
-    noPhotos: 'Sin fotos disponibles', requestInfo: 'Solicitar información',
+    noPhotos: 'Sin fotos disponibles', requestInfo: 'Solicitar información', watchVideo: 'Ver vídeo', virtualTour: 'Tour virtual',
     propertyTypes: { apartment: 'Piso', house: 'Casa', villa: 'Chalet', land: 'Terreno', commercial: 'Local', office: 'Oficina', garage: 'Garaje', other: 'Otro' },
     conditions: { new: 'Obra nueva', good: 'Buen estado', needs_renovation: 'A reformar' },
     leadForm: {
@@ -41,7 +41,7 @@ export const publicListingT = {
     bedrooms: 'Chambres', bathrooms: 'Salles de bain', builtArea: 'Surface construite', plot: 'Terrain',
     yearBuilt: 'Année', energy: 'Énergie', elevator: 'Ascenseur', parking: 'Parking', yes: 'Oui',
     description: 'Description', ref: 'Réf', notFound: 'Bien non trouvé', notFoundSub: "Cette annonce n'est plus disponible.",
-    noPhotos: 'Pas de photos disponibles', requestInfo: 'Demander des informations',
+    noPhotos: 'Pas de photos disponibles', requestInfo: 'Demander des informations', watchVideo: 'Voir la vidéo', virtualTour: 'Visite virtuelle',
     propertyTypes: { apartment: 'Appartement', house: 'Maison', villa: 'Villa', land: 'Terrain', commercial: 'Local commercial', office: 'Bureau', garage: 'Garage', other: 'Autre' },
     conditions: { new: 'Neuf', good: 'Bon état', needs_renovation: 'À rénover' },
     leadForm: {
@@ -55,7 +55,7 @@ export const publicListingT = {
     bedrooms: 'Schlafzimmer', bathrooms: 'Bäder', builtArea: 'Wohnfläche', plot: 'Grundstück',
     yearBuilt: 'Baujahr', energy: 'Energie', elevator: 'Aufzug', parking: 'Parkplatz', yes: 'Ja',
     description: 'Beschreibung', ref: 'Ref', notFound: 'Immobilie nicht gefunden', notFoundSub: 'Dieses Inserat ist nicht mehr verfügbar.',
-    noPhotos: 'Keine Fotos verfügbar', requestInfo: 'Informationen anfordern',
+    noPhotos: 'Keine Fotos verfügbar', requestInfo: 'Informationen anfordern', watchVideo: 'Video ansehen', virtualTour: 'Virtueller Rundgang',
     propertyTypes: { apartment: 'Wohnung', house: 'Haus', villa: 'Villa', land: 'Grundstück', commercial: 'Gewerbe', office: 'Büro', garage: 'Garage', other: 'Sonstige' },
     conditions: { new: 'Neubau', good: 'Guter Zustand', needs_renovation: 'Renovierungsbedürftig' },
     leadForm: {
@@ -69,7 +69,7 @@ export const publicListingT = {
     bedrooms: 'Camere', bathrooms: 'Bagni', builtArea: 'Superficie', plot: 'Terreno',
     yearBuilt: 'Anno', energy: 'Energia', elevator: 'Ascensore', parking: 'Parcheggio', yes: 'Sì',
     description: 'Descrizione', ref: 'Rif', notFound: 'Immobile non trovato', notFoundSub: 'Questo annuncio non è più disponibile.',
-    noPhotos: 'Nessuna foto disponibile', requestInfo: 'Richiedi informazioni',
+    noPhotos: 'Nessuna foto disponibile', requestInfo: 'Richiedi informazioni', watchVideo: 'Guarda il video', virtualTour: 'Tour virtuale',
     propertyTypes: { apartment: 'Appartamento', house: 'Casa', villa: 'Villa', land: 'Terreno', commercial: 'Commerciale', office: 'Ufficio', garage: 'Garage', other: 'Altro' },
     conditions: { new: 'Nuova costruzione', good: 'Buone condizioni', needs_renovation: 'Da ristrutturare' },
     leadForm: {
@@ -83,7 +83,7 @@ export const publicListingT = {
     bedrooms: 'Quartos', bathrooms: 'Casas de banho', builtArea: 'Área construída', plot: 'Terreno',
     yearBuilt: 'Ano', energy: 'Energia', elevator: 'Elevador', parking: 'Estacionamento', yes: 'Sim',
     description: 'Descrição', ref: 'Ref', notFound: 'Imóvel não encontrado', notFoundSub: 'Este anúncio já não está disponível.',
-    noPhotos: 'Sem fotos disponíveis', requestInfo: 'Solicitar informação',
+    noPhotos: 'Sem fotos disponíveis', requestInfo: 'Solicitar informação', watchVideo: 'Ver vídeo', virtualTour: 'Tour virtual',
     propertyTypes: { apartment: 'Apartamento', house: 'Moradia', villa: 'Villa', land: 'Terreno', commercial: 'Comercial', office: 'Escritório', garage: 'Garagem', other: 'Outro' },
     conditions: { new: 'Construção nova', good: 'Bom estado', needs_renovation: 'Para renovar' },
     leadForm: {
@@ -97,7 +97,7 @@ export const publicListingT = {
     bedrooms: 'Sypialnie', bathrooms: 'Łazienki', builtArea: 'Pow. zabudowy', plot: 'Działka',
     yearBuilt: 'Rok budowy', energy: 'Energia', elevator: 'Winda', parking: 'Parking', yes: 'Tak',
     description: 'Opis', ref: 'Ref', notFound: 'Nie znaleziono nieruchomości', notFoundSub: 'To ogłoszenie nie jest już dostępne.',
-    noPhotos: 'Brak zdjęć', requestInfo: 'Zapytaj o szczegóły',
+    noPhotos: 'Brak zdjęć', requestInfo: 'Zapytaj o szczegóły', watchVideo: 'Obejrzyj wideo', virtualTour: 'Wirtualny spacer',
     propertyTypes: { apartment: 'Mieszkanie', house: 'Dom', villa: 'Willa', land: 'Działka', commercial: 'Lokal', office: 'Biuro', garage: 'Garaż', other: 'Inne' },
     conditions: { new: 'Nowe', good: 'Dobry stan', needs_renovation: 'Do remontu' },
     leadForm: {
