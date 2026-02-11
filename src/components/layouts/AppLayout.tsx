@@ -9,6 +9,7 @@ import {
   Menu,
   X,
   Shield,
+  QrCode,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
@@ -18,12 +19,14 @@ import zignoLogo from '@/assets/zigno-logo.png';
 const navItems = [
   { path: '/app', icon: LayoutDashboard, labelKey: 'dashboard' },
   { path: '/app/listings', icon: FileText, labelKey: 'listings' },
+  { path: '/app/signs', icon: QrCode, labelKey: 'signs' },
   { path: '/app/settings', icon: Settings, labelKey: 'settings' },
 ];
 
 const labels: Record<string, Record<string, string>> = {
   dashboard: { en: 'Dashboard', es: 'Panel', fr: 'Tableau de bord', de: 'Dashboard', it: 'Pannello', pt: 'Painel', pl: 'Panel' },
   listings: { en: 'My Listings', es: 'Mis anuncios', fr: 'Mes annonces', de: 'Meine Inserate', it: 'I miei annunci', pt: 'Meus anúncios', pl: 'Moje ogłoszenia' },
+  signs: { en: 'My Signs', es: 'Mis Señales', fr: 'Mes Panneaux', de: 'Meine Schilder', it: 'I Miei Cartelli', pt: 'Meus Cartazes', pl: 'Moje Znaki' },
   settings: { en: 'Settings', es: 'Ajustes', fr: 'Paramètres', de: 'Einstellungen', it: 'Impostazioni', pt: 'Configurações', pl: 'Ustawienia' },
   admin: { en: 'Admin Panel', es: 'Panel Admin', fr: 'Admin', de: 'Admin', it: 'Admin', pt: 'Admin', pl: 'Admin' },
   logout: { en: 'Log out', es: 'Cerrar sesión', fr: 'Déconnexion', de: 'Abmelden', it: 'Esci', pt: 'Sair', pl: 'Wyloguj' },
