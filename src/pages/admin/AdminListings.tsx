@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -115,8 +115,10 @@ const AdminListings = () => {
               ) : listings.length === 0 ? (
                 <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">No listings found</td></tr>
               ) : listings.map((l: any) => (
-                <tr key={l.id} className="border-b border-border hover:bg-muted/30">
-                  <td className="px-4 py-3 font-medium text-foreground max-w-[200px] truncate">{l.title || '(untitled)'}</td>
+                <tr key={l.id} className="border-b border-border hover:bg-muted/30 cursor-pointer" onClick={() => window.location.href = `/admin/listings/${l.id}`}>
+                  <td className="px-4 py-3 font-medium text-foreground max-w-[200px] truncate">
+                    <Link to={`/admin/listings/${l.id}`} className="hover:underline text-primary">{l.title || '(untitled)'}</Link>
+                  </td>
                   <td className="px-4 py-3"><Badge variant={statusVariant(l.status)}>{l.status}</Badge></td>
                   <td className="px-4 py-3 text-muted-foreground">{l.city || '—'}</td>
                   <td className="px-4 py-3 text-muted-foreground">{l.operation_type || '—'} / {l.property_type || '—'}</td>

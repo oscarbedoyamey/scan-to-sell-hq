@@ -119,7 +119,7 @@ const AdminPurchases = () => {
               ) : purchases.length === 0 ? (
                 <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">No purchases found</td></tr>
               ) : purchases.map((p: any) => (
-                <tr key={p.id} className="border-b border-border hover:bg-muted/30">
+                <tr key={p.id} className="border-b border-border hover:bg-muted/30 cursor-pointer" onClick={() => window.location.href = `/admin/purchases/${p.id}`}>
                   <td className="px-4 py-3">
                     <p className="text-foreground">{p.profiles?.full_name || '—'}</p>
                     <p className="text-xs text-muted-foreground">{p.profiles?.email}</p>
