@@ -22,6 +22,7 @@ import Listings from "./pages/app/Listings";
 import ListingNew from "./pages/app/ListingNew";
 import ListingDetail from "./pages/app/ListingDetail";
 import Settings from "./pages/app/Settings";
+import MySigns from "./pages/app/MySigns";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminListings from "./pages/admin/AdminListings";
@@ -62,6 +63,7 @@ const App = () => (
                 <Route path="listings" element={<Listings />} />
                 <Route path="listings/new" element={<ListingNew />} />
                 <Route path="listings/:id" element={<ListingDetail />} />
+                <Route path="signs" element={<MySigns />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
 
