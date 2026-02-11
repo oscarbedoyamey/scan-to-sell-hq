@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, Check } from 'lucide-react';
+import { ArrowLeft, Loader2, Check, QrCode, Signpost, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -65,6 +65,17 @@ const planLabels: Record<string, Record<string, string>> = {
   bestValue: { en: 'Best value', es: 'Mejor precio', fr: 'Meilleur prix', de: 'Bester Preis', it: 'Miglior prezzo', pt: 'Melhor preço', pl: 'Najlepsza cena' },
   saveChanges: { en: 'Save changes', es: 'Guardar cambios', fr: 'Enregistrer', de: 'Speichern', it: 'Salva', pt: 'Salvar', pl: 'Zapisz' },
   changesSaved: { en: 'Changes saved successfully', es: 'Cambios guardados correctamente', fr: 'Modifications enregistrées', de: 'Änderungen gespeichert', it: 'Modifiche salvate', pt: 'Alterações salvas', pl: 'Zmiany zapisane' },
+  howToPublish: { en: 'How do you want to publish?', es: '¿Cómo quieres publicar?', fr: 'Comment voulez-vous publier ?', de: 'Wie möchten Sie veröffentlichen?', it: 'Come vuoi pubblicare?', pt: 'Como deseja publicar?', pl: 'Jak chcesz opublikować?' },
+  useAvailableSign: { en: 'Use an available sign', es: 'Usar cartel disponible', fr: 'Utiliser une affiche disponible', de: 'Verfügbares Plakat nutzen', it: 'Usa un cartello disponibile', pt: 'Usar cartaz disponível', pl: 'Użyj dostępnego plakatu' },
+  useAvailableSignDesc: { en: 'Assign one of your existing signs to this listing', es: 'Asigna uno de tus carteles existentes a este anuncio', fr: 'Assignez une de vos affiches existantes', de: 'Weisen Sie eines Ihrer Plakate zu', it: 'Assegna uno dei tuoi cartelli esistenti', pt: 'Atribua um de seus cartazes existentes', pl: 'Przypisz jeden z istniejących plakatów' },
+  buyNewSign: { en: 'Create a new sign', es: 'Crear cartel nuevo', fr: 'Créer une nouvelle affiche', de: 'Neues Plakat erstellen', it: 'Crea un nuovo cartello', pt: 'Criar novo cartaz', pl: 'Utwórz nowy plakat' },
+  buyNewSignDesc: { en: 'Purchase a plan to get a new physical sign with QR code', es: 'Compra un plan para obtener un nuevo cartel físico con QR', fr: 'Achetez un plan pour obtenir une nouvelle affiche avec QR', de: 'Kaufen Sie einen Plan für ein neues Plakat mit QR', it: 'Acquista un piano per un nuovo cartello con QR', pt: 'Compre um plano para um novo cartaz com QR', pl: 'Kup plan, aby uzyskać nowy plakat z QR' },
+  qrOnly: { en: 'QR-only (I\'ll use my own sign)', es: 'Solo QR (usaré mi propio cartel)', fr: 'QR uniquement (j\'utilise mon affiche)', de: 'Nur QR (ich nutze mein eigenes Plakat)', it: 'Solo QR (uso il mio cartello)', pt: 'Apenas QR (usarei meu próprio cartaz)', pl: 'Tylko QR (użyję własnego plakatu)' },
+  qrOnlyDesc: { en: 'Get a QR code that points directly to your listing page', es: 'Obtén un código QR que apunta directamente a tu anuncio', fr: 'Obtenez un QR pointant vers votre annonce', de: 'QR-Code direkt zu Ihrer Inseratseite', it: 'Ottieni un QR che punta alla tua pagina annuncio', pt: 'Obtenha um QR que aponta para seu anúncio', pl: 'Uzyskaj kod QR prowadzący do strony ogłoszenia' },
+  availableSignsCount: { en: 'available signs', es: 'carteles disponibles', fr: 'affiches disponibles', de: 'verfügbare Plakate', it: 'cartelli disponibili', pt: 'cartazes disponíveis', pl: 'dostępne plakaty' },
+  selectSign: { en: 'Select a sign to assign', es: 'Selecciona un cartel', fr: 'Sélectionnez une affiche', de: 'Plakat auswählen', it: 'Seleziona un cartello', pt: 'Selecione um cartaz', pl: 'Wybierz plakat' },
+  assignAndActivate: { en: 'Assign & Activate', es: 'Asignar y Activar', fr: 'Assigner & Activer', de: 'Zuweisen & Aktivieren', it: 'Assegna & Attiva', pt: 'Atribuir & Ativar', pl: 'Przypisz & Aktywuj' },
+  activated: { en: 'Listing activated!', es: '¡Anuncio activado!', fr: 'Annonce activée !', de: 'Inserat aktiviert!', it: 'Annuncio attivato!', pt: 'Anúncio ativado!', pl: 'Ogłoszenie aktywowane!' },
 };
 
 const ListingNew = () => {
@@ -83,6 +94,11 @@ const ListingNew = () => {
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [showPlanSelection, setShowPlanSelection] = useState(false);
+  const [showSignSelection, setShowSignSelection] = useState(false);
+  const [publishMode, setPublishMode] = useState<'assign' | 'new' | 'qr-only' | null>(null);
+  const [availableSigns, setAvailableSigns] = useState<any[]>([]);
+  const [selectedSignId, setSelectedSignId] = useState<string | null>(null);
+  const [assigningSign, setAssigningSign] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isNew && !!editId);
   const [originalStatus, setOriginalStatus] = useState<string | null>(null);
@@ -215,6 +231,12 @@ const ListingNew = () => {
   const handleBack = () => {
     if (showPlanSelection) {
       setShowPlanSelection(false);
+      setPublishMode(null);
+      return;
+    }
+    if (showSignSelection) {
+      setShowSignSelection(false);
+      setPublishMode(null);
       return;
     }
     setStep((s) => Math.max(s - 1, 0));
@@ -232,13 +254,55 @@ const ListingNew = () => {
       if (savedId) {
         setListingId(savedId);
       }
-      // Show plan selection instead of directly publishing
-      setShowPlanSelection(true);
+
+      // Check for available unassigned signs
+      const { data: poolSigns } = await (supabase as any)
+        .from('signs')
+        .select('*')
+        .is('listing_id', null)
+        .order('created_at', { ascending: false });
+
+      setAvailableSigns(poolSigns || []);
+      setShowSignSelection(true);
     } catch (err: any) {
       console.error('Save error:', err);
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
       setPublishing(false);
+    }
+  };
+
+  const handleAssignAndActivate = async () => {
+    if (!listingId || !selectedSignId) return;
+    setAssigningSign(true);
+    try {
+      // Assign the sign to this listing
+      await (supabase as any)
+        .from('signs')
+        .update({ listing_id: listingId })
+        .eq('id', selectedSignId);
+
+      // Record assignment
+      await (supabase as any)
+        .from('sign_assignments')
+        .insert({
+          sign_id: selectedSignId,
+          listing_id: listingId,
+          assigned_by: user?.id,
+        });
+
+      // Activate the listing
+      await (supabase as any)
+        .from('listings')
+        .update({ status: 'active' })
+        .eq('id', listingId);
+
+      toast({ title: '✅', description: tp('activated') });
+      navigate(`/app/listings/${listingId}`);
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setAssigningSign(false);
     }
   };
 
@@ -278,7 +342,108 @@ const ListingNew = () => {
         {t('back')}
       </Link>
 
-      {showPlanSelection ? (
+      {showSignSelection ? (
+        /* Sign selection / publish mode screen */
+        <div>
+          <div className="text-center mb-8">
+            <h1 className="font-display text-2xl font-bold text-foreground mb-2">{tp('howToPublish')}</h1>
+          </div>
+
+          {!publishMode ? (
+            /* Step 1: Choose mode */
+            <div className="space-y-3 max-w-lg mx-auto">
+              {availableSigns.length > 0 && (
+                <button
+                  onClick={() => setPublishMode('assign')}
+                  className="w-full text-left bg-card rounded-2xl border-2 border-border hover:border-primary p-5 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <QrCode className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">{tp('useAvailableSign')}</p>
+                      <p className="text-sm text-muted-foreground">{tp('useAvailableSignDesc')}</p>
+                      <p className="text-xs text-primary mt-1">{availableSigns.length} {tp('availableSignsCount')}</p>
+                    </div>
+                  </div>
+                </button>
+              )}
+
+              <button
+                onClick={() => { setPublishMode('new'); setShowPlanSelection(true); setShowSignSelection(false); }}
+                className="w-full text-left bg-card rounded-2xl border-2 border-border hover:border-primary p-5 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                    <Signpost className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">{tp('buyNewSign')}</p>
+                    <p className="text-sm text-muted-foreground">{tp('buyNewSignDesc')}</p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => { setPublishMode('qr-only'); setShowPlanSelection(true); setShowSignSelection(false); }}
+                className="w-full text-left bg-card rounded-2xl border-2 border-border hover:border-primary p-5 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                    <Link2 className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">{tp('qrOnly')}</p>
+                    <p className="text-sm text-muted-foreground">{tp('qrOnlyDesc')}</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          ) : publishMode === 'assign' ? (
+            /* Step 2: Select sign from pool */
+            <div className="max-w-lg mx-auto">
+              <p className="text-sm font-medium text-foreground mb-3">{tp('selectSign')}</p>
+              <div className="space-y-3 mb-6">
+                {availableSigns.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => setSelectedSignId(s.id)}
+                    className={`w-full text-left rounded-xl border-2 p-4 transition-colors ${
+                      selectedSignId === s.id
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/40'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <QrCode className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <code className="bg-secondary px-2 py-0.5 rounded text-xs font-mono">{s.sign_code}</code>
+                        {s.headline_text && <p className="text-sm text-muted-foreground mt-1">{s.headline_text}</p>}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <Button
+                variant="hero"
+                className="w-full"
+                disabled={!selectedSignId || assigningSign}
+                onClick={handleAssignAndActivate}
+              >
+                {assigningSign && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {tp('assignAndActivate')}
+              </Button>
+            </div>
+          ) : null}
+
+          <div className="mt-6">
+            <Button variant="outline" onClick={handleBack}>
+              {t('prev')}
+            </Button>
+          </div>
+        </div>
+      ) : showPlanSelection ? (
         /* Plan selection screen */
         <div>
           <div className="text-center mb-8">
