@@ -1,9 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useWizardLabels } from './wizardLabels';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, X, Loader2 } from 'lucide-react';
+import { Upload, X, Loader2, GripVertical, ImageIcon } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Listing = Partial<Tables<'listings'>>;
@@ -19,6 +19,8 @@ export const StepMedia = ({ data, listingId, onChange }: StepMediaProps) => {
   const coverInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const uploadFile = async (file: File, path: string) => {
     const { data: uploadData, error } = await supabase.storage
@@ -36,13 +38,11 @@ export const StepMedia = ({ data, listingId, onChange }: StepMediaProps) => {
     if (!files || files.length === 0 || !listingId) return;
     setUploading(true);
     try {
-      // First file becomes cover
       const coverFile = files[0];
       const coverExt = coverFile.name.split('.').pop();
       const coverUrl = await uploadFile(coverFile, `${listingId}/cover.${coverExt}`);
       onChange({ cover_image_url: coverUrl });
 
-      // Remaining files go to gallery
       if (files.length > 1) {
         const currentUrls = (data.gallery_urls as string[]) || [];
         const newUrls: string[] = [];
@@ -90,6 +90,46 @@ export const StepMedia = ({ data, listingId, onChange }: StepMediaProps) => {
     onChange({ gallery_urls: urls as any });
   };
 
+  const setAsCover = (index: number) => {
+    const urls = [...((data.gallery_urls as string[]) || [])];
+    const newCover = urls[index];
+    // Move old cover to gallery if it exists
+    if (data.cover_image_url) {
+      urls[index] = data.cover_image_url;
+    } else {
+      urls.splice(index, 1);
+    }
+    onChange({ cover_image_url: newCover, gallery_urls: urls as any });
+  };
+
+  const handleDragStart = (index: number) => {
+    setDragIndex(index);
+  };
+
+  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  }, []);
+
+  const handleDrop = (targetIndex: number) => {
+    if (dragIndex === null || dragIndex === targetIndex) {
+      setDragIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+    const urls = [...((data.gallery_urls as string[]) || [])];
+    const [moved] = urls.splice(dragIndex, 1);
+    urls.splice(targetIndex, 0, moved);
+    onChange({ gallery_urls: urls as any });
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
   return (
     <div className="space-y-8">
       {/* Cover image */}
@@ -126,15 +166,41 @@ export const StepMedia = ({ data, listingId, onChange }: StepMediaProps) => {
         <input ref={galleryInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleGalleryUpload} />
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
           {((data.gallery_urls as string[]) || []).map((url, i) => (
-            <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-border">
+            <div
+              key={i}
+              draggable
+              onDragStart={() => handleDragStart(i)}
+              onDragOver={(e) => handleDragOver(e, i)}
+              onDrop={() => handleDrop(i)}
+              onDragEnd={handleDragEnd}
+              className={`relative aspect-square rounded-lg overflow-hidden border transition-all cursor-grab active:cursor-grabbing ${
+                dragOverIndex === i ? 'border-primary ring-2 ring-primary/30 scale-105' : 
+                dragIndex === i ? 'opacity-50 border-border' : 'border-border'
+              }`}
+            >
               <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
-              <button
-                type="button"
-                onClick={() => removeGalleryImage(i)}
-                className="absolute top-1 right-1 bg-background/80 rounded-full p-1 hover:bg-background"
-              >
-                <X className="w-3 h-3" />
-              </button>
+              <div className="absolute top-1 left-1">
+                <span className="bg-background/80 rounded px-1 py-0.5 text-[10px] text-muted-foreground">
+                  <GripVertical className="w-3 h-3 inline" />
+                </span>
+              </div>
+              <div className="absolute top-1 right-1 flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => setAsCover(i)}
+                  title={t('coverImage')}
+                  className="bg-background/80 rounded-full p-1 hover:bg-primary hover:text-primary-foreground transition-colors"
+                >
+                  <ImageIcon className="w-3 h-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeGalleryImage(i)}
+                  className="bg-background/80 rounded-full p-1 hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
             </div>
           ))}
           {((data.gallery_urls as string[]) || []).length < 30 && (
