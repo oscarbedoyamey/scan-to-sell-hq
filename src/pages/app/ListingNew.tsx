@@ -76,6 +76,7 @@ const ListingNew = () => {
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('listing_id');
   const isNew = searchParams.get('new') === '1';
+  const isEdit = !!editId && !isNew;
 
   const [step, setStep] = useState(0);
   const [listingId, setListingId] = useState<string | null>(editId);
@@ -131,7 +132,10 @@ const ListingNew = () => {
           const { id, created_at, updated_at, owner_user_id, status, ...rest } = existing;
           setData((prev) => ({ ...prev, ...rest }));
 
-          if (existing.cover_image_url || (existing.gallery_urls as any[])?.length > 0 || existing.video_url) {
+          // When editing an existing active/paused/expired listing, always start at step 0
+          if (isEdit) {
+            setStep(0);
+          } else if (existing.cover_image_url || (existing.gallery_urls as any[])?.length > 0 || existing.video_url) {
             setStep(2);
           } else if (existing.title && existing.operation_type && existing.property_type) {
             setStep(1);
@@ -359,11 +363,8 @@ const ListingNew = () => {
               {t('prev')}
             </Button>
             <div className="flex gap-3">
-              {step < STEPS.length - 1 ? (
-                <Button onClick={handleNext} disabled={!canAdvance() || saving}>
-                  {t('next')}
-                </Button>
-              ) : originalStatus && originalStatus !== 'draft' ? (
+              {/* Save changes button — always visible when editing a non-draft listing */}
+              {originalStatus && originalStatus !== 'draft' && (
                 <Button variant="hero" onClick={async () => {
                   setPublishing(true);
                   if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -374,12 +375,17 @@ const ListingNew = () => {
                   {publishing && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                   {tp('saveChanges')}
                 </Button>
-              ) : (
+              )}
+              {step < STEPS.length - 1 ? (
+                <Button onClick={handleNext} disabled={!canAdvance() || saving}>
+                  {t('next')}
+                </Button>
+              ) : !originalStatus || originalStatus === 'draft' ? (
                 <Button variant="hero" onClick={handlePublish} disabled={publishing || saving}>
                   {publishing && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                   {t('publish')}
                 </Button>
-              )}
+              ) : null}
             </div>
           </div>
         </>
