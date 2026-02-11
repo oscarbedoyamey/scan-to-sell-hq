@@ -27,7 +27,10 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminUserDetail from "./pages/admin/AdminUserDetail";
 import AdminListings from "./pages/admin/AdminListings";
+import AdminListingDetail from "./pages/admin/AdminListingDetail";
 import AdminPurchases from "./pages/admin/AdminPurchases";
+import AdminPurchaseDetail from "./pages/admin/AdminPurchaseDetail";
+import AdminSigns from "./pages/admin/AdminSigns";
 import AdminTemplates from "./pages/admin/AdminTemplates";
 
 const queryClient = new QueryClient();
@@ -81,7 +84,10 @@ const App = () => (
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="users/:userId" element={<AdminUserDetail />} />
                 <Route path="listings" element={<AdminListings />} />
+                <Route path="listings/:listingId" element={<AdminListingDetail />} />
                 <Route path="purchases" element={<AdminPurchases />} />
+                <Route path="purchases/:purchaseId" element={<AdminPurchaseDetail />} />
+                <Route path="signs" element={<AdminSigns />} />
                 <Route path="templates" element={<AdminTemplates />} />
               </Route>
 

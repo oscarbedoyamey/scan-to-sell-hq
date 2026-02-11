@@ -6,6 +6,7 @@ import {
   FileText,
   CreditCard,
   Palette,
+  QrCode,
   ArrowLeft,
   LogOut,
   Menu,
@@ -19,6 +20,7 @@ const navItems = [
   { path: '/admin/users', icon: Users, label: 'Users' },
   { path: '/admin/listings', icon: FileText, label: 'Listings' },
   { path: '/admin/purchases', icon: CreditCard, label: 'Purchases' },
+  { path: '/admin/signs', icon: QrCode, label: 'Signs' },
   { path: '/admin/templates', icon: Palette, label: 'Templates' },
 ];
 
