@@ -184,6 +184,51 @@ serve(async (req) => {
         }
       }
 
+      // Send payment confirmation email
+      try {
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("email, locale")
+          .eq("id", user.id)
+          .single();
+
+        const { data: listing } = await supabaseAdmin
+          .from("listings")
+          .select("title, city")
+          .eq("id", listingId)
+          .single();
+
+        if (profile?.email) {
+          const { data: pkgInfo } = await supabaseAdmin
+            .from("packages")
+            .select("price_eur")
+            .eq("id", purchase?.package_id)
+            .single();
+
+          const functionsUrl = Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", ".supabase.co/functions/v1");
+          await fetch(`${functionsUrl}/send-email`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+            },
+            body: JSON.stringify({
+              type: "payment_confirmation",
+              to: profile.email,
+              locale: profile.locale || "en",
+              data: {
+                listingTitle: listing?.title || listing?.city || "—",
+                amount: pkgInfo ? `${pkgInfo.price_eur} €` : "—",
+                endDate: endAt.toLocaleDateString(profile.locale || "en", { year: "numeric", month: "long", day: "numeric" }),
+              },
+            }),
+          });
+        }
+      } catch (emailErr) {
+        console.error("Payment confirmation email error:", emailErr);
+        // Non-blocking
+      }
+
       return new Response(JSON.stringify({ verified: true, status: "paid", listing_id: listingId }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
