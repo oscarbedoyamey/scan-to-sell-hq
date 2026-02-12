@@ -114,7 +114,7 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Zigno <onboarding@resend.dev>",
+        from: "Zigno <noreply@zignoqr.com>",
         to: [email],
         subject: subjects[lang],
         html: magicLinkHtml(lang, magicLink),

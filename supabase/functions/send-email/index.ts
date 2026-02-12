@@ -108,7 +108,7 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Zigno <onboarding@resend.dev>",
+        from: "Zigno <noreply@zignoqr.com>",
         to: [to],
         subject,
         html,
