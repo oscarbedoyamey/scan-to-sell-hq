@@ -39,25 +39,24 @@ const Auth = () => {
     setSending(true);
     setError('');
 
-    const { error: authError } = await (await import('@/contexts/AuthContext')).useAuth
-      ? { error: null }
-      : { error: null };
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data, error: fnError } = await supabase.functions.invoke('send-magic-link', {
+        body: {
+          email: email.trim(),
+          locale: language,
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
 
-    // Use supabase directly
-    const { supabase } = await import('@/integrations/supabase/client');
-    const { error: otpError } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
 
-    setSending(false);
-
-    if (otpError) {
-      setError(otpError.message);
-    } else {
       setSent(true);
+    } catch (err: any) {
+      setError(err.message || 'Error sending magic link');
+    } finally {
+      setSending(false);
     }
   };
 
