@@ -210,7 +210,7 @@ serve(async (req) => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+              "Authorization": `Bearer ${token}`,
             },
             body: JSON.stringify({
               type: "payment_confirmation",
