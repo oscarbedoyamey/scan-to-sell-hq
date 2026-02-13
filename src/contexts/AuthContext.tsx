@@ -88,7 +88,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          // Don't block isLoading on profile fetch – prevents infinite spinner
+          // if DB queries are slow or token needs refreshing
+          fetchProfile(session.user.id);
         }
       } finally {
         if (mounted) setIsLoading(false);
