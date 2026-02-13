@@ -58,31 +58,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let mounted = true;
 
-    // Set up auth state listener BEFORE checking session
+    // Listener for ONGOING auth changes (does NOT control isLoading)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
+      (_event, newSession) => {
         if (!mounted) return;
-
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
           // Defer DB calls to avoid deadlock with auth state change
-          setTimeout(async () => {
+          setTimeout(() => {
             if (!mounted) return;
-            await fetchProfile(newSession.user.id);
-            if (mounted) setIsLoading(false);
+            fetchProfile(newSession.user.id);
           }, 0);
         } else {
           setProfile(null);
           setIsAdmin(false);
-          setIsLoading(false);
         }
       }
     );
 
-    // Check current session
-    supabase.auth.getSession();
+    // INITIAL load (controls isLoading)
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!mounted) return;
+
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        }
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
 
     return () => {
       mounted = false;
