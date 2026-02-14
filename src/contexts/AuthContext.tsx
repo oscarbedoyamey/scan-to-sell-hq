@@ -79,29 +79,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // INITIAL load (controls isLoading)
+    // We rely on onAuthStateChange to set user/session.
+    // Here we just kick off getSession (which triggers the listener)
+    // and set a safety timeout so the spinner never hangs forever.
     const initializeAuth = async () => {
       try {
-        // Safety timeout – if getSession hangs (e.g. token refresh fails),
-        // we still clear the spinner after 4 seconds
-        const timeout = new Promise<null>((resolve) =>
-          setTimeout(() => resolve(null), 4000)
-        );
-
-        const sessionResult = supabase.auth.getSession().then(r => r.data.session);
-        const session = await Promise.race([sessionResult, timeout]);
-
-        if (!mounted) return;
-
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          fetchProfile(session.user.id);
-        }
+        await supabase.auth.getSession();
       } catch (err) {
         console.error('Auth init error:', err);
       } finally {
-        if (mounted) setIsLoading(false);
+        // Give the onAuthStateChange listener a moment to fire
+        // before clearing loading state
+        setTimeout(() => {
+          if (mounted) setIsLoading(false);
+        }, 200);
       }
     };
 
