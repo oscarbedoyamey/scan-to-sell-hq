@@ -112,6 +112,14 @@ const DistributionSection = ({
 
       onDataChange();
 
+      // Auto-generate assets after assignment
+      try {
+        await supabase.functions.invoke('generate-sign-assets', { body: { sign_id: sign.id } });
+      } catch (genErr) {
+        console.warn('Auto-generate after assign failed:', genErr);
+      }
+      onDataChange(); // refresh again to show generated assets
+
       toast({ title: '✅', description: t('assigned') });
       setShowAssignModal(false);
       setReassignConfirmed(false);
@@ -157,6 +165,14 @@ const DistributionSection = ({
           assigned_by: user?.id,
         });
 
+      onDataChange();
+
+      // Auto-generate assets after reassignment
+      try {
+        await supabase.functions.invoke('generate-sign-assets', { body: { sign_id: signId } });
+      } catch (genErr) {
+        console.warn('Auto-generate after reassign failed:', genErr);
+      }
       onDataChange();
 
       toast({ title: '✅', description: t('assigned') });
