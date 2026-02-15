@@ -42,7 +42,7 @@ const labels: Record<string, Record<string, string>> = {
 interface DistributionSectionProps {
   listingId: string;
   signs: Sign[];
-  onSignsChange: (signs: Sign[]) => void;
+  onDataChange: () => void;
   getPublicUrl: (path: string | null) => string | null;
   onGenerateAssets: (signId: string) => void;
   generating: string | null;
@@ -51,7 +51,7 @@ interface DistributionSectionProps {
 const DistributionSection = ({
   listingId,
   signs,
-  onSignsChange,
+  onDataChange,
   getPublicUrl,
   onGenerateAssets,
   generating,
@@ -110,13 +110,7 @@ const DistributionSection = ({
           assigned_by: user?.id,
         });
 
-      // Refresh signs list
-      const { data: updated } = await (supabase as any)
-        .from('signs')
-        .select('*')
-        .eq('listing_id', listingId)
-        .order('created_at', { ascending: false });
-      onSignsChange(updated || []);
+      onDataChange();
 
       toast({ title: '✅', description: t('assigned') });
       setShowAssignModal(false);
@@ -163,13 +157,7 @@ const DistributionSection = ({
           assigned_by: user?.id,
         });
 
-      // Refresh signs list
-      const { data: updated } = await (supabase as any)
-        .from('signs')
-        .select('*')
-        .eq('listing_id', listingId)
-        .order('created_at', { ascending: false });
-      onSignsChange(updated || []);
+      onDataChange();
 
       toast({ title: '✅', description: t('assigned') });
       setShowReassignConfirm(null);
@@ -198,13 +186,7 @@ const DistributionSection = ({
         .update({ listing_id: null })
         .eq('id', signId);
 
-      // Refresh
-      const { data: updated } = await (supabase as any)
-        .from('signs')
-        .select('*')
-        .eq('listing_id', listingId)
-        .order('created_at', { ascending: false });
-      onSignsChange(updated || []);
+      onDataChange();
 
       toast({ title: '✅', description: t('unassigned') });
       setShowUnassignModal(null);
