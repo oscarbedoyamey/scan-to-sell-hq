@@ -12,6 +12,7 @@ import { StepMedia } from '@/components/wizard/StepMedia';
 import { StepContact } from '@/components/wizard/StepContact';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Tables } from '@/integrations/supabase/types';
+import { useListingMutations } from '@/hooks/useListingMutations';
 
 type Listing = Partial<Tables<'listings'>>;
 
@@ -84,6 +85,7 @@ const ListingNew = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { invalidateAll } = useListingMutations();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('listing_id');
   const isNew = searchParams.get('new') === '1';
@@ -298,6 +300,7 @@ const ListingNew = () => {
         .eq('id', listingId);
 
       toast({ title: '✅', description: tp('activated') });
+      invalidateAll();
       navigate(`/app/listings/${listingId}`);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
@@ -535,6 +538,7 @@ const ListingNew = () => {
                   if (saveTimer.current) clearTimeout(saveTimer.current);
                   await autoSave(data, listingId);
                   toast({ title: '✅', description: tp('changesSaved') });
+                  invalidateAll();
                   navigate(`/app/listings/${listingId}`);
                 }} disabled={publishing || saving}>
                   {publishing && <Loader2 className="w-4 h-4 animate-spin mr-2" />}

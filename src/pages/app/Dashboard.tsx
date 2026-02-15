@@ -1,12 +1,12 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, FileText, AlertTriangle, BarChart3 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { useDashboardStats, useDashboardScans } from '@/hooks/useListings';
 
 const labels: Record<string, Record<string, string>> = {
   welcome: { en: 'Welcome back', es: 'Bienvenido de nuevo', fr: 'Bon retour', de: 'Willkommen zurück', it: 'Bentornato', pt: 'Bem-vindo de volta', pl: 'Witaj ponownie' },
@@ -52,71 +52,18 @@ function aggregateScans(scans: ScanRow[], granularity: 'day' | 'week' | 'month')
 }
 
 const Dashboard = () => {
-  const { profile, user } = useAuth();
+  const { profile } = useAuth();
   const { language } = useLanguage();
   const t = (key: string) => labels[key]?.[language] || labels[key]?.en || key;
 
-  const [activeCount, setActiveCount] = useState(0);
-  const [expiringCount, setExpiringCount] = useState(0);
-  const [scans, setScans] = useState<ScanRow[]>([]);
   const [granularity, setGranularity] = useState<'day' | 'week' | 'month'>('day');
   const [range, setRange] = useState('30');
 
-  useEffect(() => {
-    if (!user) return;
+  const { data: stats } = useDashboardStats();
+  const { data: scans } = useDashboardScans(Number(range));
 
-    const loadStats = async () => {
-      // Active listings count
-      const { count: ac } = await (supabase as any)
-        .from('listings')
-        .select('id', { count: 'exact', head: true })
-        .eq('owner_user_id', user.id)
-        .eq('status', 'active');
-      setActiveCount(ac || 0);
-
-      // Expiring in 30 days — needs active purchase ending within 30 days
-      const in30 = new Date();
-      in30.setDate(in30.getDate() + 30);
-      const { count: ec } = await (supabase as any)
-        .from('purchases')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('status', 'paid')
-        .lte('end_at', in30.toISOString())
-        .gte('end_at', new Date().toISOString());
-      setExpiringCount(ec || 0);
-    };
-
-    loadStats();
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    const since = new Date();
-    since.setDate(since.getDate() - Number(range));
-
-    const loadScans = async () => {
-      // Get user listings ids first
-      const { data: listings } = await (supabase as any)
-        .from('listings')
-        .select('id')
-        .eq('owner_user_id', user.id);
-      if (!listings || listings.length === 0) { setScans([]); return; }
-      const ids = listings.map((l: any) => l.id);
-
-      const { data } = await (supabase as any)
-        .from('scans')
-        .select('occurred_at, listing_id')
-        .in('listing_id', ids)
-        .gte('occurred_at', since.toISOString())
-        .order('occurred_at', { ascending: true });
-      setScans(data || []);
-    };
-    loadScans();
-  }, [user, range]);
-
-  const chartData = useMemo(() => aggregateScans(scans, granularity), [scans, granularity]);
-  const totalScans = scans.length;
+  const chartData = useMemo(() => aggregateScans(scans || [], granularity), [scans, granularity]);
+  const totalScans = scans?.length || 0;
 
   return (
     <div className="max-w-5xl">
@@ -129,7 +76,6 @@ const Dashboard = () => {
 
       {/* Cards grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {/* Create new */}
         <Link
           to="/app/listings/new"
           className="group col-span-1 sm:col-span-2 lg:col-span-2 bg-primary text-primary-foreground rounded-2xl p-6 hover:shadow-lg transition-all"
@@ -145,22 +91,20 @@ const Dashboard = () => {
           </div>
         </Link>
 
-        {/* Active listings */}
         <div className="bg-card rounded-2xl border border-border p-6">
           <div className="flex items-center gap-3 mb-3">
             <FileText className="h-5 w-5 text-success" />
             <span className="text-sm text-muted-foreground">{t('active')}</span>
           </div>
-          <p className="font-display text-3xl font-bold text-foreground">{activeCount}</p>
+          <p className="font-display text-3xl font-bold text-foreground">{stats?.activeCount ?? 0}</p>
         </div>
 
-        {/* Expiring */}
         <div className="bg-card rounded-2xl border border-border p-6">
           <div className="flex items-center gap-3 mb-3">
             <AlertTriangle className="h-5 w-5 text-accent" />
             <span className="text-sm text-muted-foreground">{t('expiring')}</span>
           </div>
-          <p className="font-display text-3xl font-bold text-foreground">{expiringCount}</p>
+          <p className="font-display text-3xl font-bold text-foreground">{stats?.expiringCount ?? 0}</p>
         </div>
       </div>
 

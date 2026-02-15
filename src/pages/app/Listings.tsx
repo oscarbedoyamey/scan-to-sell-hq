@@ -1,12 +1,9 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, FileText, Pencil, Home, MapPin, QrCode } from 'lucide-react';
-import type { Tables } from '@/integrations/supabase/types';
+import { useUserListings } from '@/hooks/useListings';
 
 const labels: Record<string, Record<string, string>> = {
   title: { en: 'My Listings', es: 'Mis anuncios', fr: 'Mes annonces', de: 'Meine Inserate', it: 'I miei annunci', pt: 'Meus anúncios', pl: 'Moje ogłoszenia' },
@@ -31,30 +28,9 @@ const statusVariant: Record<string, 'default' | 'secondary' | 'outline' | 'destr
 
 const Listings = () => {
   const { language } = useLanguage();
-  const { user } = useAuth();
   const t = (key: string) => labels[key]?.[language] || labels[key]?.en || key;
 
-  const [listings, setListings] = useState<(Tables<'listings'> & { sign_count?: number })[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!user) return;
-    const fetchData = async () => {
-      const { data } = await (supabase as any)
-        .from('listings')
-        .select('*, signs(id)')
-        .eq('owner_user_id', user.id)
-        .order('updated_at', { ascending: false });
-      const withCount = (data || []).map((l: any) => ({
-        ...l,
-        sign_count: Array.isArray(l.signs) ? l.signs.length : 0,
-        signs: undefined,
-      }));
-      setListings(withCount);
-      setLoading(false);
-    };
-    fetchData();
-  }, [user]);
+  const { data: listings = [], isLoading: loading } = useUserListings();
 
   const currencySymbol: Record<string, string> = { EUR: '€', GBP: '£', CHF: 'CHF', PLN: 'zł', CZK: 'Kč' };
 

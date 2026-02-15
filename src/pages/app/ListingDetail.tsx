@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { ArrowLeft, QrCode, FileText, Download, RefreshCw, ExternalLink, Loader2, Eye, CreditCard, BarChart3, Power, ToggleLeft, Pencil, Link2, Copy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import type { Tables } from '@/integrations/supabase/types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import DistributionSection from '@/components/listing/DistributionSection';
+import { useListing, useListingSigns, useListingPurchase, useListingScans } from '@/hooks/useListings';
+import { useListingMutations } from '@/hooks/useListingMutations';
 
 type Listing = Tables<'listings'>;
 type Sign = Tables<'signs'>;
@@ -77,36 +79,22 @@ const ListingDetail = () => {
   const { toast } = useToast();
   const { language } = useLanguage();
   const navigate = useNavigate();
-  const [listing, setListing] = useState<Listing | null>(null);
-  const [signs, setSigns] = useState<Sign[]>([]);
-  const [purchase, setPurchase] = useState<Purchase | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { invalidateListingDetail, invalidateListings } = useListingMutations();
+
+  const { data: listing, isLoading: loadingListing } = useListing(id);
+  const { data: signs = [] } = useListingSigns(id);
+  const { data: purchase } = useListingPurchase(id);
+  const { data: scans = [] } = useListingScans(id);
+
   const [generating, setGenerating] = useState<string | null>(null);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
-  const [scans, setScans] = useState<{ occurred_at: string | null }[]>([]);
   const [scanGranularity, setScanGranularity] = useState<'day' | 'week' | 'month'>('day');
   const [togglingStatus, setTogglingStatus] = useState(false);
   const [togglingRenew, setTogglingRenew] = useState(false);
 
   const t = (key: string) => labels[key]?.[language] || labels[key]?.en || key;
 
-  useEffect(() => {
-    if (!id) return;
-    const load = async () => {
-      const [{ data: l }, { data: s }, { data: p }, { data: sc }] = await Promise.all([
-        supabase.from('listings').select('*').eq('id', id).single(),
-        supabase.from('signs').select('*').eq('listing_id', id).order('created_at', { ascending: false }),
-        (supabase as any).from('purchases').select('*').eq('listing_id', id).eq('status', 'paid').order('end_at', { ascending: false }).limit(1).maybeSingle(),
-        (supabase as any).from('scans').select('occurred_at').eq('listing_id', id).order('occurred_at', { ascending: true }),
-      ]);
-      setListing(l);
-      setSigns(s || []);
-      setPurchase(p);
-      setScans(sc || []);
-      setLoading(false);
-    };
-    load();
-  }, [id]);
+  const loading = loadingListing;
 
   const scanChartData = useMemo(() => aggregateScans(scans, scanGranularity), [scans, scanGranularity]);
 
@@ -118,8 +106,7 @@ const ListingDetail = () => {
       });
       if (res.error) throw new Error(res.error.message);
       toast({ title: '✅', description: t('assetsGenerated') });
-      const { data: updated } = await supabase.from('signs').select('*').eq('listing_id', id!).order('created_at', { ascending: false });
-      setSigns(updated || []);
+      if (id) invalidateListingDetail(id);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
@@ -296,7 +283,7 @@ const ListingDetail = () => {
                 onCheckedChange={async (checked) => {
                   setTogglingRenew(true);
                   await supabase.from('listings').update({ auto_renew: checked } as any).eq('id', listing.id);
-                  setListing((prev) => prev ? { ...prev, auto_renew: checked } as any : prev);
+                  if (id) { invalidateListingDetail(id); invalidateListings(); }
                   setTogglingRenew(false);
                 }}
               />
@@ -318,7 +305,7 @@ const ListingDetail = () => {
                     setTogglingStatus(true);
                     const newStatus = listing.status === 'active' ? 'paused' : 'active';
                     await supabase.from('listings').update({ status: newStatus }).eq('id', listing.id);
-                    setListing((prev) => prev ? { ...prev, status: newStatus } : prev);
+                    if (id) { invalidateListingDetail(id); invalidateListings(); }
                     toast({ title: '✅', description: newStatus === 'paused' ? t('deactivated') : t('reactivated') });
                     setTogglingStatus(false);
                   }}
@@ -376,7 +363,7 @@ const ListingDetail = () => {
       <DistributionSection
         listingId={listing.id}
         signs={signs}
-        onSignsChange={setSigns}
+        onDataChange={() => { if (id) { invalidateListingDetail(id); invalidateListings(); } }}
         getPublicUrl={getPublicUrl}
         onGenerateAssets={generateAssets}
         generating={generating}
