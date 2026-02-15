@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { QrCode, FileText, Download, ExternalLink, Unlink, RefreshCw, Loader2, AlertTriangle, Eye } from 'lucide-react';
+import { QrCode, Download, ExternalLink, Unlink, RefreshCw, Loader2, AlertTriangle, Eye, LinkIcon, Plus } from 'lucide-react';
 import { useUserSigns } from '@/hooks/useSigns';
 import { useListingMutations } from '@/hooks/useListingMutations';
 
@@ -36,12 +36,19 @@ const translations: Record<string, Record<string, string>> = {
   regenerate: { en: 'Regenerate', es: 'Regenerar' },
   generate: { en: 'Generate', es: 'Generar' },
   assetsGenerated: { en: 'Assets generated', es: 'Activos generados' },
+  assignListing: { en: 'Assign listing', es: 'Asignar anuncio' },
+  assignListingTitle: { en: 'Assign to a listing', es: 'Asignar a un anuncio' },
+  assignListingDesc: { en: 'Choose a listing with an active subscription', es: 'Elige un anuncio con suscripción activa' },
+  noActiveListings: { en: 'No listings with active subscriptions', es: 'No hay anuncios con suscripción activa' },
+  createNewListing: { en: 'Create new listing', es: 'Crear nuevo anuncio' },
+  assignSuccess: { en: 'Sign assigned successfully', es: 'Cartel asignado correctamente' },
 };
 
 export default function MySigns() {
   const { language } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { data: signs = [], isLoading: loading } = useUserSigns();
   const { invalidateSigns, invalidateAll } = useListingMutations();
 
@@ -49,6 +56,12 @@ export default function MySigns() {
   const [unassigning, setUnassigning] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
   const [qrPreview, setQrPreview] = useState<{ code: string; url: string } | null>(null);
+
+  // Assign listing state
+  const [assignSignId, setAssignSignId] = useState<string | null>(null);
+  const [activeListings, setActiveListings] = useState<Array<{ id: string; title: string | null; listing_code: string | null; city: string | null }>>([]);
+  const [loadingListings, setLoadingListings] = useState(false);
+  const [assigning, setAssigning] = useState<string | null>(null);
 
   const t = (key: string) => translations[key]?.[language] || translations[key]?.en || key;
 
@@ -92,6 +105,82 @@ export default function MySigns() {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
       setGenerating(null);
+    }
+  };
+
+  const loadActiveListings = async () => {
+    if (!user) return;
+    setLoadingListings(true);
+    try {
+      // Get listings that have an active (paid) purchase
+      const { data: purchases } = await (supabase as any)
+        .from('purchases')
+        .select('listing_id')
+        .eq('user_id', user.id)
+        .eq('status', 'paid')
+        .gte('end_at', new Date().toISOString());
+
+      const listingIds = [...new Set((purchases || []).map((p: any) => p.listing_id).filter(Boolean))] as string[];
+
+      if (listingIds.length === 0) {
+        setActiveListings([]);
+        setLoadingListings(false);
+        return;
+      }
+
+      const { data: listings } = await (supabase as any)
+        .from('listings')
+        .select('id, title, listing_code, city')
+        .in('id', listingIds)
+        .order('updated_at', { ascending: false });
+
+      setActiveListings(listings || []);
+    } catch (err) {
+      console.error('Error loading active listings:', err);
+      setActiveListings([]);
+    } finally {
+      setLoadingListings(false);
+    }
+  };
+
+  const handleOpenAssign = (signId: string) => {
+    setAssignSignId(signId);
+    loadActiveListings();
+  };
+
+  const handleAssignToListing = async (listingId: string) => {
+    if (!assignSignId || !user) return;
+    setAssigning(listingId);
+    try {
+      // Update sign's listing_id
+      await (supabase as any)
+        .from('signs')
+        .update({ listing_id: listingId })
+        .eq('id', assignSignId);
+
+      // Record assignment
+      await (supabase as any)
+        .from('sign_assignments')
+        .insert({
+          sign_id: assignSignId,
+          listing_id: listingId,
+          assigned_by: user.id,
+        });
+
+      // Auto-generate assets
+      try {
+        await supabase.functions.invoke('generate-sign-assets', { body: { sign_id: assignSignId } });
+      } catch (genErr) {
+        console.warn('Auto-generate after assign failed:', genErr);
+      }
+
+      invalidateAll();
+      toast({ title: '✅', description: t('assignSuccess') });
+      setAssignSignId(null);
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setAssigning(null);
     }
   };
 
@@ -181,6 +270,17 @@ export default function MySigns() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1 flex-wrap">
+                          {/* Assign listing (only for unassigned signs) */}
+                          {!sign.listing_id && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="gap-1"
+                              onClick={() => handleOpenAssign(sign.id)}
+                            >
+                              <LinkIcon className="h-3.5 w-3.5" /> {t('assignListing')}
+                            </Button>
+                          )}
                           {/* Generate / Regenerate */}
                           {sign.listing_id && (
                             <Button
@@ -282,6 +382,66 @@ export default function MySigns() {
               {t('unassign')}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Listing Dialog */}
+      <Dialog open={!!assignSignId} onOpenChange={() => setAssignSignId(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LinkIcon className="h-5 w-5 text-primary" />
+              {t('assignListingTitle')}
+            </DialogTitle>
+            <DialogDescription>{t('assignListingDesc')}</DialogDescription>
+          </DialogHeader>
+
+          {loadingListings ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : activeListings.length === 0 ? (
+            <div className="text-center py-6">
+              <p className="text-sm text-muted-foreground mb-4">{t('noActiveListings')}</p>
+              <Button onClick={() => { setAssignSignId(null); navigate('/app/listings/new'); }}>
+                <Plus className="h-4 w-4 mr-1" /> {t('createNewListing')}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-72 overflow-y-auto">
+              {activeListings.map((listing) => (
+                <button
+                  key={listing.id}
+                  disabled={!!assigning}
+                  onClick={() => handleAssignToListing(listing.id)}
+                  className="w-full flex items-center justify-between gap-3 rounded-lg border border-border p-3 hover:bg-accent/50 transition-colors text-left disabled:opacity-50"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {listing.title || listing.listing_code || 'Untitled'}
+                    </p>
+                    {listing.city && (
+                      <p className="text-xs text-muted-foreground">{listing.city}</p>
+                    )}
+                  </div>
+                  {assigning === listing.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+                  ) : (
+                    <LinkIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                  )}
+                </button>
+              ))}
+              <div className="pt-2 border-t border-border">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => { setAssignSignId(null); navigate('/app/listings/new'); }}
+                >
+                  <Plus className="h-4 w-4 mr-1" /> {t('createNewListing')}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
