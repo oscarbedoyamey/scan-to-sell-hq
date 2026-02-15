@@ -111,13 +111,30 @@ serve(async (req) => {
       throw new Error(`Webhook failed (${webhookResponse.status}): ${errText}`);
     }
 
-    console.log("n8n webhook responded OK");
+    // --- 3. Save the returned PNG poster to storage ---
+    const posterBuffer = new Uint8Array(await webhookResponse.arrayBuffer());
+    console.log(`Received poster PNG: ${posterBuffer.byteLength} bytes`);
 
-    // --- 3. Update sign record with QR path ---
+    const posterPath = `signs/${sign.id}/poster.png`;
+    const { error: posterUploadError } = await supabaseAdmin.storage
+      .from("generated-assets")
+      .upload(posterPath, posterBuffer, {
+        contentType: "image/png",
+        upsert: true,
+      });
+
+    if (posterUploadError) throw new Error(`Poster upload failed: ${posterUploadError.message}`);
+
+    const { data: posterPublicUrlData } = supabaseAdmin.storage
+      .from("generated-assets")
+      .getPublicUrl(posterPath);
+
+    // --- 4. Update sign record ---
     const { error: updateError } = await supabaseAdmin
       .from("signs")
       .update({
         qr_image_path: qrPath,
+        sign_pdf_path: posterPath,
         public_url: publicUrl,
       })
       .eq("id", sign.id);
@@ -128,6 +145,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         qr_url: qrPublicUrlData.publicUrl,
+        poster_url: posterPublicUrlData.publicUrl,
         public_url: publicUrl,
       }),
       {
