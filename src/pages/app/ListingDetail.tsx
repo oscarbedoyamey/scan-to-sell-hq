@@ -159,9 +159,9 @@ const ListingDetail = () => {
   const needsPayment = !purchase || isExpired;
 
   const plans = [
-    { id: 'plan_3m', months: 3, price: 49 },
-    { id: 'plan_6m', months: 6, price: 64 },
-    { id: 'plan_12m', months: 12, price: 94 },
+    { id: '3m', months: 3, price: 49 },
+    { id: '6m', months: 6, price: 64 },
+    { id: '12m', months: 12, price: 94 },
   ];
 
   return (
@@ -240,7 +240,7 @@ const ListingDetail = () => {
                 </p>
               )}
             </div>
-            <Button variant="outline" size="sm" onClick={() => handleCheckout('plan_6m')} disabled={loadingPlan !== null}>
+            <Button variant="outline" size="sm" onClick={() => handleCheckout('6m')} disabled={loadingPlan !== null}>
               {loadingPlan && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
               {t('renew')}
             </Button>
