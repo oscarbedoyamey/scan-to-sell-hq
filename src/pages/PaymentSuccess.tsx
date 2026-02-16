@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,6 +27,8 @@ const PaymentSuccess = () => {
 
   const t = (key: string) => labels[key]?.[language] || labels[key]?.en || key;
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
     const pId = searchParams.get('purchase_id');
@@ -44,7 +46,12 @@ const PaymentSuccess = () => {
         if (error) throw error;
         if (data?.verified) {
           setStatus('success');
-          setListingId(data.listing_id || null);
+          const lid = data.listing_id || null;
+          setListingId(lid);
+          // Auto-redirect to listing detail after 2 seconds
+          setTimeout(() => {
+            navigate(lid ? `/app/listings/${lid}` : '/app/signs', { replace: true });
+          }, 2000);
         } else {
           setStatus('error');
         }
@@ -56,7 +63,7 @@ const PaymentSuccess = () => {
 
     const timer = setTimeout(verify, 1500);
     return () => clearTimeout(timer);
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

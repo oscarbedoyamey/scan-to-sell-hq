@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ArrowLeft, QrCode, FileText, Download, RefreshCw, ExternalLink, Loader2, Eye, CreditCard, BarChart3, Power, ToggleLeft, Pencil, Link2, Copy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -82,9 +82,16 @@ const ListingDetail = () => {
   const { invalidateListingDetail, invalidateListings } = useListingMutations();
 
   const { data: listing, isLoading: loadingListing } = useListing(id);
-  const { data: signs = [] } = useListingSigns(id);
+  const [signsPolling, setSignsPolling] = useState(false);
+  const { data: signs = [] } = useListingSigns(id, signsPolling);
   const { data: purchase } = useListingPurchase(id);
   const { data: scans = [] } = useListingScans(id);
+
+  // Enable polling while any sign is missing generated assets
+  useEffect(() => {
+    const pending = signs.some((s: any) => s.listing_id && !s.sign_pdf_path);
+    setSignsPolling(pending);
+  }, [signs]);
 
   const [generating, setGenerating] = useState<string | null>(null);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);

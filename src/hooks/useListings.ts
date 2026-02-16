@@ -31,11 +31,12 @@ export function useListing(id: string | undefined) {
 }
 
 /** Signs for a specific listing */
-export function useListingSigns(listingId: string | undefined) {
+export function useListingSigns(listingId: string | undefined, refetchWhilePending = false) {
   return useQuery({
     queryKey: [LISTINGS_QUERY_KEY, 'signs', listingId],
     queryFn: () => fetchListingSigns(listingId!),
     enabled: !!listingId,
+    refetchInterval: refetchWhilePending ? 5000 : false,
   });
 }
 
