@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import zignoLogo from '@/assets/zigno-logo.png';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 const labels: Record<string, Record<string, string>> = {
   verifying: { en: 'Verifying your payment…', es: 'Verificando tu pago…', fr: 'Vérification du paiement…', de: 'Zahlung wird überprüft…', it: 'Verifica del pagamento…', pt: 'Verificando pagamento…', pl: 'Weryfikacja płatności…' },
@@ -18,9 +19,11 @@ const labels: Record<string, Record<string, string>> = {
   retry: { en: 'Try again', es: 'Intentar de nuevo', fr: 'Réessayer', de: 'Erneut versuchen', it: 'Riprova', pt: 'Tentar novamente', pl: 'Spróbuj ponownie' },
 };
 
+const DELAYS = [1000, 2000, 3000, 4000, 5000];
+const MAX_ATTEMPTS = 6;
+
 const PaymentSuccess = () => {
   const { language } = useLanguage();
-  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
   const [listingId, setListingId] = useState<string | null>(null);
@@ -29,61 +32,76 @@ const PaymentSuccess = () => {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const sessionId = searchParams.get('session_id');
-    const pId = searchParams.get('purchase_id');
+  const sessionId = searchParams.get('session_id');
+  const purchaseId = searchParams.get('purchase_id');
 
-    if (!sessionId || !pId) {
+  const runVerification = useCallback(async () => {
+    if (!sessionId || !purchaseId) {
       setStatus('error');
       return;
     }
 
-    let cancelled = false;
+    setStatus('verifying');
     let attempt = 0;
-    const maxAttempts = 3;
 
-    const verify = async () => {
-      while (attempt < maxAttempts && !cancelled) {
-        attempt++;
-        try {
-          console.log(`[PaymentSuccess] Verify attempt ${attempt}/${maxAttempts}`);
-          const { data, error } = await supabase.functions.invoke('verify-payment', {
-            body: { session_id: sessionId, purchase_id: pId },
-          });
-          if (cancelled) return;
-          if (error) throw error;
-          if (data?.verified) {
-            setStatus('success');
-            const lid = data.listing_id || null;
-            setListingId(lid);
-            setTimeout(() => {
-              navigate(lid ? `/app/listings/${lid}` : '/app/signs', { replace: true });
-            }, 2000);
-            return;
-          } else {
-            // Payment not yet confirmed, retry after delay
-            if (attempt < maxAttempts) {
-              await new Promise(r => setTimeout(r, 3000));
-              continue;
-            }
-            setStatus('error');
-            return;
-          }
-        } catch (err) {
-          console.error(`[PaymentSuccess] Attempt ${attempt} failed:`, err);
-          if (attempt < maxAttempts) {
-            await new Promise(r => setTimeout(r, 3000));
-            continue;
-          }
-          setStatus('error');
+    while (attempt < MAX_ATTEMPTS) {
+      attempt++;
+      try {
+        console.log(`[PaymentSuccess] Verify attempt ${attempt}/${MAX_ATTEMPTS} (fetch directo)`);
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-payment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_KEY,
+          },
+          body: JSON.stringify({ session_id: sessionId, purchase_id: purchaseId }),
+        });
+
+        if (!response.ok) {
+          console.error(`[PaymentSuccess] HTTP ${response.status} en intento ${attempt}`);
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log(`[PaymentSuccess] Respuesta intento ${attempt}:`, data);
+
+        if (data?.verified) {
+          setStatus('success');
+          const lid = data.listing_id || null;
+          setListingId(lid);
+          setTimeout(() => {
+            navigate(lid ? `/app/listings/${lid}` : '/app/signs', { replace: true });
+          }, 2000);
           return;
         }
-      }
-    };
 
-    const timer = setTimeout(verify, 500);
-    return () => { cancelled = true; clearTimeout(timer); };
-  }, [searchParams, navigate]);
+        // Not yet verified, retry with progressive delay
+        if (attempt < MAX_ATTEMPTS) {
+          const delay = DELAYS[attempt - 1] || 5000;
+          console.log(`[PaymentSuccess] No verificado aún, reintentando en ${delay}ms…`);
+          await new Promise(r => setTimeout(r, delay));
+          continue;
+        }
+
+        setStatus('error');
+        return;
+      } catch (err) {
+        console.error(`[PaymentSuccess] Intento ${attempt} falló:`, err);
+        if (attempt < MAX_ATTEMPTS) {
+          const delay = DELAYS[attempt - 1] || 5000;
+          await new Promise(r => setTimeout(r, delay));
+          continue;
+        }
+        setStatus('error');
+        return;
+      }
+    }
+  }, [sessionId, purchaseId, navigate]);
+
+  useEffect(() => {
+    const timer = setTimeout(runVerification, 500);
+    return () => clearTimeout(timer);
+  }, [runVerification]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -132,8 +150,8 @@ const PaymentSuccess = () => {
                 <p className="text-muted-foreground">{t('errorDesc')}</p>
               </div>
               <div className="flex flex-col gap-3">
-                <Button asChild variant="default" size="lg">
-                  <Link to="/app/listings">{t('retry')}</Link>
+                <Button variant="default" size="lg" onClick={runVerification}>
+                  {t('retry')}
                 </Button>
                 <Button asChild variant="outline" size="lg">
                   <Link to="/app">{t('goHome')}</Link>
