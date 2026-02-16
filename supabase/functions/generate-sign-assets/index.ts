@@ -26,14 +26,28 @@ serve(async (req) => {
   );
 
   try {
-    const authHeader = req.headers.get("Authorization")!;
-    const token = authHeader.replace("Bearer ", "");
-    const { data: authData } = await supabaseClient.auth.getUser(token);
-    const user = authData.user;
-    if (!user) throw new Error("User not authenticated");
-
     const { sign_id } = await req.json();
     if (!sign_id) throw new Error("sign_id is required");
+
+    // Optionally verify user ownership (skip if called with service role key)
+    const authHeader = req.headers.get("Authorization");
+    let isServiceRole = false;
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      // Check if it's the service role key (internal call)
+      if (token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
+        isServiceRole = true;
+      } else {
+        const { data: authData } = await supabaseClient.auth.getUser(token);
+        const user = authData.user;
+        if (!user) throw new Error("User not authenticated");
+
+        // Verify ownership below after fetching listing
+        var authenticatedUserId = user.id;
+      }
+    } else {
+      throw new Error("Authorization required");
+    }
 
     // Fetch sign + listing
     const { data: sign, error: signError } = await supabaseAdmin
@@ -52,14 +66,15 @@ serve(async (req) => {
 
     if (listingError || !listing) throw new Error("Listing not found");
 
-    // Verify ownership
-    if (listing.owner_user_id !== user.id) {
-      // Check admin role
-      const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
-        _user_id: user.id,
-        _role: "admin",
-      });
-      if (!isAdmin) throw new Error("Unauthorized");
+    // Verify ownership (skip for service role calls)
+    if (!isServiceRole && authenticatedUserId) {
+      if (listing.owner_user_id !== authenticatedUserId) {
+        const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
+          _user_id: authenticatedUserId,
+          _role: "admin",
+        });
+        if (!isAdmin) throw new Error("Unauthorized");
+      }
     }
 
     const publicUrl = `${PUBLISHED_URL}/s/${sign.sign_code}`;

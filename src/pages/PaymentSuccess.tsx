@@ -38,31 +38,51 @@ const PaymentSuccess = () => {
       return;
     }
 
+    let cancelled = false;
+    let attempt = 0;
+    const maxAttempts = 3;
+
     const verify = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('verify-payment', {
-          body: { session_id: sessionId, purchase_id: pId },
-        });
-        if (error) throw error;
-        if (data?.verified) {
-          setStatus('success');
-          const lid = data.listing_id || null;
-          setListingId(lid);
-          // Auto-redirect to listing detail after 2 seconds
-          setTimeout(() => {
-            navigate(lid ? `/app/listings/${lid}` : '/app/signs', { replace: true });
-          }, 2000);
-        } else {
+      while (attempt < maxAttempts && !cancelled) {
+        attempt++;
+        try {
+          console.log(`[PaymentSuccess] Verify attempt ${attempt}/${maxAttempts}`);
+          const { data, error } = await supabase.functions.invoke('verify-payment', {
+            body: { session_id: sessionId, purchase_id: pId },
+          });
+          if (cancelled) return;
+          if (error) throw error;
+          if (data?.verified) {
+            setStatus('success');
+            const lid = data.listing_id || null;
+            setListingId(lid);
+            setTimeout(() => {
+              navigate(lid ? `/app/listings/${lid}` : '/app/signs', { replace: true });
+            }, 2000);
+            return;
+          } else {
+            // Payment not yet confirmed, retry after delay
+            if (attempt < maxAttempts) {
+              await new Promise(r => setTimeout(r, 3000));
+              continue;
+            }
+            setStatus('error');
+            return;
+          }
+        } catch (err) {
+          console.error(`[PaymentSuccess] Attempt ${attempt} failed:`, err);
+          if (attempt < maxAttempts) {
+            await new Promise(r => setTimeout(r, 3000));
+            continue;
+          }
           setStatus('error');
+          return;
         }
-      } catch (err) {
-        console.error('Payment verification failed:', err);
-        setStatus('error');
       }
     };
 
-    const timer = setTimeout(verify, 1500);
-    return () => clearTimeout(timer);
+    const timer = setTimeout(verify, 500);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [searchParams, navigate]);
 
   return (

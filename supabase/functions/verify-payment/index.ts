@@ -24,31 +24,49 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
+  const supabaseAdmin = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
   try {
-    const authHeader = req.headers.get("Authorization")!;
-    const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
-    if (!user) throw new Error("User not authenticated");
-
     const { session_id, purchase_id } = await req.json();
     if (!session_id || !purchase_id) throw new Error("session_id and purchase_id are required");
+
+    // Get user from auth header if available, otherwise from purchase record
+    let userId: string | null = null;
+    let userToken: string | null = null;
+
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader) {
+      userToken = authHeader.replace("Bearer ", "");
+      const supabaseClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      );
+      const { data } = await supabaseClient.auth.getUser(userToken);
+      userId = data.user?.id ?? null;
+    }
+
+    // If no auth, get user_id from the purchase record
+    if (!userId) {
+      const { data: purchaseRow } = await supabaseAdmin
+        .from("purchases")
+        .select("user_id")
+        .eq("id", purchase_id)
+        .single();
+      userId = purchaseRow?.user_id ?? null;
+    }
+
+    if (!userId) throw new Error("Could not determine user");
+
+    console.log("Verifying payment", { session_id, purchase_id, userId });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
 
     const session = await stripe.checkout.sessions.retrieve(session_id);
-
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
 
     if (session.payment_status === "paid") {
       // Get purchase with package info
@@ -155,20 +173,20 @@ serve(async (req) => {
               .insert({
                 sign_id: newSign.id,
                 listing_id: listingId,
-                assigned_by: user.id,
+                assigned_by: userId,
               });
           }
         }
 
-        // Auto-generate assets if we have a sign
+        // Auto-generate assets if we have a sign — use service role key for internal call
         if (signId) {
-          // Fire-and-forget: don't block payment verification on asset generation
           const functionsUrl = Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", ".supabase.co/functions/v1");
+          const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
           fetch(`${functionsUrl}/generate-sign-assets`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
+              "Authorization": `Bearer ${serviceKey}`,
             },
             body: JSON.stringify({ sign_id: signId }),
           }).catch((genErr) => {
@@ -182,7 +200,7 @@ serve(async (req) => {
         const { data: profile } = await supabaseAdmin
           .from("profiles")
           .select("email, locale")
-          .eq("id", user.id)
+          .eq("id", userId)
           .single();
 
         const { data: listing } = await supabaseAdmin
@@ -199,11 +217,12 @@ serve(async (req) => {
             .single();
 
           const functionsUrl = Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", ".supabase.co/functions/v1");
+          const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
           await fetch(`${functionsUrl}/send-email`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
+              "Authorization": `Bearer ${serviceKey}`,
             },
             body: JSON.stringify({
               type: "payment_confirmation",
@@ -219,7 +238,6 @@ serve(async (req) => {
         }
       } catch (emailErr) {
         console.error("Payment confirmation email error:", emailErr);
-        // Non-blocking
       }
 
       return new Response(JSON.stringify({ verified: true, status: "paid", listing_id: listingId }), {
