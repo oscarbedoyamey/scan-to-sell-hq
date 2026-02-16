@@ -162,25 +162,18 @@ serve(async (req) => {
 
         // Auto-generate assets if we have a sign
         if (signId) {
-          try {
-            const functionsUrl = Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", ".supabase.co/functions/v1");
-            const response = await fetch(`${functionsUrl}/generate-sign-assets`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-              },
-              body: JSON.stringify({ sign_id: signId }),
-            });
-
-            if (!response.ok) {
-              const errText = await response.text();
-              console.error("Asset generation failed:", errText);
-            }
-          } catch (genErr) {
+          // Fire-and-forget: don't block payment verification on asset generation
+          const functionsUrl = Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", ".supabase.co/functions/v1");
+          fetch(`${functionsUrl}/generate-sign-assets`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify({ sign_id: signId }),
+          }).catch((genErr) => {
             console.error("Asset generation error:", genErr);
-            // Non-blocking: payment is still verified even if asset gen fails
-          }
+          });
         }
       }
 
