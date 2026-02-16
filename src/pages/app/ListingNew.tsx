@@ -53,9 +53,9 @@ const INITIAL_DATA: Listing = {
 };
 
 const plans = [
-  { id: 'plan_3m', months: 3, price: 49, popular: false },
-  { id: 'plan_6m', months: 6, price: 64, popular: true },
-  { id: 'plan_12m', months: 12, price: 94, popular: false },
+  { id: '3m', months: 3, price: 49, popular: false },
+  { id: '6m', months: 6, price: 64, popular: true },
+  { id: '12m', months: 12, price: 94, popular: false },
 ];
 
 const planLabels: Record<string, Record<string, string>> = {

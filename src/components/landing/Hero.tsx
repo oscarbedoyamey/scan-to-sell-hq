@@ -29,7 +29,7 @@ export const Hero = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { package_id: 'plan_6m' },
+        body: { package_id: '6m' },
       });
       if (error) throw error;
       if (data?.url) window.location.href = data.url;
