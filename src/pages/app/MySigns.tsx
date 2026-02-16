@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { QrCode, Download, ExternalLink, Unlink, RefreshCw, Loader2, AlertTriangle, Eye, LinkIcon, Plus } from 'lucide-react';
 import { useUserSigns } from '@/hooks/useSigns';
@@ -36,6 +37,7 @@ const translations: Record<string, Record<string, string>> = {
   regenerate: { en: 'Regenerate', es: 'Regenerar' },
   generate: { en: 'Generate', es: 'Generar' },
   assetsGenerated: { en: 'Assets generated', es: 'Activos generados' },
+  generatingTooltip: { en: 'Sign is being generated', es: 'El cartel se está generando' },
   assignListing: { en: 'Assign listing', es: 'Asignar anuncio' },
   assignListingTitle: { en: 'Assign to a listing', es: 'Asignar a un anuncio' },
   assignListingDesc: { en: 'Choose a listing with an active subscription', es: 'Elige un anuncio con suscripción activa' },
@@ -49,8 +51,15 @@ export default function MySigns() {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { data: signs = [], isLoading: loading } = useUserSigns();
+  const [signsPolling, setSignsPolling] = useState(false);
+  const { data: signs = [], isLoading: loading } = useUserSigns(signsPolling);
   const { invalidateSigns, invalidateAll } = useListingMutations();
+
+  // Enable polling while any sign is missing generated assets
+  useEffect(() => {
+    const pending = signs.some((s: any) => s.listing_id && !s.sign_pdf_path);
+    setSignsPolling(pending);
+  }, [signs]);
 
   const [unassignSignId, setUnassignSignId] = useState<string | null>(null);
   const [unassigning, setUnassigning] = useState(false);
@@ -294,6 +303,19 @@ export default function MySigns() {
                                 sign.qr_image_path ? <RefreshCw className="h-3.5 w-3.5" /> : <QrCode className="h-3.5 w-3.5" />}
                               {sign.qr_image_path ? t('regenerate') : t('generate')}
                             </Button>
+                          )}
+                          {/* Generating indicator */}
+                          {sign.listing_id && !sign.sign_pdf_path && !isGenerating && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex items-center gap-1 text-xs text-primary cursor-help">
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{t('generatingTooltip')}</p>
+                              </TooltipContent>
+                            </Tooltip>
                           )}
                           {/* QR preview */}
                           {qrUrl && (

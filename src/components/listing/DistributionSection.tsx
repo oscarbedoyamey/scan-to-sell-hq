@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose
 } from '@/components/ui/dialog';
@@ -36,7 +37,7 @@ const labels: Record<string, Record<string, string>> = {
   unassigned: { en: 'Sign unassigned', es: 'Cartel desasignado', fr: 'Affiche désassignée', de: 'Zuordnung aufgehoben', it: 'Cartello rimosso', pt: 'Cartaz desatribuído', pl: 'Plakat odłączony' },
   regenerate: { en: 'Regenerate', es: 'Regenerar', fr: 'Régénérer', de: 'Neu generieren', it: 'Rigenera', pt: 'Regenerar', pl: 'Regeneruj' },
   generate: { en: 'Generate assets', es: 'Generar activos', fr: 'Générer', de: 'Generieren', it: 'Genera', pt: 'Gerar', pl: 'Generuj' },
-  preview: { en: 'Preview', es: 'Ver', fr: 'Voir', de: 'Vorschau', it: 'Anteprima', pt: 'Ver', pl: 'Podgląd' },
+  generatingTooltip: { en: 'Sign is being generated', es: 'El cartel se está generando', fr: 'L\'affiche est en cours de génération', de: 'Plakat wird erstellt', it: 'Il cartello è in fase di generazione', pt: 'O cartaz está sendo gerado', pl: 'Plakat jest generowany' },
 };
 
 interface DistributionSectionProps {
@@ -247,12 +248,25 @@ const DistributionSection = ({
                 <div className="flex flex-col sm:flex-row gap-4">
                   {/* QR preview */}
                   <div className="shrink-0">
-                    {qrUrl ? (
-                      <img src={qrUrl} alt="QR Code" className="w-24 h-24 rounded-lg border border-border" />
+                    {sign.sign_pdf_path ? (
+                      qrUrl ? (
+                        <img src={qrUrl} alt="QR Code" className="w-24 h-24 rounded-lg border border-border" />
+                      ) : (
+                        <div className="w-24 h-24 rounded-lg border border-dashed border-border flex items-center justify-center bg-muted/50">
+                          <QrCode className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                      )
                     ) : (
-                      <div className="w-24 h-24 rounded-lg border border-dashed border-border flex items-center justify-center bg-muted/50">
-                        <QrCode className="h-6 w-6 text-muted-foreground" />
-                      </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="w-24 h-24 rounded-lg border border-dashed border-primary/30 flex items-center justify-center bg-primary/5 cursor-help">
+                            <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{t('generatingTooltip')}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                   </div>
 
