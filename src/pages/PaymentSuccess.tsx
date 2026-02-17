@@ -1,6 +1,7 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -25,9 +26,11 @@ const MAX_ATTEMPTS = 6;
 
 const PaymentSuccess = () => {
   const { language } = useLanguage();
+  const { user, isLoading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
   const [listingId, setListingId] = useState<string | null>(null);
+  const pendingRedirect = useRef<string | null>(null);
 
   const t = (key: string) => labels[key]?.[language] || labels[key]?.en || key;
 
@@ -70,9 +73,8 @@ const PaymentSuccess = () => {
           setStatus('success');
           const lid = data.listing_id || null;
           setListingId(lid);
-          setTimeout(() => {
-            navigate(lid ? `/app/listings/${lid}` : '/app/signs', { replace: true });
-          }, 2000);
+          // Store pending redirect — actual navigation happens once auth is ready
+          pendingRedirect.current = lid ? `/app/listings/${lid}` : '/app/signs';
           return;
         }
 
@@ -98,6 +100,16 @@ const PaymentSuccess = () => {
       }
     }
   }, [sessionId, purchaseId, navigate]);
+
+  // Wait for auth to be ready before redirecting
+  useEffect(() => {
+    if (status === 'success' && pendingRedirect.current && !authLoading && user) {
+      const dest = pendingRedirect.current;
+      pendingRedirect.current = null;
+      const timer = setTimeout(() => navigate(dest, { replace: true }), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [status, authLoading, user, navigate]);
 
   useEffect(() => {
     const timer = setTimeout(runVerification, 500);
