@@ -115,7 +115,7 @@ const DistributionSection = ({
 
       // Auto-generate assets after assignment
       try {
-        await supabase.functions.invoke('generate-sign-assets', { body: { sign_id: sign.id } });
+        await supabase.functions.invoke('generate-sign-assets', { body: { sign_id: sign.id, fallback_language: language } });
       } catch (genErr) {
         console.warn('Auto-generate after assign failed:', genErr);
       }
@@ -170,7 +170,7 @@ const DistributionSection = ({
 
       // Auto-generate assets after reassignment
       try {
-        await supabase.functions.invoke('generate-sign-assets', { body: { sign_id: signId } });
+        await supabase.functions.invoke('generate-sign-assets', { body: { sign_id: signId, fallback_language: language } });
       } catch (genErr) {
         console.warn('Auto-generate after reassign failed:', genErr);
       }

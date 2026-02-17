@@ -188,7 +188,7 @@ serve(async (req) => {
               "Content-Type": "application/json",
               "Authorization": `Bearer ${serviceKey}`,
             },
-            body: JSON.stringify({ sign_id: signId }),
+            body: JSON.stringify({ sign_id: signId, fallback_language: listing?.base_language || "es" }),
           }).catch((genErr) => {
             console.error("Asset generation error:", genErr);
           });

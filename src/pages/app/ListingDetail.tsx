@@ -110,7 +110,7 @@ const ListingDetail = () => {
     setGenerating(signId);
     try {
       const res = await supabase.functions.invoke('generate-sign-assets', {
-        body: { sign_id: signId },
+        body: { sign_id: signId, fallback_language: language },
       });
       if (res.error) throw new Error(res.error.message);
       toast({ title: '✅', description: t('assetsGenerated') });

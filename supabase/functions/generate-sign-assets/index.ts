@@ -26,7 +26,7 @@ serve(async (req) => {
   );
 
   try {
-    const { sign_id } = await req.json();
+    const { sign_id, fallback_language } = await req.json();
     if (!sign_id) throw new Error("sign_id is required");
 
     // Optionally verify user ownership (skip if called with service role key)
@@ -106,7 +106,7 @@ serve(async (req) => {
     const webhookUrl = "https://obminversion.app.n8n.cloud/webhook/43dc4fb9-fc7a-4af6-b06c-0fecc7dee9f9";
     const webhookBody = {
       listingId: listing.id,
-      language: sign.language || listing.base_language || "es",
+      language: sign.language || listing.base_language || fallback_language || "es",
       Text: saleRentText,
       size: sign.size || "A4",
       type: listing.property_type || "",
