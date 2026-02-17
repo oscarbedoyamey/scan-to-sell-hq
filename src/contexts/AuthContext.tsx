@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { restoreSession } from '@/lib/sessionBackup';
+import { getBackedUpTokens } from '@/lib/sessionBackup';
 import type { User, Session } from '@supabase/supabase-js';
 
 export interface Profile {
@@ -91,17 +91,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const initializeAuth = async () => {
       try {
-        // Restore session from localStorage backup if sessionStorage was lost
-        // (e.g. after Stripe checkout redirect)
-        const wasRestored = restoreSession();
-        if (wasRestored) {
-          console.log('[Auth] Session restored from backup after external redirect');
-        }
+        // Check for backed-up tokens from before Stripe redirect
+        const backedUpTokens = getBackedUpTokens();
 
-        await Promise.race([
-          supabase.auth.getSession(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('getSession timeout')), 2500)),
-        ]);
+        if (backedUpTokens) {
+          console.log('[Auth] Found backed-up tokens, restoring session via setSession');
+          const { error } = await supabase.auth.setSession({
+            access_token: backedUpTokens.access_token,
+            refresh_token: backedUpTokens.refresh_token,
+          });
+          if (error) {
+            console.error('[Auth] Failed to restore session from backup:', error.message);
+          } else {
+            console.log('[Auth] Session successfully restored from backup');
+          }
+        } else {
+          await Promise.race([
+            supabase.auth.getSession(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('getSession timeout')), 2500)),
+          ]);
+        }
       } catch (err) {
         console.error('Auth init error:', err);
       } finally {
