@@ -106,7 +106,7 @@ export default function MySigns() {
   const handleGenerate = async (signId: string) => {
     setGenerating(signId);
     try {
-      const res = await supabase.functions.invoke('generate-sign-assets', { body: { sign_id: signId } });
+      const res = await supabase.functions.invoke('generate-sign-assets', { body: { sign_id: signId, fallback_language: language } });
       if (res.error) throw new Error(res.error.message);
       toast({ title: '✅', description: t('assetsGenerated') });
       invalidateSigns();
@@ -178,7 +178,7 @@ export default function MySigns() {
 
       // Auto-generate assets
       try {
-        await supabase.functions.invoke('generate-sign-assets', { body: { sign_id: assignSignId } });
+        await supabase.functions.invoke('generate-sign-assets', { body: { sign_id: assignSignId, fallback_language: language } });
       } catch (genErr) {
         console.warn('Auto-generate after assign failed:', genErr);
       }
