@@ -106,10 +106,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.log('[Auth] Session successfully restored from backup');
           }
         } else {
-          await Promise.race([
-            supabase.auth.getSession(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('getSession timeout')), 2500)),
-          ]);
+          try {
+            await Promise.race([
+              supabase.auth.getSession(),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('getSession timeout')), 2500)),
+            ]);
+          } catch (timeoutErr) {
+            console.warn('[Auth] getSession timed out, attempting refreshSession…');
+            const { error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) {
+              console.error('[Auth] refreshSession failed, signing out:', refreshError.message);
+              await supabase.auth.signOut();
+            } else {
+              console.log('[Auth] Session refreshed successfully after timeout');
+            }
+          }
         }
       } catch (err) {
         console.error('Auth init error:', err);

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { backupSession } from '@/lib/sessionBackup';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Play, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,10 @@ export const Hero = () => {
         body: { package_id: '6m' },
       });
       if (error) throw error;
-      if (data?.url) window.location.href = data.url;
+      if (data?.url) {
+        backupSession();
+        window.location.href = data.url;
+      }
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
