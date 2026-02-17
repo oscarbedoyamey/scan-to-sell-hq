@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { getBackedUpTokens } from '@/lib/sessionBackup';
 import type { User, Session } from '@supabase/supabase-js';
 
 export interface Profile {
@@ -79,50 +78,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // INITIAL load (controls isLoading)
+    // INITIAL load — simple getSession, no backup/restore needed.
+    // The sessionStorage patch handles cross-origin persistence transparently.
     const initializeAuth = async () => {
       try {
-        // Check for backed-up tokens from before Stripe redirect
-        const backedUpTokens = getBackedUpTokens();
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        if (!mounted) return;
 
-        if (backedUpTokens) {
-          console.log('[Auth] Found backed-up tokens, restoring via refreshSession');
-          try {
-            const { data, error } = await supabase.auth.refreshSession({
-              refresh_token: backedUpTokens.refresh_token,
-            });
-            if (error) {
-              console.error('[Auth] refreshSession from backup failed:', error.message);
-              await supabase.auth.signOut();
-            } else {
-              console.log('[Auth] Session restored from backup:', !!data.session);
-            }
-          } catch (restoreErr) {
-            console.error('[Auth] Exception restoring backup:', restoreErr);
-            await supabase.auth.signOut();
-          }
-        } else {
-          // Try getSession with a generous timeout
-          try {
-            await Promise.race([
-              supabase.auth.getSession(),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('getSession timeout')), 5000)),
-            ]);
-          } catch (timeoutErr) {
-            console.warn('[Auth] getSession timed out, attempting refreshSession…');
-            try {
-              const { data, error: refreshError } = await supabase.auth.refreshSession();
-              if (refreshError) {
-                console.error('[Auth] refreshSession failed, signing out:', refreshError.message);
-                await supabase.auth.signOut();
-              } else {
-                console.log('[Auth] Session refreshed successfully:', !!data.session);
-              }
-            } catch (refreshErr) {
-              console.error('[Auth] refreshSession threw:', refreshErr);
-              await supabase.auth.signOut();
-            }
-          }
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+
+        if (initialSession?.user) {
+          await fetchProfile(initialSession.user.id);
         }
       } catch (err) {
         console.error('Auth init error:', err);

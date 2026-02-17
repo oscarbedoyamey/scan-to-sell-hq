@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { backupSession } from '@/lib/sessionBackup';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Play, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -34,7 +33,6 @@ export const Hero = () => {
       });
       if (error) throw error;
       if (data?.url) {
-        backupSession();
         window.location.href = data.url;
       }
     } catch (err: any) {
