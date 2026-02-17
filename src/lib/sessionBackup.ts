@@ -7,42 +7,59 @@
 
 const BACKUP_KEY = 'zigno_session_backup';
 
+interface SessionTokens {
+  access_token: string;
+  refresh_token: string;
+}
+
 export function backupSession() {
-  // Copy all supabase auth keys from sessionStorage to localStorage
+  // Find the supabase auth token in sessionStorage
   const keys = Object.keys(sessionStorage).filter(
     (k) => k.startsWith('sb-') && k.includes('-auth-token')
   );
   if (keys.length === 0) return;
 
-  const backup: Record<string, string> = {};
+  // Extract the actual tokens from the stored session data
   for (const k of keys) {
-    const v = sessionStorage.getItem(k);
-    if (v) backup[k] = v;
+    const raw = sessionStorage.getItem(k);
+    if (!raw) continue;
+    try {
+      const parsed = JSON.parse(raw);
+      const tokens: SessionTokens = {
+        access_token: parsed.access_token || parsed.currentSession?.access_token,
+        refresh_token: parsed.refresh_token || parsed.currentSession?.refresh_token,
+      };
+      if (tokens.access_token && tokens.refresh_token) {
+        localStorage.setItem(BACKUP_KEY, JSON.stringify(tokens));
+        console.log('[SessionBackup] Session backed up before redirect');
+        return;
+      }
+    } catch {
+      // try next key
+    }
   }
-  localStorage.setItem(BACKUP_KEY, JSON.stringify(backup));
 }
 
-export function restoreSession(): boolean {
+/**
+ * Returns the backed-up session tokens if available, or null.
+ * Cleans up the backup after reading.
+ */
+export function getBackedUpTokens(): SessionTokens | null {
   const raw = localStorage.getItem(BACKUP_KEY);
-  if (!raw) return false;
+  if (!raw) return null;
 
   try {
-    const backup = JSON.parse(raw) as Record<string, string>;
-    let restored = false;
-    for (const [k, v] of Object.entries(backup)) {
-      // Only restore if sessionStorage doesn't already have it
-      if (!sessionStorage.getItem(k)) {
-        sessionStorage.setItem(k, v);
-        restored = true;
-      }
+    const tokens = JSON.parse(raw) as SessionTokens;
+    if (tokens.access_token && tokens.refresh_token) {
+      localStorage.removeItem(BACKUP_KEY);
+      console.log('[SessionBackup] Tokens retrieved from backup');
+      return tokens;
     }
-    // Clean up backup after restoration
-    localStorage.removeItem(BACKUP_KEY);
-    return restored;
   } catch {
-    localStorage.removeItem(BACKUP_KEY);
-    return false;
+    // corrupted
   }
+  localStorage.removeItem(BACKUP_KEY);
+  return null;
 }
 
 export function clearSessionBackup() {
