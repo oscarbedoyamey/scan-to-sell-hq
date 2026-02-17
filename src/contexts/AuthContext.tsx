@@ -86,15 +86,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const backedUpTokens = getBackedUpTokens();
 
         if (backedUpTokens) {
-          console.log('[Auth] Found backed-up tokens, restoring session via setSession');
-          const { error } = await supabase.auth.setSession({
-            access_token: backedUpTokens.access_token,
-            refresh_token: backedUpTokens.refresh_token,
-          });
-          if (error) {
-            console.error('[Auth] Failed to restore session from backup:', error.message);
-          } else {
-            console.log('[Auth] Session successfully restored from backup');
+          console.log('[Auth] Found backed-up tokens, restoring via refreshSession');
+          try {
+            const { data, error } = await supabase.auth.refreshSession({
+              refresh_token: backedUpTokens.refresh_token,
+            });
+            if (error) {
+              console.error('[Auth] refreshSession from backup failed:', error.message);
+              await supabase.auth.signOut();
+            } else {
+              console.log('[Auth] Session restored from backup:', !!data.session);
+            }
+          } catch (restoreErr) {
+            console.error('[Auth] Exception restoring backup:', restoreErr);
+            await supabase.auth.signOut();
           }
         } else {
           // Try getSession with a generous timeout
