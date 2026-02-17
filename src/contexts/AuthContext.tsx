@@ -79,19 +79,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // INITIAL load (controls isLoading)
-    // We rely on onAuthStateChange to set user/session.
-    // Here we just kick off getSession (which triggers the listener)
-    // and set a safety timeout so the spinner never hangs forever.
+    // Hard safety timeout so the spinner NEVER hangs forever,
+    // even if getSession() hangs (e.g. after Stripe redirect).
+    const safetyTimer = setTimeout(() => {
+      if (mounted) {
+        console.warn('Auth safety timeout reached — clearing loading state');
+        setIsLoading(false);
+      }
+    }, 3000);
+
     const initializeAuth = async () => {
       try {
-        await supabase.auth.getSession();
+        await Promise.race([
+          supabase.auth.getSession(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('getSession timeout')), 2500)),
+        ]);
       } catch (err) {
         console.error('Auth init error:', err);
       } finally {
         // Give the onAuthStateChange listener a moment to fire
         // before clearing loading state
         setTimeout(() => {
-          if (mounted) setIsLoading(false);
+          if (mounted) {
+            setIsLoading(false);
+            clearTimeout(safetyTimer);
+          }
         }, 200);
       }
     };
@@ -100,6 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       mounted = false;
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
