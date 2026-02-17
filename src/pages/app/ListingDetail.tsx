@@ -2,7 +2,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useState, useMemo, useEffect } from 'react';
 import { ArrowLeft, QrCode, FileText, Download, RefreshCw, ExternalLink, Loader2, Eye, CreditCard, BarChart3, Power, ToggleLeft, Pencil, Link2, Copy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { backupSession } from '@/lib/sessionBackup';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -131,7 +131,6 @@ const ListingDetail = () => {
       });
       if (error) throw error;
       if (data?.url) {
-        backupSession(); // Persist session before leaving to Stripe
         window.location.href = data.url;
       }
     } catch (err: any) {

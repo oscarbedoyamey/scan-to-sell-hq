@@ -1,7 +1,6 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -26,11 +25,9 @@ const MAX_ATTEMPTS = 6;
 
 const PaymentSuccess = () => {
   const { language } = useLanguage();
-  const { user, isLoading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
   const [listingId, setListingId] = useState<string | null>(null);
-  const pendingRedirect = useRef<string | null>(null);
 
   const t = (key: string) => labels[key]?.[language] || labels[key]?.en || key;
 
@@ -51,7 +48,6 @@ const PaymentSuccess = () => {
     while (attempt < MAX_ATTEMPTS) {
       attempt++;
       try {
-        console.log(`[PaymentSuccess] Verify attempt ${attempt}/${MAX_ATTEMPTS} (fetch directo)`);
         const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-payment`, {
           method: 'POST',
           headers: {
@@ -61,27 +57,22 @@ const PaymentSuccess = () => {
           body: JSON.stringify({ session_id: sessionId, purchase_id: purchaseId }),
         });
 
-        if (!response.ok) {
-          console.error(`[PaymentSuccess] HTTP ${response.status} en intento ${attempt}`);
-          throw new Error(`HTTP ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const data = await response.json();
-        console.log(`[PaymentSuccess] Respuesta intento ${attempt}:`, data);
 
         if (data?.verified) {
           setStatus('success');
           const lid = data.listing_id || null;
           setListingId(lid);
-          // Store pending redirect — actual navigation happens once auth is ready
-          pendingRedirect.current = lid ? `/app/listings/${lid}` : '/app/signs';
+          setTimeout(() => {
+            navigate(lid ? `/app/listings/${lid}` : '/app/signs', { replace: true });
+          }, 2000);
           return;
         }
 
-        // Not yet verified, retry with progressive delay
         if (attempt < MAX_ATTEMPTS) {
           const delay = DELAYS[attempt - 1] || 5000;
-          console.log(`[PaymentSuccess] No verificado aún, reintentando en ${delay}ms…`);
           await new Promise(r => setTimeout(r, delay));
           continue;
         }
@@ -89,7 +80,7 @@ const PaymentSuccess = () => {
         setStatus('error');
         return;
       } catch (err) {
-        console.error(`[PaymentSuccess] Intento ${attempt} falló:`, err);
+        console.error(`[PaymentSuccess] Attempt ${attempt} failed:`, err);
         if (attempt < MAX_ATTEMPTS) {
           const delay = DELAYS[attempt - 1] || 5000;
           await new Promise(r => setTimeout(r, delay));
@@ -100,16 +91,6 @@ const PaymentSuccess = () => {
       }
     }
   }, [sessionId, purchaseId, navigate]);
-
-  // Wait for auth to be ready before redirecting
-  useEffect(() => {
-    if (status === 'success' && pendingRedirect.current && !authLoading && user) {
-      const dest = pendingRedirect.current;
-      pendingRedirect.current = null;
-      const timer = setTimeout(() => navigate(dest, { replace: true }), 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [status, authLoading, user, navigate]);
 
   useEffect(() => {
     const timer = setTimeout(runVerification, 500);

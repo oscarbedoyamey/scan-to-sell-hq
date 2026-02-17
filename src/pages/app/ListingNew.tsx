@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { backupSession } from '@/lib/sessionBackup';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Check, QrCode, Signpost, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -319,7 +318,6 @@ const ListingNew = () => {
       });
       if (error) throw error;
       if (checkoutData?.url) {
-        backupSession();
         window.location.href = checkoutData.url;
       }
     } catch (err: any) {
