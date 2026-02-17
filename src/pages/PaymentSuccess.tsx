@@ -3,6 +3,7 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getBackedUpTokens } from '@/lib/sessionBackup';
 import zignoLogo from '@/assets/zigno-logo.png';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -99,6 +100,23 @@ const PaymentSuccess = () => {
   }, [sessionId, purchaseId, navigate]);
 
   useEffect(() => {
+    // === TEMPORARY DEBUG LOG ===
+    const backupRaw = localStorage.getItem('zigno_session_backup');
+    const sessionKeys = Object.keys(sessionStorage).filter(k => k.startsWith('sb-'));
+    console.log('[PaymentSuccess] DEBUG — localStorage backup exists:', !!backupRaw);
+    console.log('[PaymentSuccess] DEBUG — localStorage backup content:', backupRaw ? JSON.parse(backupRaw) : null);
+    console.log('[PaymentSuccess] DEBUG — sessionStorage sb- keys:', sessionKeys);
+    sessionKeys.forEach(k => {
+      try {
+        const val = JSON.parse(sessionStorage.getItem(k) || '');
+        console.log(`[PaymentSuccess] DEBUG — sessionStorage[${k}]:`, {
+          has_access_token: !!val?.access_token,
+          has_refresh_token: !!val?.refresh_token,
+        });
+      } catch { console.log(`[PaymentSuccess] DEBUG — sessionStorage[${k}]: (not JSON)`); }
+    });
+    // === END DEBUG ===
+
     const timer = setTimeout(runVerification, 500);
     return () => clearTimeout(timer);
   }, [runVerification]);
