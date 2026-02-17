@@ -80,15 +80,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // INITIAL load (controls isLoading)
-    // Hard safety timeout so the spinner NEVER hangs forever,
-    // even if getSession() hangs (e.g. after Stripe redirect).
-    const safetyTimer = setTimeout(() => {
-      if (mounted) {
-        console.warn('Auth safety timeout reached — clearing loading state');
-        setIsLoading(false);
-      }
-    }, 3000);
-
     const initializeAuth = async () => {
       try {
         // Check for backed-up tokens from before Stripe redirect
@@ -106,31 +97,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.log('[Auth] Session successfully restored from backup');
           }
         } else {
+          // Try getSession with a generous timeout
           try {
             await Promise.race([
               supabase.auth.getSession(),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('getSession timeout')), 2500)),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('getSession timeout')), 5000)),
             ]);
           } catch (timeoutErr) {
             console.warn('[Auth] getSession timed out, attempting refreshSession…');
-            const { error: refreshError } = await supabase.auth.refreshSession();
-            if (refreshError) {
-              console.error('[Auth] refreshSession failed, signing out:', refreshError.message);
+            try {
+              const { data, error: refreshError } = await supabase.auth.refreshSession();
+              if (refreshError) {
+                console.error('[Auth] refreshSession failed, signing out:', refreshError.message);
+                await supabase.auth.signOut();
+              } else {
+                console.log('[Auth] Session refreshed successfully:', !!data.session);
+              }
+            } catch (refreshErr) {
+              console.error('[Auth] refreshSession threw:', refreshErr);
               await supabase.auth.signOut();
-            } else {
-              console.log('[Auth] Session refreshed successfully after timeout');
             }
           }
         }
       } catch (err) {
         console.error('Auth init error:', err);
       } finally {
-        setTimeout(() => {
-          if (mounted) {
-            setIsLoading(false);
-            clearTimeout(safetyTimer);
-          }
-        }, 200);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -138,7 +132,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       mounted = false;
-      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
