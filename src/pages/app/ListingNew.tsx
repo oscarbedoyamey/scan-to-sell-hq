@@ -313,15 +313,8 @@ const ListingNew = () => {
     if (!listingId) return;
     setLoadingPlan(packageId);
     try {
-      const { data: checkoutData, error } = await supabase.functions.invoke('create-checkout', {
-        body: { package_id: packageId, listing_id: listingId },
-      });
-      if (error) throw error;
-      if (checkoutData?.url) {
-        window.location.href = checkoutData.url;
-      }
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      // Navigate to embedded checkout page
+      navigate(`/checkout?package_id=${packageId}&listing_id=${listingId}`);
     } finally {
       setLoadingPlan(null);
     }

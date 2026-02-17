@@ -73,13 +73,15 @@ serve(async (req) => {
     if (purchaseError) throw new Error("Failed to create purchase record");
 
     const origin = req.headers.get("origin") || "https://scan-to-sell-hq.lovable.app";
+
+    // Use embedded mode — returns client_secret instead of url
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [{ price: pkg.stripe_price_id, quantity: 1 }],
       mode: "payment",
-      success_url: `${origin}/payment-success?purchase_id=${purchase.id}&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/app/listings`,
+      ui_mode: "embedded",
+      return_url: `${origin}/payment-success?purchase_id=${purchase.id}&session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
         purchase_id: purchase.id,
         package_id: pkg.id,
@@ -93,10 +95,13 @@ serve(async (req) => {
       .update({ stripe_checkout_session_id: session.id })
       .eq("id", purchase.id);
 
-    return new Response(JSON.stringify({ url: session.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({ client_secret: session.client_secret }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
   } catch (error) {
     console.error("Checkout error:", error);
     return new Response(JSON.stringify({ error: error.message }), {

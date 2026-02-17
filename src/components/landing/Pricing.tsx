@@ -1,10 +1,8 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Loader2 } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const labels: Record<string, Record<string, string>> = {
@@ -38,7 +36,7 @@ export const Pricing = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  
 
   const t = (key: string, dict: Record<string, Record<string, string>> = labels) =>
     dict[key]?.[language] || dict[key]?.en || key;
@@ -50,22 +48,8 @@ export const Pricing = () => {
       return;
     }
 
-    setLoadingPlan(packageId);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { package_id: packageId },
-      });
-
-      if (error) throw error;
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (err: any) {
-      console.error('Checkout error:', err);
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
-    } finally {
-      setLoadingPlan(null);
-    }
+    // Navigate to embedded checkout page (no listing_id from landing)
+    navigate(`/checkout?package_id=${packageId}`);
   };
 
   return (
@@ -118,12 +102,8 @@ export const Pricing = () => {
                 variant={plan.popular ? 'hero' : 'default'}
                 size="lg"
                 className="w-full"
-                disabled={loadingPlan !== null}
                 onClick={() => handleCheckout(plan.id)}
               >
-                {loadingPlan === plan.id ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : null}
                 {t('cta')}
               </Button>
             </div>
