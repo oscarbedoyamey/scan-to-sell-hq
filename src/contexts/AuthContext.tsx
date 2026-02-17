@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { restoreSession } from '@/lib/sessionBackup';
 import type { User, Session } from '@supabase/supabase-js';
 
 export interface Profile {
@@ -90,6 +91,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const initializeAuth = async () => {
       try {
+        // Restore session from localStorage backup if sessionStorage was lost
+        // (e.g. after Stripe checkout redirect)
+        const wasRestored = restoreSession();
+        if (wasRestored) {
+          console.log('[Auth] Session restored from backup after external redirect');
+        }
+
         await Promise.race([
           supabase.auth.getSession(),
           new Promise((_, reject) => setTimeout(() => reject(new Error('getSession timeout')), 2500)),
@@ -97,8 +105,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (err) {
         console.error('Auth init error:', err);
       } finally {
-        // Give the onAuthStateChange listener a moment to fire
-        // before clearing loading state
         setTimeout(() => {
           if (mounted) {
             setIsLoading(false);
