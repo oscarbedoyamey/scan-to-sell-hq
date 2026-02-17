@@ -81,7 +81,7 @@ const ListingDetail = () => {
   const navigate = useNavigate();
   const { invalidateListingDetail, invalidateListings } = useListingMutations();
 
-  const { data: listing, isLoading: loadingListing } = useListing(id);
+  const { data: listing, isLoading: loadingListing, isError: listingError, refetch: refetchListing } = useListing(id);
   const [signsPolling, setSignsPolling] = useState(false);
   const { data: signs = [] } = useListingSigns(id, signsPolling);
   const { data: purchase } = useListingPurchase(id);
@@ -151,13 +151,20 @@ const ListingDetail = () => {
     );
   }
 
-  if (!listing) {
+  if (listingError || !listing) {
     return (
       <div className="max-w-5xl">
         <Link to="/app/listings" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
           <ArrowLeft className="h-4 w-4" /> {t('back')}
         </Link>
-        <p className="text-muted-foreground">Listing not found.</p>
+        <div className="text-center py-10 space-y-4">
+          <p className="text-muted-foreground">{listingError ? 'Error loading listing. Please try again.' : 'Listing not found.'}</p>
+          {listingError && (
+            <Button variant="outline" onClick={() => refetchListing()}>
+              <RefreshCw className="h-4 w-4 mr-2" /> {t('retry')}
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
