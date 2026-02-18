@@ -48,8 +48,18 @@ export const Pricing = () => {
       return;
     }
 
-    // Navigate to embedded checkout page (no listing_id from landing)
-    navigate(`/checkout?package_id=${packageId}`);
+    try {
+      const { data, error } = await (await import('@/integrations/supabase/client')).supabase.functions.invoke('create-checkout', {
+        body: { package_id: packageId },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      toast({ title: err.message || 'Checkout failed', variant: 'destructive' });
+    }
   };
 
   return (

@@ -14,7 +14,6 @@ import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 
 import PaymentSuccess from "./pages/PaymentSuccess";
-import EmbeddedCheckout from "./pages/EmbeddedCheckout";
 import PublicListing from "./pages/PublicListing";
 import PublicListingDirect from "./pages/PublicListingDirect";
 import DemoListing from "./pages/DemoListing";
@@ -49,7 +48,6 @@ const App = () => (
               <Route path="/" element={<Index />} />
               
               <Route path="/payment-success" element={<PaymentSuccess />} />
-              <Route path="/checkout" element={<ProtectedRoute><EmbeddedCheckout /></ProtectedRoute>} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/s/:signCode" element={<PublicListing />} />

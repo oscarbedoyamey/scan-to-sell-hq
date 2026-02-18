@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
-import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -74,14 +74,13 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://scan-to-sell-hq.lovable.app";
 
-    // Use embedded mode — returns client_secret instead of url
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [{ price: pkg.stripe_price_id, quantity: 1 }],
       mode: "payment",
-      ui_mode: "embedded",
-      return_url: `${origin}/payment-success?purchase_id=${purchase.id}&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/payment-success?purchase_id=${purchase.id}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/app/listings/${listing_id || ""}`,
       metadata: {
         purchase_id: purchase.id,
         package_id: pkg.id,
@@ -96,7 +95,7 @@ serve(async (req) => {
       .eq("id", purchase.id);
 
     return new Response(
-      JSON.stringify({ client_secret: session.client_secret }),
+      JSON.stringify({ url: session.url }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
