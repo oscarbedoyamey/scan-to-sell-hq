@@ -8,10 +8,20 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+// WORKAROUND: Disable Navigator Locks API to prevent multi-tab deadlocks
+// This is the official workaround for Supabase auth deadlock bug
+// References: 
+// - https://github.com/supabase/supabase-js/issues/1594
+// - https://github.com/supabase/supabase-js/issues/2013
+const noOpLock = async (name: string, acquireTimeout: number, fn: () => Promise<any>) => {
+  return await fn();
+};
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: sessionStorage,
+    storage: localStorage,        // Use localStorage for cross-tab and redirect persistence
     persistSession: true,
     autoRefreshToken: true,
+    lock: noOpLock,               // Disable broken lock mechanism to prevent deadlocks
   }
 });
