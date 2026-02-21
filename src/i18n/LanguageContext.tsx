@@ -24,21 +24,28 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Listen for auth changes to load user's saved locale
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const uid = session?.user?.id ?? null;
       setUserId(uid);
 
       if (uid) {
-        const { data } = await (supabase as any)
-          .from('profiles')
-          .select('locale')
-          .eq('id', uid)
-          .maybeSingle();
+        // Defer DB call to avoid deadlock with auth state change callback
+        setTimeout(async () => {
+          try {
+            const { data } = await (supabase as any)
+              .from('profiles')
+              .select('locale')
+              .eq('id', uid)
+              .maybeSingle();
 
-        if (data?.locale && SUPPORTED_LANGS.includes(data.locale as Language)) {
-          setLanguageState(data.locale as Language);
-          document.documentElement.lang = data.locale;
-        }
+            if (data?.locale && SUPPORTED_LANGS.includes(data.locale as Language)) {
+              setLanguageState(data.locale as Language);
+              document.documentElement.lang = data.locale;
+            }
+          } catch (err) {
+            console.error('Error fetching locale:', err);
+          }
+        }, 0);
       }
     });
 
