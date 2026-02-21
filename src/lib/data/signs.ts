@@ -8,6 +8,7 @@ export interface SignWithAssignment extends Sign {
   listing?: {
     title: string;
     listing_code: string;
+    contact_phone: string | null;
   };
   latest_assignment?: SignAssignment;
 }
@@ -18,7 +19,7 @@ export async function fetchUserSigns(userId: string): Promise<SignWithAssignment
   // Get user's listings first
   const { data: userListings, error: listingsError } = await supabase
     .from('listings')
-    .select('id, title, listing_code')
+    .select('id, title, listing_code, contact_phone')
     .eq('owner_user_id', userId);
 
   if (listingsError) throw listingsError;
@@ -47,6 +48,7 @@ export async function fetchUserSigns(userId: string): Promise<SignWithAssignment
           listing = {
             title: listingData.title || 'Untitled',
             listing_code: listingData.listing_code || '',
+            contact_phone: listingData.contact_phone || null,
           };
         }
       }

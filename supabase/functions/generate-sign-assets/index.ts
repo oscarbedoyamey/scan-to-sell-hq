@@ -26,7 +26,7 @@ serve(async (req) => {
   );
 
   try {
-    const { sign_id, fallback_language } = await req.json();
+    const { sign_id, fallback_language, phone: requestPhone } = await req.json();
     if (!sign_id) throw new Error("sign_id is required");
 
     // Optionally verify user ownership (skip if called with service role key)
@@ -111,7 +111,7 @@ serve(async (req) => {
       size: sign.size || "A4",
       type: listing.property_type || "",
       qrUrl: qrPublicUrlData.publicUrl,
-      phone: "",
+      phone: requestPhone || "",
     };
 
     console.log("Calling n8n webhook:", JSON.stringify(webhookBody));
