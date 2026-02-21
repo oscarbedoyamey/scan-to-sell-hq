@@ -21,7 +21,7 @@ const wizardLabels: Record<string, Record<string, string>> = {
   sale: { en: 'Sale', es: 'Venta', fr: 'Vente', de: 'Verkauf', it: 'Vendita', pt: 'Venda', pl: 'Sprzedaż' },
   rent: { en: 'Rent', es: 'Alquiler', fr: 'Location', de: 'Miete', it: 'Affitto', pt: 'Aluguel', pl: 'Wynajem' },
   propertyType: { en: 'Property type', es: 'Tipo de propiedad', fr: 'Type de bien', de: 'Immobilienart', it: 'Tipo di proprietà', pt: 'Tipo de imóvel', pl: 'Typ nieruchomości' },
-  apartment: { en: 'Apartment', es: 'Piso', fr: 'Appartement', de: 'Wohnung', it: 'Appartamento', pt: 'Apartamento', pl: 'Mieszkanie' },
+  apartment: { en: 'Apartment', es: 'Vivienda', fr: 'Appartement', de: 'Wohnung', it: 'Appartamento', pt: 'Apartamento', pl: 'Mieszkanie' },
   house: { en: 'House', es: 'Casa', fr: 'Maison', de: 'Haus', it: 'Casa', pt: 'Casa', pl: 'Dom' },
   villa: { en: 'Villa', es: 'Villa', fr: 'Villa', de: 'Villa', it: 'Villa', pt: 'Vila', pl: 'Willa' },
   land: { en: 'Land', es: 'Terreno', fr: 'Terrain', de: 'Grundstück', it: 'Terreno', pt: 'Terreno', pl: 'Działka' },
