@@ -126,9 +126,50 @@ serve(async (req) => {
       throw new Error(`Webhook failed (${webhookResponse.status}): ${errText}`);
     }
 
-    // --- 3. Save the returned PNG poster to storage ---
-    const posterBuffer = new Uint8Array(await webhookResponse.arrayBuffer());
-    console.log(`Received poster PNG: ${posterBuffer.byteLength} bytes`);
+    // --- 3. Save the returned poster to storage ---
+    // n8n may return raw PNG bytes OR a JSON with a URL to the image
+    const responseContentType = webhookResponse.headers.get("content-type") || "";
+    const responseBytes = new Uint8Array(await webhookResponse.arrayBuffer());
+    console.log(`Webhook response: ${responseBytes.byteLength} bytes, content-type: ${responseContentType}`);
+
+    let posterBuffer: Uint8Array;
+
+    // If response is small or not an image, it's likely JSON with a URL
+    if (responseBytes.byteLength < 1000 || responseContentType.includes("application/json") || responseContentType.includes("text/")) {
+      const responseText = new TextDecoder().decode(responseBytes);
+      console.log("Webhook response body:", responseText);
+
+      // Try to parse as JSON and extract an image URL
+      let imageUrl: string | null = null;
+      try {
+        const parsed = JSON.parse(responseText);
+        // Common patterns: { url: "..." }, { imageUrl: "..." }, { data: { url: "..." } }, or just a string URL
+        imageUrl = parsed.url || parsed.imageUrl || parsed.image_url || parsed.data?.url || parsed.data?.imageUrl || null;
+        // If parsed is an array, try first element
+        if (!imageUrl && Array.isArray(parsed) && parsed.length > 0) {
+          const first = parsed[0];
+          imageUrl = typeof first === "string" ? first : (first.url || first.imageUrl || first.image_url || null);
+        }
+      } catch {
+        // Maybe it's a plain URL string
+        if (responseText.startsWith("http")) {
+          imageUrl = responseText.trim();
+        }
+      }
+
+      if (imageUrl) {
+        console.log("Fetching poster image from URL:", imageUrl);
+        const imgResponse = await fetch(imageUrl);
+        if (!imgResponse.ok) throw new Error(`Failed to fetch poster image: ${imgResponse.status}`);
+        posterBuffer = new Uint8Array(await imgResponse.arrayBuffer());
+        console.log(`Downloaded poster: ${posterBuffer.byteLength} bytes`);
+      } else {
+        throw new Error(`Webhook returned non-image response (${responseBytes.byteLength} bytes): ${responseText.substring(0, 500)}`);
+      }
+    } else {
+      posterBuffer = responseBytes;
+      console.log(`Received poster PNG: ${posterBuffer.byteLength} bytes`);
+    }
 
     const posterPath = `signs/${sign.id}/poster.png`;
     const { error: posterUploadError } = await supabaseAdmin.storage
