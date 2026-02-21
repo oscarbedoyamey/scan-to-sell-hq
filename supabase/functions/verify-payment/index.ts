@@ -114,13 +114,14 @@ serve(async (req) => {
 
         let signId: string | null = existingSigns?.[0]?.id || null;
 
+        // Get listing data (needed for sign creation and asset generation)
+        const { data: listing } = await supabaseAdmin
+          .from("listings")
+          .select("operation_type, base_language")
+          .eq("id", listingId)
+          .single();
+
         if (!signId) {
-          // Get listing data for sign defaults
-          const { data: listing } = await supabaseAdmin
-            .from("listings")
-            .select("operation_type, base_language")
-            .eq("id", listingId)
-            .single();
 
           // Generate a unique sign_code
           let signCode = generateSignCode();
