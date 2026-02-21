@@ -185,16 +185,12 @@ export default function MySigns() {
           assigned_by: user.id,
         });
 
-      // Auto-generate assets
-      try {
-        await supabase.functions.invoke('generate-sign-assets', { body: { sign_id: assignSignId, fallback_language: language } });
-      } catch (genErr) {
-        console.warn('Auto-generate after assign failed:', genErr);
-      }
-
       invalidateAll();
       toast({ title: '✅', description: t('assignSuccess') });
+      // Show generate dialog so user picks phone/language before generating
+      const assignedSignId = assignSignId;
       setAssignSignId(null);
+      setShowGenerateDialog(assignedSignId);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
