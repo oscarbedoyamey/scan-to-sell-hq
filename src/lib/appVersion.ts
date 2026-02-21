@@ -2,7 +2,7 @@
  * App version check — forces logout when version changes (e.g. after a deploy).
  * Bump APP_VERSION to invalidate all existing sessions.
  */
-const APP_VERSION = '1';
+const APP_VERSION = '2';
 const VERSION_KEY = 'zigno_app_version';
 
 export const checkAppVersion = () => {
