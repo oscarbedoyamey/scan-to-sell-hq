@@ -111,6 +111,7 @@ serve(async (req) => {
       size: sign.size || "A4",
       type: listing.property_type || "",
       qrUrl: qrPublicUrlData.publicUrl,
+      phone: "",
     };
 
     console.log("Calling n8n webhook:", JSON.stringify(webhookBody));
