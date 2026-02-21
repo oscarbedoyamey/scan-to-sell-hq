@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { QrCode, Download, ExternalLink, Unlink, RefreshCw, Loader2, AlertTriangle, Eye, LinkIcon, Plus } from 'lucide-react';
 import { useUserSigns } from '@/hooks/useSigns';
 import { useListingMutations } from '@/hooks/useListingMutations';
+import { SignGenerateDialog, type SignGenerateOptions } from '@/components/listing/SignGenerateDialog';
 
 const translations: Record<string, Record<string, string>> = {
   mySignsTitle: { en: 'My Signs', es: 'Mis Carteles' },
@@ -64,6 +65,7 @@ export default function MySigns() {
   const [unassignSignId, setUnassignSignId] = useState<string | null>(null);
   const [unassigning, setUnassigning] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
+  const [showGenerateDialog, setShowGenerateDialog] = useState<string | null>(null);
   const [qrPreview, setQrPreview] = useState<{ code: string; url: string } | null>(null);
 
   // Assign listing state
@@ -103,10 +105,17 @@ export default function MySigns() {
     }
   };
 
-  const handleGenerate = async (signId: string) => {
+  const handleGenerate = async (signId: string, options?: { phone?: string; language?: string }) => {
     setGenerating(signId);
+    setShowGenerateDialog(null);
     try {
-      const res = await supabase.functions.invoke('generate-sign-assets', { body: { sign_id: signId, fallback_language: language } });
+      const res = await supabase.functions.invoke('generate-sign-assets', {
+        body: {
+          sign_id: signId,
+          fallback_language: options?.language || language,
+          phone: options?.phone || '',
+        },
+      });
       if (res.error) throw new Error(res.error.message);
       toast({ title: '✅', description: t('assetsGenerated') });
       invalidateSigns();
@@ -297,7 +306,7 @@ export default function MySigns() {
                               size="sm"
                               className="gap-1"
                               disabled={isGenerating}
-                              onClick={() => handleGenerate(sign.id)}
+                              onClick={() => setShowGenerateDialog(sign.id)}
                             >
                               {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> :
                                 sign.qr_image_path ? <RefreshCw className="h-3.5 w-3.5" /> : <QrCode className="h-3.5 w-3.5" />}
@@ -466,6 +475,20 @@ export default function MySigns() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Generate dialog */}
+      <SignGenerateDialog
+        open={!!showGenerateDialog}
+        onOpenChange={(v) => { if (!v) setShowGenerateDialog(null); }}
+        onConfirm={(opts) => {
+          if (showGenerateDialog) {
+            const sign = signs.find((s: any) => s.id === showGenerateDialog);
+            const phone = opts.showPhone ? (sign?.listing?.contact_phone || '') : '';
+            handleGenerate(showGenerateDialog, { phone, language: opts.language });
+          }
+        }}
+        loading={!!generating}
+      />
     </div>
   );
 }

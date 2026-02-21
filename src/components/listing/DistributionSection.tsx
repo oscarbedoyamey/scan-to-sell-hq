@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SignGenerateDialog, type SignGenerateOptions } from './SignGenerateDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -45,8 +46,9 @@ interface DistributionSectionProps {
   signs: Sign[];
   onDataChange: () => void;
   getPublicUrl: (path: string | null) => string | null;
-  onGenerateAssets: (signId: string) => void;
+  onGenerateAssets: (signId: string, options?: { phone?: string; language?: string }) => void;
   generating: string | null;
+  contactPhone?: string;
 }
 
 const DistributionSection = ({
@@ -56,6 +58,7 @@ const DistributionSection = ({
   getPublicUrl,
   onGenerateAssets,
   generating,
+  contactPhone,
 }: DistributionSectionProps) => {
   const { user } = useAuth();
   const { language } = useLanguage();
@@ -70,7 +73,7 @@ const DistributionSection = ({
   const [assigning, setAssigning] = useState<string | null>(null);
   const [unassigning, setUnassigning] = useState(false);
   const [reassignConfirmed, setReassignConfirmed] = useState(false);
-
+  const [showGenerateDialog, setShowGenerateDialog] = useState<string | null>(null);
   const loadAvailableSigns = async () => {
     if (!user) return;
     setLoadingAvailable(true);
@@ -298,7 +301,7 @@ const DistributionSection = ({
                           </a>
                         </Button>
                       )}
-                      <Button size="sm" onClick={() => onGenerateAssets(sign.id)} disabled={isGenerating}>
+                      <Button size="sm" onClick={() => setShowGenerateDialog(sign.id)} disabled={isGenerating}>
                         {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> :
                           sign.qr_image_path ? <RefreshCw className="h-3 w-3 mr-1" /> : <QrCode className="h-3 w-3 mr-1" />}
                         {sign.qr_image_path ? t('regenerate') : t('generate')}
@@ -441,6 +444,22 @@ const DistributionSection = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Generate dialog */}
+      <SignGenerateDialog
+        open={!!showGenerateDialog}
+        onOpenChange={(v) => { if (!v) setShowGenerateDialog(null); }}
+        onConfirm={(opts) => {
+          if (showGenerateDialog) {
+            onGenerateAssets(showGenerateDialog, {
+              phone: opts.showPhone ? (contactPhone || '') : '',
+              language: opts.language,
+            });
+            setShowGenerateDialog(null);
+          }
+        }}
+        loading={!!generating}
+      />
     </div>
   );
 };

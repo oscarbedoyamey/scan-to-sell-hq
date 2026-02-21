@@ -106,11 +106,15 @@ const ListingDetail = () => {
 
   const scanChartData = useMemo(() => aggregateScans(scans, scanGranularity), [scans, scanGranularity]);
 
-  const generateAssets = async (signId: string) => {
+  const generateAssets = async (signId: string, options?: { phone?: string; language?: string }) => {
     setGenerating(signId);
     try {
       const res = await supabase.functions.invoke('generate-sign-assets', {
-        body: { sign_id: signId, fallback_language: language },
+        body: {
+          sign_id: signId,
+          fallback_language: options?.language || language,
+          phone: options?.phone || '',
+        },
       });
       if (res.error) throw new Error(res.error.message);
       toast({ title: '✅', description: t('assetsGenerated') });
@@ -384,6 +388,7 @@ const ListingDetail = () => {
         getPublicUrl={getPublicUrl}
         onGenerateAssets={generateAssets}
         generating={generating}
+        contactPhone={listing.contact_phone || ''}
       />
     </div>
   );
