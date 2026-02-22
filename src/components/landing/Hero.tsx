@@ -6,7 +6,15 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import heroPoster from '@/assets/hero-poster.jpg';
+const heroPosterByLang: Record<string, string> = {
+  en: '/hero_en.png',
+  es: '/hero_es.png',
+  fr: '/hero_fr.png',
+  de: '/hero_de.png',
+  it: '/hero_it.png',
+  pt: '/hero_pt.png',
+  pl: '/hero_pl.png',
+};
 
 export const Hero = () => {
   const { t, language } = useLanguage();
@@ -115,7 +123,7 @@ export const Hero = () => {
               {/* Main image */}
               <div className="relative rounded-2xl overflow-hidden shadow-hero animate-float">
                 <img
-                  src={heroPoster}
+                  src={heroPosterByLang[language] || heroPosterByLang.en}
                   alt="Zigno QR Code Poster"
                   className="w-full h-auto"
                 />
