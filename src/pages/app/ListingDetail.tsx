@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useState, useMemo, useEffect } from 'react';
-import { ArrowLeft, QrCode, FileText, Download, RefreshCw, ExternalLink, Loader2, Eye, CreditCard, BarChart3, Power, ToggleLeft, Pencil, Link2, Copy } from 'lucide-react';
+import { ArrowLeft, QrCode, FileText, Download, RefreshCw, ExternalLink, Loader2, Eye, CreditCard, BarChart3, Power, Pencil, Link2, Copy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,12 @@ const labels: Record<string, Record<string, string>> = {
   preview: { en: 'Preview landing', es: 'Ver landing', fr: 'Voir la page', de: 'Vorschau', it: 'Anteprima', pt: 'Pré-visualizar', pl: 'Podgląd' },
   purchase: { en: 'Purchase', es: 'Compra', fr: 'Achat', de: 'Kauf', it: 'Acquisto', pt: 'Compra', pl: 'Zakup' },
   expiresAt: { en: 'Expires', es: 'Expira', fr: 'Expire', de: 'Läuft ab', it: 'Scade', pt: 'Expira', pl: 'Wygasa' },
-  renew: { en: 'Renew listing', es: 'Renovar anuncio', fr: 'Renouveler', de: 'Erneuern', it: 'Rinnova', pt: 'Renovar', pl: 'Odnów' },
+  cancelSub: { en: 'Cancel subscription', es: 'Cancelar suscripción', fr: 'Annuler l\'abonnement', de: 'Abo kündigen', it: 'Annulla abbonamento', pt: 'Cancelar assinatura', pl: 'Anuluj subskrypcję' },
+  cancelConfirm: { en: 'Subscription will not renew', es: 'La suscripción no se renovará', fr: 'L\'abonnement ne sera pas renouvelé', de: 'Abo wird nicht verlängert', it: 'L\'abbonamento non sarà rinnovato', pt: 'A assinatura não será renovada', pl: 'Subskrypcja nie zostanie odnowiona' },
+  cancelledAt: { en: 'Cancels at', es: 'Se cancela el', fr: 'Annulé le', de: 'Endet am', it: 'Annullato il', pt: 'Cancela em', pl: 'Anuluje się' },
+  autoRenewOn: { en: 'Auto-renewal enabled', es: 'Renovación automática activada', fr: 'Renouvellement automatique activé', de: 'Auto-Verlängerung aktiviert', it: 'Rinnovo automatico attivato', pt: 'Renovação automática ativada', pl: 'Auto-odnowienie włączone' },
+  autoRenewOff: { en: 'Auto-renewal disabled', es: 'Renovación automática desactivada', fr: 'Renouvellement automatique désactivé', de: 'Auto-Verlängerung deaktiviert', it: 'Rinnovo automatico disattivato', pt: 'Renovação automática desativada', pl: 'Auto-odnowienie wyłączone' },
+  subscription: { en: 'Subscription', es: 'Suscripción', fr: 'Abonnement', de: 'Abonnement', it: 'Abbonamento', pt: 'Assinatura', pl: 'Subskrypcja' },
   activate: { en: 'Activate listing', es: 'Activar anuncio', fr: 'Activer', de: 'Aktivieren', it: 'Attiva', pt: 'Ativar', pl: 'Aktywuj' },
   noPurchase: { en: 'No active plan. Purchase one to activate this listing.', es: 'Sin plan activo. Compra uno para activar este anuncio.', fr: 'Pas de plan actif. Achetez-en un.', de: 'Kein aktiver Plan. Kaufen Sie einen.', it: 'Nessun piano attivo. Acquistane uno.', pt: 'Sem plano ativo. Compre um.', pl: 'Brak planu. Kup jeden.' },
   paid: { en: 'Paid', es: 'Pagado', fr: 'Payé', de: 'Bezahlt', it: 'Pagato', pt: 'Pago', pl: 'Opłacone' },
@@ -99,6 +104,7 @@ const ListingDetail = () => {
   const [scanGranularity, setScanGranularity] = useState<'day' | 'week' | 'month'>('day');
   const [togglingStatus, setTogglingStatus] = useState(false);
   const [togglingRenew, setTogglingRenew] = useState(false);
+  const [cancellingSubscription, setCancellingSubscription] = useState(false);
 
   const t = (key: string) => labels[key]?.[language] || labels[key]?.en || key;
 
@@ -241,7 +247,7 @@ const ListingDetail = () => {
         </div>
       )}
 
-      {/* Purchase info / Renewal */}
+      {/* Purchase / Subscription */}
       <div className="bg-card rounded-2xl border border-border p-6 mb-6">
         <div className="flex items-center gap-2 mb-3">
           <CreditCard className="h-5 w-5 text-primary" />
@@ -249,50 +255,27 @@ const ListingDetail = () => {
         </div>
 
         {purchase && !isExpired ? (
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Badge variant="default">{t('paid')}</Badge>
-                <span className="text-sm text-muted-foreground">€{purchase.amount_eur}</span>
-              </div>
-              {purchase.end_at && (
-                <p className="text-sm text-muted-foreground">
-                  {t('expiresAt')}: {new Date(purchase.end_at).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-            <Button variant="outline" size="sm" onClick={() => handleCheckout('6m')} disabled={loadingPlan !== null}>
-              {loadingPlan && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
-              {t('renew')}
-            </Button>
-          </div>
-        ) : (
-          <div>
-            <p className="text-sm text-muted-foreground mb-4">{t('noPurchase')}</p>
-            <div className="grid sm:grid-cols-3 gap-3">
-              {plans.map((plan) => (
-                <Button
-                  key={plan.id}
-                  variant="outline"
-                  className="flex flex-col h-auto py-3"
-                  onClick={() => handleCheckout(plan.id)}
-                  disabled={loadingPlan !== null}
-                >
-                  {loadingPlan === plan.id && <Loader2 className="w-3 h-3 animate-spin" />}
-                  <span className="font-bold">{plan.months} mo — €{plan.price}</span>
-                </Button>
-              ))}
-      </div>
-
-      {/* Listing settings: auto-renew + deactivate */}
-      {listing && (
-        <div className="bg-card rounded-2xl border border-border p-6 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <ToggleLeft className="h-5 w-5 text-primary" />
-            <span className="font-medium text-foreground">{t('settings')}</span>
-          </div>
-
           <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Badge variant="default">{t('paid')}</Badge>
+                  <Badge variant="outline">{t('subscription')}</Badge>
+                  <span className="text-sm text-muted-foreground">€{purchase.amount_eur}</span>
+                </div>
+                {purchase.end_at && (
+                  <p className="text-sm text-muted-foreground">
+                    {(listing as any).auto_renew === false
+                      ? `${t('cancelledAt')}: ${new Date(purchase.end_at).toLocaleDateString()}`
+                      : `${t('expiresAt')}: ${new Date(purchase.end_at).toLocaleDateString()}`
+                    }
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <Separator />
+
             {/* Auto-renew toggle */}
             <div className="flex items-center justify-between">
               <div>
@@ -300,18 +283,69 @@ const ListingDetail = () => {
               </div>
               <Switch
                 checked={(listing as any).auto_renew ?? true}
-                disabled={togglingRenew}
+                disabled={togglingRenew || cancellingSubscription}
                 onCheckedChange={async (checked) => {
+                  if (!(purchase as any).stripe_subscription_id) {
+                    // Fallback: just update listing flag locally
+                    setTogglingRenew(true);
+                    await supabase.from('listings').update({ auto_renew: checked } as any).eq('id', listing.id);
+                    if (id) { invalidateListingDetail(id); invalidateListings(); }
+                    setTogglingRenew(false);
+                    return;
+                  }
                   setTogglingRenew(true);
-                  await supabase.from('listings').update({ auto_renew: checked } as any).eq('id', listing.id);
-                  if (id) { invalidateListingDetail(id); invalidateListings(); }
-                  setTogglingRenew(false);
+                  try {
+                    const { error } = await supabase.functions.invoke('toggle-auto-renew', {
+                      body: { purchase_id: purchase.id, auto_renew: checked },
+                    });
+                    if (error) throw error;
+                    toast({ title: '✅', description: checked ? t('autoRenewOn') : t('autoRenewOff') });
+                    if (id) { invalidateListingDetail(id); invalidateListings(); }
+                  } catch (err: any) {
+                    toast({ title: 'Error', description: err.message, variant: 'destructive' });
+                  } finally {
+                    setTogglingRenew(false);
+                  }
                 }}
               />
             </div>
 
+            {/* Cancel subscription button */}
+            {(purchase as any).stripe_subscription_id && (listing as any).auto_renew !== false && (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">{t('cancelSub')}</p>
+                </div>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={cancellingSubscription}
+                  onClick={async () => {
+                    setCancellingSubscription(true);
+                    try {
+                      const { error } = await supabase.functions.invoke('cancel-subscription', {
+                        body: { purchase_id: purchase.id },
+                      });
+                      if (error) throw error;
+                      toast({ title: '✅', description: t('cancelConfirm') });
+                      if (id) { invalidateListingDetail(id); invalidateListings(); }
+                    } catch (err: any) {
+                      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+                    } finally {
+                      setCancellingSubscription(false);
+                    }
+                  }}
+                >
+                  {cancellingSubscription && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
+                  {t('cancelSub')}
+                </Button>
+              </div>
+            )}
+
+            <Separator />
+
             {/* Deactivate / Reactivate */}
-            {purchase && !isExpired && (
+            {(
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-foreground">
@@ -338,8 +372,23 @@ const ListingDetail = () => {
               </div>
             )}
           </div>
-        </div>
-      )}
+        ) : (
+          <div>
+            <p className="text-sm text-muted-foreground mb-4">{t('noPurchase')}</p>
+            <div className="grid sm:grid-cols-3 gap-3">
+              {plans.map((plan) => (
+                <Button
+                  key={plan.id}
+                  variant="outline"
+                  className="flex flex-col h-auto py-3"
+                  onClick={() => handleCheckout(plan.id)}
+                  disabled={loadingPlan !== null}
+                >
+                  {loadingPlan === plan.id && <Loader2 className="w-3 h-3 animate-spin" />}
+                  <span className="font-bold">{plan.months} mo — €{plan.price}</span>
+                </Button>
+              ))}
+            </div>
           </div>
         )}
       </div>
