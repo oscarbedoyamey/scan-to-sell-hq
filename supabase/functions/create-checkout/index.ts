@@ -33,6 +33,14 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    // Fetch user locale for Stripe preferred_locales
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("locale")
+      .eq("id", user.id)
+      .maybeSingle();
+    const userLocale = profile?.locale || "en";
+
     const { data: pkg, error: pkgError } = await supabaseAdmin
       .from("packages")
       .select("*")
@@ -51,6 +59,8 @@ serve(async (req) => {
     let customerId: string | undefined;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
+      // Update preferred_locales to match current user language
+      await stripe.customers.update(customerId, { preferred_locales: [userLocale] });
     }
 
     // Create a purchase record (pending), linked to listing if provided
@@ -74,11 +84,21 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://scan-to-sell-hq.lovable.app";
 
+    // If no existing customer, create one with preferred_locales
+    if (!customerId) {
+      const newCustomer = await stripe.customers.create({
+        email: user.email,
+        preferred_locales: [userLocale],
+        metadata: { supabase_user_id: user.id },
+      });
+      customerId = newCustomer.id;
+    }
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
       line_items: [{ price: pkg.stripe_price_id, quantity: 1 }],
       mode: "payment",
+      locale: userLocale as any,
       success_url: `${origin}/payment-success?purchase_id=${purchase.id}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/app/listings/${listing_id || ""}`,
       metadata: {
