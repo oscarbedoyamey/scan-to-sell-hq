@@ -2,20 +2,30 @@ import { useState, useMemo } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { Badge } from '@/components/ui/badge';
 
-// Import poster examples (Spanish)
+// Import poster examples (Spanish - legacy)
 import posterExample1 from '@/assets/poster-example-1.jpg';
 import posterExample2 from '@/assets/poster-example-2.jpg';
 import posterExample3 from '@/assets/poster-example-3.jpg';
 import posterExample4 from '@/assets/poster-example-4.jpg';
 import posterExample5 from '@/assets/poster-example-5.jpg';
 
-// Import language-specific posters
+// Import language-specific office rent posters
 import officeRentEn from '@/assets/office_rent_en.png';
+import officeRentEs from '@/assets/office_rent_es.png';
 import officeRentFr from '@/assets/office_rent_fr.png';
 import officeRentDe from '@/assets/office_rent_de.png';
 import officeRentIt from '@/assets/office_rent_it.png';
 import officeRentPt from '@/assets/office_rent_pt.png';
 import officeRentPl from '@/assets/office_rent_pl.png';
+
+// Import language-specific apartment sale posters
+import ventaPisoEn from '@/assets/venta_piso_en.png';
+import ventaPisoEs from '@/assets/venta_piso_es.png';
+import ventaPisoFr from '@/assets/venta_piso_fr.png';
+import ventaPisoDe from '@/assets/venta_piso_de.png';
+import ventaPisoIt from '@/assets/venta_piso_it.png';
+import ventaPisoPt from '@/assets/venta_piso_pt.png';
+import ventaPisoPl from '@/assets/venta_piso_pl.png';
 
 interface PosterItem {
   id: number;
@@ -26,29 +36,37 @@ interface PosterItem {
   color: string;
 }
 
-const esPosters: PosterItem[] = [
-  { id: 1, image: posterExample1, type: 'rent', property: 'local', format: 'poster', color: 'Azul corporativo' },
-  { id: 2, image: posterExample2, type: 'rent', property: 'local', format: 'poster', color: 'Azul clásico' },
-  { id: 3, image: posterExample3, type: 'rent', property: 'parking', format: 'poster', color: 'Verde' },
-  { id: 4, image: posterExample4, type: 'rent', property: 'parking', format: 'banner', color: 'Naranja' },
-  { id: 5, image: posterExample5, type: 'rent', property: 'parking', format: 'banner', color: 'Naranja profesional' },
-];
-
 const officeRentByLang: Record<string, string> = {
-  en: officeRentEn,
-  fr: officeRentFr,
-  de: officeRentDe,
-  it: officeRentIt,
-  pt: officeRentPt,
-  pl: officeRentPl,
+  en: officeRentEn, es: officeRentEs, fr: officeRentFr,
+  de: officeRentDe, it: officeRentIt, pt: officeRentPt, pl: officeRentPl,
+};
+
+const ventaPisoByLang: Record<string, string> = {
+  en: ventaPisoEn, es: ventaPisoEs, fr: ventaPisoFr,
+  de: ventaPisoDe, it: ventaPisoIt, pt: ventaPisoPt, pl: ventaPisoPl,
 };
 
 const getPostersForLang = (lang: string): PosterItem[] => {
-  if (lang === 'es') return esPosters;
-  const img = officeRentByLang[lang] || officeRentByLang.en;
-  return [
-    { id: 1, image: img, type: 'rent', property: 'office', format: 'poster', color: 'Naranja' },
+  const officeImg = officeRentByLang[lang] || officeRentByLang.en;
+  const aptImg = ventaPisoByLang[lang] || ventaPisoByLang.en;
+
+  const posters: PosterItem[] = [
+    { id: 1, image: officeImg, type: 'rent', property: 'office', format: 'poster', color: 'Naranja' },
+    { id: 2, image: aptImg, type: 'sale', property: 'housing', format: 'poster', color: 'Naranja' },
   ];
+
+  // Add extra Spanish-only posters
+  if (lang === 'es') {
+    posters.push(
+      { id: 3, image: posterExample1, type: 'rent', property: 'local', format: 'poster', color: 'Azul corporativo' },
+      { id: 4, image: posterExample2, type: 'rent', property: 'local', format: 'poster', color: 'Azul clásico' },
+      { id: 5, image: posterExample3, type: 'rent', property: 'parking', format: 'poster', color: 'Verde' },
+      { id: 6, image: posterExample4, type: 'rent', property: 'parking', format: 'banner', color: 'Naranja' },
+      { id: 7, image: posterExample5, type: 'rent', property: 'parking', format: 'banner', color: 'Naranja profesional' },
+    );
+  }
+
+  return posters;
 };
 
 const filterLabels = {
