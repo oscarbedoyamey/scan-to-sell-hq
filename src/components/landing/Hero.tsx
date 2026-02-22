@@ -6,7 +6,15 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import heroPoster from '@/assets/hero-poster.jpg';
+const heroPosterByLang: Record<string, string> = {
+  en: '/hero_en.png',
+  es: '/hero_es.png',
+  fr: '/hero_fr.png',
+  de: '/hero_de.png',
+  it: '/hero_it.png',
+  pt: '/hero_pt.png',
+  pl: '/hero_pl.png',
+};
 
 export const Hero = () => {
   const { t, language } = useLanguage();
