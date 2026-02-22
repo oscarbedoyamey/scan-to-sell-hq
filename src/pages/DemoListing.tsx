@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import zignoLogo from '@/assets/zigno-logo.png';
 import propertyMockup from '@/assets/property-listing-mockup.jpg';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 const demoData = {
   title: { en: 'Modern Apartment in City Center', es: 'Apartamento Moderno en Centro Ciudad', fr: 'Appartement Moderne en Centre-Ville', de: 'Moderne Wohnung im Stadtzentrum', it: 'Appartamento Moderno in Centro Città', pt: 'Apartamento Moderno no Centro da Cidade', pl: 'Nowoczesne Mieszkanie w Centrum Miasta' },
@@ -54,8 +55,14 @@ const labels: Record<string, Record<string, string>> = {
 };
 
 const DemoListing = () => {
-  const { language } = useLanguage();
-  const lang = language as string;
+  const { language: contextLanguage } = useLanguage();
+  const [searchParams] = useSearchParams();
+  const SUPPORTED = ['en', 'es', 'fr', 'de', 'it', 'pt', 'pl'];
+  const lang = useMemo(() => {
+    const qLang = searchParams.get('language')?.toLowerCase();
+    if (qLang && SUPPORTED.includes(qLang)) return qLang;
+    return 'en';
+  }, [searchParams]);
   const l = (key: string) => labels[key]?.[lang] || labels[key]?.en || key;
 
   const title = demoData.title[lang as keyof typeof demoData.title] || demoData.title.en;
