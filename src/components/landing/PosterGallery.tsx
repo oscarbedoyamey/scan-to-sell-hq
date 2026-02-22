@@ -72,6 +72,7 @@ const filterLabels = {
   poster: { en: 'Poster', es: 'Cartel', fr: 'Affiche', de: 'Plakat', it: 'Poster', pt: 'Cartaz', pl: 'Plakat' },
   banner: { en: 'Banner', es: 'Lona', fr: 'Bâche', de: 'Banner', it: 'Striscione', pt: 'Faixa', pl: 'Baner' },
   sticker: { en: 'Sticker', es: 'Pegatina', fr: 'Autocollant', de: 'Aufkleber', it: 'Adesivo', pt: 'Autocolante', pl: 'Naklejka' },
+  custom: { en: 'Custom', es: 'Personalizado', fr: 'Personnalisé', de: 'Individuell', it: 'Personalizzato', pt: 'Personalizado', pl: 'Niestandardowy' },
 };
 
 export const PosterGallery = () => {
@@ -91,10 +92,7 @@ export const PosterGallery = () => {
     { key: 'all', label: getLabel('all') },
     { key: 'rent', label: getLabel('rent') },
     { key: 'sale', label: getLabel('sale') },
-    { key: 'local', label: getLabel('local') },
-    { key: 'parking', label: getLabel('parking') },
-    { key: 'poster', label: getLabel('poster') },
-    { key: 'banner', label: getLabel('banner') },
+    { key: 'custom', label: getLabel('custom') },
   ];
 
   return (
