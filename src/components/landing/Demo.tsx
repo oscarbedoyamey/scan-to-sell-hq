@@ -1,15 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 
-import qrEn from '@/assets/qr_zignoqr_demo_en.png';
-import qrEs from '@/assets/qr_zignoqr_demo_es.png';
-import qrFr from '@/assets/qr_zignoqr_demo_fr.png';
-import qrDe from '@/assets/qr_zignoqr_demo_de.png';
-import qrIt from '@/assets/qr_zignoqr_demo_it.png';
-import qrPt from '@/assets/qr_zignoqr_demo_pt.png';
-import qrPl from '@/assets/qr_zignoqr_demo_pl.png';
-
-const qrByLang: Record<string, string> = { en: qrEn, es: qrEs, fr: qrFr, de: qrDe, it: qrIt, pt: qrPt, pl: qrPl };
+const qrByLang: Record<string, string> = {
+  en: '/qr_zignoqr_demo_en.png',
+  es: '/qr_zignoqr_demo_es.png',
+  fr: '/qr_zignoqr_demo_fr.png',
+  de: '/qr_zignoqr_demo_de.png',
+  it: '/qr_zignoqr_demo_it.png',
+  pt: '/qr_zignoqr_demo_pt.png',
+  pl: '/qr_zignoqr_demo_pl.png',
+};
 
 export const Demo = () => {
   const { t, language } = useLanguage();
