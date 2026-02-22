@@ -27,14 +27,14 @@ const en = {
   
   // Hero Section
   hero: {
-    badge: 'Now available across Europe',
+    badge: 'Already trusted in 31+ countries',
     title: 'Turn your property sign into a',
     titleHighlight: '24/7 sales channel',
     subtitle: 'Replace the traditional "For Sale" sign with a smart QR code poster. Buyers scan and instantly see all property details—photos, price, location, and contact—on their phone.',
     cta: 'Create my poster now',
     ctaSecondary: 'See how it works',
     trustedBy: 'Trusted by property owners in',
-    countries: '15+ European countries',
+    countries: '31+ countries worldwide',
   },
 
   // How It Works
@@ -88,7 +88,7 @@ const en = {
     },
     option2: {
       title: 'Trusted partners',
-      description: 'Choose from our vetted printing partners across Europe for professional results.',
+      description: 'Choose from our vetted printing partners worldwide for professional results.',
     },
     option3: {
       title: 'AI-powered recommendation',
@@ -158,8 +158,8 @@ const en = {
   testimonials: {
     sectionLabel: 'Success Stories',
     title: 'Loved by property owners',
-    titleHighlight: 'across Europe',
-    subtitle: 'See why thousands of property owners and agents trust Zigno.',
+    titleHighlight: 'worldwide',
+    subtitle: 'See why thousands of property owners and agents in 31+ countries trust Zigno.',
   },
 
   // FAQ
@@ -186,7 +186,7 @@ const en = {
       },
       {
         question: 'Which countries do you support?',
-        answer: "Zigno works in all European Union countries plus the UK, Switzerland, and Norway. Our printing partners cover 15+ countries.",
+        answer: "Zigno works globally—we already have customers in 31+ countries. You can use Zigno anywhere in the world.",
       },
       {
         question: 'Can I cancel my subscription anytime?',
@@ -199,7 +199,7 @@ const en = {
 
   // Footer
   footer: {
-    description: 'The smart way to sell property in Europe. Replace traditional signs with QR-powered listings that work 24/7.',
+    description: 'The smart way to sell property worldwide. Replace traditional signs with QR-powered listings that work 24/7.',
     product: 'Product',
     legal: 'Legal',
     links: {
@@ -255,14 +255,14 @@ const fr = {
     createPoster: 'Créer mon affiche',
   },
   hero: {
-    badge: 'Maintenant disponible dans toute l\'Europe',
+    badge: 'Déjà présent dans 31+ pays',
     title: 'Transformez votre panneau en un',
     titleHighlight: 'canal de vente 24h/24',
     subtitle: 'Remplacez le panneau "À vendre" traditionnel par une affiche QR code intelligente. Les acheteurs scannent et voient instantanément tous les détails—photos, prix, localisation et contact.',
     cta: 'Créer mon affiche',
     ctaSecondary: 'Voir comment ça marche',
     trustedBy: 'Utilisé par des propriétaires dans',
-    countries: '15+ pays européens',
+    countries: '31+ pays dans le monde',
   },
   howItWorks: {
     sectionLabel: 'Processus Simple',
@@ -310,7 +310,7 @@ const fr = {
     },
     option2: {
       title: 'Partenaires de confiance',
-      description: 'Choisissez parmi nos partenaires d\'impression vérifiés à travers l\'Europe.',
+      description: 'Choisissez parmi nos partenaires d\'impression vérifiés dans le monde entier.',
     },
     option3: {
       title: 'Recommandation IA',
@@ -376,8 +376,8 @@ const fr = {
   testimonials: {
     sectionLabel: 'Témoignages',
     title: 'Adoré par les propriétaires',
-    titleHighlight: 'à travers l\'Europe',
-    subtitle: 'Découvrez pourquoi des milliers de propriétaires et agents font confiance à Zigno.',
+    titleHighlight: 'dans le monde entier',
+    subtitle: 'Découvrez pourquoi des milliers de propriétaires et agents dans 31+ pays font confiance à Zigno.',
   },
   faq: {
     sectionLabel: 'Questions & Réponses',
@@ -402,7 +402,7 @@ const fr = {
       },
       {
         question: 'Quels pays supportez-vous?',
-        answer: 'Zigno fonctionne dans tous les pays de l\'UE plus le Royaume-Uni, la Suisse et la Norvège. Nos partenaires d\'impression couvrent 15+ pays.',
+        answer: 'Zigno fonctionne dans le monde entier—nous avons déjà des clients dans 31+ pays. Vous pouvez utiliser Zigno partout.',
       },
       {
         question: 'Puis-je annuler mon abonnement à tout moment?',
@@ -413,7 +413,7 @@ const fr = {
     contactCta: 'Contactez-nous',
   },
   footer: {
-    description: 'La façon intelligente de vendre en Europe. Remplacez les panneaux traditionnels par des annonces QR qui fonctionnent 24h/24.',
+    description: 'La façon intelligente de vendre dans le monde entier. Remplacez les panneaux traditionnels par des annonces QR qui fonctionnent 24h/24.',
     product: 'Produit',
     legal: 'Légal',
     links: {
@@ -465,14 +465,14 @@ const es = {
     createPoster: 'Crear mi cartel',
   },
   hero: {
-    badge: 'Ya disponible en toda Europa',
+    badge: 'Ya presente en 31+ países',
     title: 'Convierte tu cartel en un',
     titleHighlight: 'canal de ventas 24/7',
     subtitle: 'Reemplaza el típico cartel "Se Vende" por uno con código QR inteligente. Los compradores escanean y ven al instante todos los detalles—fotos, precio, ubicación y contacto.',
     cta: 'Crear mi cartel ahora',
     ctaSecondary: 'Ver cómo funciona',
     trustedBy: 'Usado por propietarios en',
-    countries: '15+ países europeos',
+    countries: '31+ países en todo el mundo',
   },
   howItWorks: {
     sectionLabel: 'Proceso Simple',
@@ -520,7 +520,7 @@ const es = {
     },
     option2: {
       title: 'Imprentas de confianza',
-      description: 'Elige entre nuestras imprentas verificadas en toda Europa para resultados profesionales.',
+      description: 'Elige entre nuestras imprentas verificadas en todo el mundo para resultados profesionales.',
     },
     option3: {
       title: 'Recomendación con IA',
@@ -586,8 +586,8 @@ const es = {
   testimonials: {
     sectionLabel: 'Casos de Éxito',
     title: 'Amado por propietarios',
-    titleHighlight: 'en toda Europa',
-    subtitle: 'Descubre por qué miles de propietarios y agentes confían en Zigno.',
+    titleHighlight: 'en todo el mundo',
+    subtitle: 'Descubre por qué miles de propietarios y agentes en 31+ países confían en Zigno.',
   },
   faq: {
     sectionLabel: 'Preguntas y Respuestas',
@@ -612,7 +612,7 @@ const es = {
       },
       {
         question: '¿Qué países soportáis?',
-        answer: 'Zigno funciona en todos los países de la UE más Reino Unido, Suiza y Noruega. Nuestras imprentas asociadas cubren 15+ países.',
+        answer: 'Zigno funciona a nivel global—ya tenemos clientes en 31+ países. Puedes usar Zigno en cualquier parte del mundo.',
       },
       {
         question: '¿Puedo cancelar mi suscripción en cualquier momento?',
@@ -623,7 +623,7 @@ const es = {
     contactCta: 'Contáctanos',
   },
   footer: {
-    description: 'La forma inteligente de vender propiedades en Europa. Reemplaza los carteles tradicionales por anuncios QR que funcionan 24/7.',
+    description: 'La forma inteligente de vender propiedades en todo el mundo. Reemplaza los carteles tradicionales por anuncios QR que funcionan 24/7.',
     product: 'Producto',
     legal: 'Legal',
     links: {
@@ -675,14 +675,14 @@ const de = {
     createPoster: 'Mein Plakat erstellen',
   },
   hero: {
-    badge: 'Jetzt europaweit verfügbar',
+    badge: 'Bereits in 31+ Ländern vertreten',
     title: 'Verwandle dein Schild in einen',
     titleHighlight: '24/7-Verkaufskanal',
     subtitle: 'Ersetze das traditionelle "Zu Verkaufen"-Schild durch ein smartes QR-Code-Plakat. Käufer scannen und sehen sofort alle Details—Fotos, Preis, Lage und Kontakt.',
     cta: 'Jetzt mein Plakat erstellen',
     ctaSecondary: 'So funktioniert\'s',
     trustedBy: 'Genutzt von Immobilienbesitzern in',
-    countries: '15+ europäischen Ländern',
+    countries: '31+ Ländern weltweit',
   },
   howItWorks: {
     sectionLabel: 'Einfacher Prozess',
@@ -730,7 +730,7 @@ const de = {
     },
     option2: {
       title: 'Vertrauenswürdige Partner',
-      description: 'Wähle aus unseren geprüften Druckpartnern in ganz Europa für professionelle Ergebnisse.',
+      description: 'Wähle aus unseren geprüften Druckpartnern weltweit für professionelle Ergebnisse.',
     },
     option3: {
       title: 'KI-gestützte Empfehlung',
@@ -796,8 +796,8 @@ const de = {
   testimonials: {
     sectionLabel: 'Erfolgsgeschichten',
     title: 'Geliebt von Immobilienbesitzern',
-    titleHighlight: 'in ganz Europa',
-    subtitle: 'Erfahre, warum Tausende von Eigentümern und Maklern Zigno vertrauen.',
+    titleHighlight: 'weltweit',
+    subtitle: 'Erfahre, warum Tausende von Eigentümern und Maklern in 31+ Ländern Zigno vertrauen.',
   },
   faq: {
     sectionLabel: 'Fragen & Antworten',
@@ -822,7 +822,7 @@ const de = {
       },
       {
         question: 'Welche Länder unterstützt ihr?',
-        answer: 'Zigno funktioniert in allen EU-Ländern plus UK, Schweiz und Norwegen. Unsere Druckpartner decken 15+ Länder ab.',
+        answer: 'Zigno funktioniert weltweit—wir haben bereits Kunden in 31+ Ländern. Du kannst Zigno überall auf der Welt nutzen.',
       },
       {
         question: 'Kann ich mein Abo jederzeit kündigen?',
@@ -833,7 +833,7 @@ const de = {
     contactCta: 'Kontaktiere uns',
   },
   footer: {
-    description: 'Der smarte Weg, Immobilien in Europa zu verkaufen. Ersetze traditionelle Schilder durch QR-Anzeigen, die 24/7 funktionieren.',
+    description: 'Der smarte Weg, Immobilien weltweit zu verkaufen. Ersetze traditionelle Schilder durch QR-Anzeigen, die 24/7 funktionieren.',
     product: 'Produkt',
     legal: 'Rechtliches',
     links: {
@@ -885,14 +885,14 @@ const it = {
     createPoster: 'Crea il mio cartello',
   },
   hero: {
-    badge: 'Ora disponibile in tutta Europa',
+    badge: 'Già presente in 31+ paesi',
     title: 'Trasforma il tuo cartello in un',
     titleHighlight: 'canale di vendita 24/7',
     subtitle: 'Sostituisci il tradizionale cartello "Vendesi" con un poster con codice QR intelligente. Gli acquirenti scansionano e vedono istantaneamente tutti i dettagli—foto, prezzo, posizione e contatto.',
     cta: 'Crea il mio cartello ora',
     ctaSecondary: 'Scopri come funziona',
     trustedBy: 'Usato da proprietari in',
-    countries: '15+ paesi europei',
+    countries: '31+ paesi nel mondo',
   },
   howItWorks: {
     sectionLabel: 'Processo Semplice',
@@ -940,7 +940,7 @@ const it = {
     },
     option2: {
       title: 'Partner di fiducia',
-      description: 'Scegli tra i nostri partner di stampa verificati in tutta Europa per risultati professionali.',
+      description: 'Scegli tra i nostri partner di stampa verificati in tutto il mondo per risultati professionali.',
     },
     option3: {
       title: 'Raccomandazione IA',
@@ -1006,8 +1006,8 @@ const it = {
   testimonials: {
     sectionLabel: 'Storie di Successo',
     title: 'Amato dai proprietari',
-    titleHighlight: 'in tutta Europa',
-    subtitle: 'Scopri perché migliaia di proprietari e agenti si fidano di Zigno.',
+    titleHighlight: 'in tutto il mondo',
+    subtitle: 'Scopri perché migliaia di proprietari e agenti in 31+ paesi si fidano di Zigno.',
   },
   faq: {
     sectionLabel: 'Domande e Risposte',
@@ -1032,7 +1032,7 @@ const it = {
       },
       {
         question: 'Quali paesi supportate?',
-        answer: 'Zigno funziona in tutti i paesi UE più UK, Svizzera e Norvegia. I nostri partner di stampa coprono 15+ paesi.',
+        answer: 'Zigno funziona a livello globale—abbiamo già clienti in 31+ paesi. Puoi usare Zigno ovunque nel mondo.',
       },
       {
         question: 'Posso cancellare l\'abbonamento in qualsiasi momento?',
@@ -1043,7 +1043,7 @@ const it = {
     contactCta: 'Contattaci',
   },
   footer: {
-    description: 'Il modo intelligente per vendere immobili in Europa. Sostituisci i cartelli tradizionali con annunci QR che funzionano 24/7.',
+    description: 'Il modo intelligente per vendere immobili in tutto il mondo. Sostituisci i cartelli tradizionali con annunci QR che funzionano 24/7.',
     product: 'Prodotto',
     legal: 'Legale',
     links: {
@@ -1095,14 +1095,14 @@ const pt = {
     createPoster: 'Criar meu cartaz',
   },
   hero: {
-    badge: 'Agora disponível em toda a Europa',
+    badge: 'Já presente em 31+ países',
     title: 'Transforme seu cartaz num',
     titleHighlight: 'canal de vendas 24/7',
     subtitle: 'Substitua o tradicional cartaz "Vende-se" por um poster com código QR inteligente. Os compradores digitalizam e veem instantaneamente todos os detalhes—fotos, preço, localização e contacto.',
     cta: 'Criar meu cartaz agora',
     ctaSecondary: 'Ver como funciona',
     trustedBy: 'Usado por proprietários em',
-    countries: '15+ países europeus',
+    countries: '31+ países no mundo',
   },
   howItWorks: {
     sectionLabel: 'Processo Simples',
@@ -1150,7 +1150,7 @@ const pt = {
     },
     option2: {
       title: 'Parceiros de confiança',
-      description: 'Escolha entre nossos parceiros de impressão verificados em toda a Europa para resultados profissionais.',
+      description: 'Escolha entre nossos parceiros de impressão verificados em todo o mundo para resultados profissionais.',
     },
     option3: {
       title: 'Recomendação IA',
@@ -1216,8 +1216,8 @@ const pt = {
   testimonials: {
     sectionLabel: 'Histórias de Sucesso',
     title: 'Amado por proprietários',
-    titleHighlight: 'em toda a Europa',
-    subtitle: 'Descubra por que milhares de proprietários e agentes confiam no Zigno.',
+    titleHighlight: 'em todo o mundo',
+    subtitle: 'Descubra por que milhares de proprietários e agentes em 31+ países confiam no Zigno.',
   },
   faq: {
     sectionLabel: 'Perguntas e Respostas',
@@ -1242,7 +1242,7 @@ const pt = {
       },
       {
         question: 'Quais países vocês suportam?',
-        answer: 'Zigno funciona em todos os países da UE mais Reino Unido, Suíça e Noruega. Nossos parceiros de impressão cobrem 15+ países.',
+        answer: 'Zigno funciona globalmente—já temos clientes em 31+ países. Pode usar Zigno em qualquer parte do mundo.',
       },
       {
         question: 'Posso cancelar minha assinatura a qualquer momento?',
@@ -1253,7 +1253,7 @@ const pt = {
     contactCta: 'Contacte-nos',
   },
   footer: {
-    description: 'A forma inteligente de vender imóveis na Europa. Substitua cartazes tradicionais por anúncios QR que funcionam 24/7.',
+    description: 'A forma inteligente de vender imóveis em todo o mundo. Substitua cartazes tradicionais por anúncios QR que funcionam 24/7.',
     product: 'Produto',
     legal: 'Legal',
     links: {
@@ -1305,14 +1305,14 @@ const pl = {
     createPoster: 'Stwórz mój plakat',
   },
   hero: {
-    badge: 'Teraz dostępne w całej Europie',
+    badge: 'Już obecni w 31+ krajach',
     title: 'Zamień swój szyld w',
     titleHighlight: 'kanał sprzedaży 24/7',
     subtitle: 'Zastąp tradycyjny szyld "Na sprzedaż" inteligentnym plakatem z kodem QR. Kupujący skanują i natychmiast widzą wszystkie szczegóły—zdjęcia, cenę, lokalizację i kontakt.',
     cta: 'Stwórz mój plakat teraz',
     ctaSecondary: 'Zobacz jak to działa',
     trustedBy: 'Zaufali nam właściciele w',
-    countries: '15+ krajach europejskich',
+    countries: '31+ krajach na świecie',
   },
   howItWorks: {
     sectionLabel: 'Prosty Proces',
@@ -1360,7 +1360,7 @@ const pl = {
     },
     option2: {
       title: 'Zaufani partnerzy',
-      description: 'Wybierz spośród naszych zweryfikowanych partnerów drukarskich w całej Europie.',
+      description: 'Wybierz spośród naszych zweryfikowanych partnerów drukarskich na całym świecie.',
     },
     option3: {
       title: 'Rekomendacja AI',
@@ -1426,8 +1426,8 @@ const pl = {
   testimonials: {
     sectionLabel: 'Historie Sukcesu',
     title: 'Kochany przez właścicieli',
-    titleHighlight: 'w całej Europie',
-    subtitle: 'Zobacz dlaczego tysiące właścicieli i agentów ufa Zigno.',
+    titleHighlight: 'na całym świecie',
+    subtitle: 'Zobacz dlaczego tysiące właścicieli i agentów w 31+ krajach ufa Zigno.',
   },
   faq: {
     sectionLabel: 'Pytania i Odpowiedzi',
@@ -1452,7 +1452,7 @@ const pl = {
       },
       {
         question: 'Jakie kraje wspieracie?',
-        answer: 'Zigno działa we wszystkich krajach UE plus UK, Szwajcaria i Norwegia. Nasi partnerzy drukarni obejmują 15+ krajów.',
+        answer: 'Zigno działa globalnie—mamy już klientów w 31+ krajach. Możesz używać Zigno w dowolnym miejscu na świecie.',
       },
       {
         question: 'Czy mogę anulować subskrypcję w dowolnym momencie?',
@@ -1463,7 +1463,7 @@ const pl = {
     contactCta: 'Skontaktuj się z nami',
   },
   footer: {
-    description: 'Inteligentny sposób sprzedaży nieruchomości w Europie. Zastąp tradycyjne szyldy ogłoszeniami QR działającymi 24/7.',
+    description: 'Inteligentny sposób sprzedaży nieruchomości na całym świecie. Zastąp tradycyjne szyldy ogłoszeniami QR działającymi 24/7.',
     product: 'Produkt',
     legal: 'Prawne',
     links: {
