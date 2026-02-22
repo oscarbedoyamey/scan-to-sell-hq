@@ -1,13 +1,21 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { Badge } from '@/components/ui/badge';
 
-// Import poster examples
+// Import poster examples (Spanish)
 import posterExample1 from '@/assets/poster-example-1.jpg';
 import posterExample2 from '@/assets/poster-example-2.jpg';
 import posterExample3 from '@/assets/poster-example-3.jpg';
 import posterExample4 from '@/assets/poster-example-4.jpg';
 import posterExample5 from '@/assets/poster-example-5.jpg';
+
+// Import language-specific posters
+import officeRentEn from '@/assets/office_rent_en.png';
+import officeRentFr from '@/assets/office_rent_fr.png';
+import officeRentDe from '@/assets/office_rent_de.png';
+import officeRentIt from '@/assets/office_rent_it.png';
+import officeRentPt from '@/assets/office_rent_pt.png';
+import officeRentPl from '@/assets/office_rent_pl.png';
 
 interface PosterItem {
   id: number;
@@ -18,48 +26,30 @@ interface PosterItem {
   color: string;
 }
 
-const posters: PosterItem[] = [
-  {
-    id: 1,
-    image: posterExample1,
-    type: 'rent',
-    property: 'local',
-    format: 'poster',
-    color: 'Azul corporativo',
-  },
-  {
-    id: 2,
-    image: posterExample2,
-    type: 'rent',
-    property: 'local',
-    format: 'poster',
-    color: 'Azul clásico',
-  },
-  {
-    id: 3,
-    image: posterExample3,
-    type: 'rent',
-    property: 'parking',
-    format: 'poster',
-    color: 'Verde',
-  },
-  {
-    id: 4,
-    image: posterExample4,
-    type: 'rent',
-    property: 'parking',
-    format: 'banner',
-    color: 'Naranja',
-  },
-  {
-    id: 5,
-    image: posterExample5,
-    type: 'rent',
-    property: 'parking',
-    format: 'banner',
-    color: 'Naranja profesional',
-  },
+const esPosters: PosterItem[] = [
+  { id: 1, image: posterExample1, type: 'rent', property: 'local', format: 'poster', color: 'Azul corporativo' },
+  { id: 2, image: posterExample2, type: 'rent', property: 'local', format: 'poster', color: 'Azul clásico' },
+  { id: 3, image: posterExample3, type: 'rent', property: 'parking', format: 'poster', color: 'Verde' },
+  { id: 4, image: posterExample4, type: 'rent', property: 'parking', format: 'banner', color: 'Naranja' },
+  { id: 5, image: posterExample5, type: 'rent', property: 'parking', format: 'banner', color: 'Naranja profesional' },
 ];
+
+const officeRentByLang: Record<string, string> = {
+  en: officeRentEn,
+  fr: officeRentFr,
+  de: officeRentDe,
+  it: officeRentIt,
+  pt: officeRentPt,
+  pl: officeRentPl,
+};
+
+const getPostersForLang = (lang: string): PosterItem[] => {
+  if (lang === 'es') return esPosters;
+  const img = officeRentByLang[lang] || officeRentByLang.en;
+  return [
+    { id: 1, image: img, type: 'rent', property: 'office', format: 'poster', color: 'Naranja' },
+  ];
+};
 
 const filterLabels = {
   all: { en: 'All', es: 'Todos', fr: 'Tous', de: 'Alle', it: 'Tutti', pt: 'Todos', pl: 'Wszystkie' },
@@ -83,6 +73,8 @@ export const PosterGallery = () => {
   const getLabel = (key: keyof typeof filterLabels) => {
     return filterLabels[key][language as keyof (typeof filterLabels)['all']] || filterLabels[key].en;
   };
+
+  const posters = useMemo(() => getPostersForLang(language), [language]);
 
   const filteredPosters = activeFilter === 'all' 
     ? posters 
