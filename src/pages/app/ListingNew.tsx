@@ -124,6 +124,8 @@ const ListingNew = () => {
 
     const loadDraft = async () => {
       try {
+        const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000));
+
         let query;
         if (editId) {
           query = (supabase as any)
@@ -143,7 +145,7 @@ const ListingNew = () => {
             .maybeSingle();
         }
 
-        const { data: existing } = await query;
+        const existing = await Promise.race([query.then((r: any) => r.data), timeout]);
         if (existing) {
           setListingId(existing.id);
           setOriginalStatus(existing.status);
@@ -224,9 +226,10 @@ const ListingNew = () => {
     return true;
   };
 
-  const handleNext = async () => {
+  const handleNext = () => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    await autoSave(data, listingId);
+    // Fire save in background — don't block step advancement to prevent hanging
+    autoSave(data, listingId);
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   };
 
