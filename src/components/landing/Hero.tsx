@@ -123,7 +123,7 @@ export const Hero = () => {
               {/* Main image */}
               <div className="relative rounded-2xl overflow-hidden shadow-hero animate-float">
                 <img
-                  src={heroPoster}
+                  src={heroPosterByLang[language] || heroPosterByLang.en}
                   alt="Zigno QR Code Poster"
                   className="w-full h-auto"
                 />
