@@ -35,11 +35,10 @@ serve(async (req) => {
 
     // Get user from auth header if available, otherwise from purchase record
     let userId: string | null = null;
-    let userToken: string | null = null;
 
     const authHeader = req.headers.get("Authorization");
     if (authHeader) {
-      userToken = authHeader.replace("Bearer ", "");
+      const userToken = authHeader.replace("Bearer ", "");
       const supabaseClient = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
         Deno.env.get("SUPABASE_ANON_KEY") ?? ""
@@ -48,7 +47,6 @@ serve(async (req) => {
       userId = data.user?.id ?? null;
     }
 
-    // If no auth, get user_id from the purchase record
     if (!userId) {
       const { data: purchaseRow } = await supabaseAdmin
         .from("purchases")
@@ -86,11 +84,15 @@ serve(async (req) => {
       const endAt = new Date(now);
       endAt.setMonth(endAt.getMonth() + (pkg?.duration_months || 3));
 
+      // Get subscription ID from session (subscription mode)
+      const subscriptionId = session.subscription as string | null;
+
       await supabaseAdmin
         .from("purchases")
         .update({
           status: "paid",
-          stripe_payment_intent_id: session.payment_intent as string,
+          stripe_payment_intent_id: session.payment_intent as string || null,
+          stripe_subscription_id: subscriptionId,
           start_at: now.toISOString(),
           end_at: endAt.toISOString(),
         })
@@ -114,7 +116,7 @@ serve(async (req) => {
 
         let signId: string | null = existingSigns?.[0]?.id || null;
 
-        // Get listing data (needed for sign creation and asset generation)
+        // Get listing data
         const { data: listing } = await supabaseAdmin
           .from("listings")
           .select("operation_type, base_language")
@@ -122,8 +124,6 @@ serve(async (req) => {
           .single();
 
         if (!signId) {
-
-          // Generate a unique sign_code
           let signCode = generateSignCode();
           let attempts = 0;
           while (attempts < 10) {
@@ -137,7 +137,6 @@ serve(async (req) => {
             attempts++;
           }
 
-          // Determine headline based on operation type and language
           const headlineMap: Record<string, Record<string, string>> = {
             sale: { es: "SE VENDE", en: "FOR SALE", fr: "À VENDRE", de: "ZU VERKAUFEN", it: "IN VENDITA", pt: "VENDE-SE", pl: "NA SPRZEDAŻ" },
             rent: { es: "SE ALQUILA", en: "FOR RENT", fr: "À LOUER", de: "ZU VERMIETEN", it: "IN AFFITTO", pt: "ALUGA-SE", pl: "DO WYNAJĘCIA" },
@@ -167,8 +166,6 @@ serve(async (req) => {
             console.error("Error creating sign:", signError);
           } else {
             signId = newSign.id;
-
-            // Record assignment in sign_assignments history
             await supabaseAdmin
               .from("sign_assignments")
               .insert({
@@ -179,7 +176,7 @@ serve(async (req) => {
           }
         }
 
-        // Auto-generate assets if we have a sign — use service role key for internal call
+        // Auto-generate assets
         if (signId) {
           const functionsUrl = Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", ".supabase.co/functions/v1");
           const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -194,51 +191,6 @@ serve(async (req) => {
             console.error("Asset generation error:", genErr);
           });
         }
-      }
-
-      // Send payment confirmation email
-      try {
-        const { data: profile } = await supabaseAdmin
-          .from("profiles")
-          .select("email, locale")
-          .eq("id", userId)
-          .single();
-
-        const { data: listing } = await supabaseAdmin
-          .from("listings")
-          .select("title, city")
-          .eq("id", listingId)
-          .single();
-
-        if (profile?.email) {
-          const { data: pkgInfo } = await supabaseAdmin
-            .from("packages")
-            .select("price_eur")
-            .eq("id", purchase?.package_id)
-            .single();
-
-          const functionsUrl = Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", ".supabase.co/functions/v1");
-          const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-          await fetch(`${functionsUrl}/send-email`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${serviceKey}`,
-            },
-            body: JSON.stringify({
-              type: "payment_confirmation",
-              to: profile.email,
-              locale: profile.locale || "en",
-              data: {
-                listingTitle: listing?.title || listing?.city || "—",
-                amount: pkgInfo ? `${pkgInfo.price_eur} €` : "—",
-                endDate: endAt.toLocaleDateString(profile.locale || "en", { year: "numeric", month: "long", day: "numeric" }),
-              },
-            }),
-          });
-        }
-      } catch (emailErr) {
-        console.error("Payment confirmation email error:", emailErr);
       }
 
       return new Response(JSON.stringify({ verified: true, status: "paid", listing_id: listingId }), {

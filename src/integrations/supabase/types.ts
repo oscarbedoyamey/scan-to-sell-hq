@@ -387,6 +387,7 @@ export type Database = {
           status: Database["public"]["Enums"]["purchase_status"] | null
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
+          stripe_subscription_id: string | null
           user_id: string
         }
         Insert: {
@@ -400,6 +401,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["purchase_status"] | null
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
+          stripe_subscription_id?: string | null
           user_id: string
         }
         Update: {
@@ -413,6 +415,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["purchase_status"] | null
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
+          stripe_subscription_id?: string | null
           user_id?: string
         }
         Relationships: [
