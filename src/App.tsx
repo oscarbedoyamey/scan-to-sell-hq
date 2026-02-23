@@ -17,6 +17,9 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PublicListing from "./pages/PublicListing";
 import PublicListingDirect from "./pages/PublicListingDirect";
 import DemoListing from "./pages/DemoListing";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import Cookies from "./pages/Cookies";
 import Dashboard from "./pages/app/Dashboard";
 import Listings from "./pages/app/Listings";
 import ListingNew from "./pages/app/ListingNew";
@@ -53,6 +56,9 @@ const App = () => (
               <Route path="/s/:signCode" element={<PublicListing />} />
               <Route path="/l/:listingCode" element={<PublicListingDirect />} />
               <Route path="/demo" element={<DemoListing />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/cookies" element={<Cookies />} />
 
               {/* Protected app routes */}
               <Route

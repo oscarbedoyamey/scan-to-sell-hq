@@ -1,4 +1,5 @@
 import { useLanguage } from '@/i18n/LanguageContext';
+import { Link } from 'react-router-dom';
 import zignoLogoDark from '@/assets/zigno-logo-dark.png';
 
 export const Footer = () => {
@@ -26,9 +27,9 @@ export const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4">{t.footer.legal}</h4>
             <ul className="space-y-2 text-background/70">
-              <li><a href="#" className="hover:text-background transition-colors">{t.footer.links.privacy}</a></li>
-              <li><a href="#" className="hover:text-background transition-colors">{t.footer.links.terms}</a></li>
-              <li><a href="#" className="hover:text-background transition-colors">{t.footer.links.cookies}</a></li>
+              <li><Link to="/privacy" className="hover:text-background transition-colors">{t.footer.links.privacy}</Link></li>
+              <li><Link to="/terms" className="hover:text-background transition-colors">{t.footer.links.terms}</Link></li>
+              <li><Link to="/cookies" className="hover:text-background transition-colors">{t.footer.links.cookies}</Link></li>
             </ul>
           </div>
         </div>
