@@ -282,7 +282,7 @@ const AdminListingDetail = () => {
         </TabsContent>
 
         <TabsContent value="signs">
-          <div className="bg-card rounded-2xl border border-border overflow-hidden">
+          <div className="bg-card rounded-2xl border border-border overflow-hidden overflow-x-auto">
             {signs.length > 0 && (
               <div className="px-4 py-3 border-b border-border flex justify-end">
                 <Button
@@ -350,7 +350,7 @@ const AdminListingDetail = () => {
         </TabsContent>
 
         <TabsContent value="leads">
-          <div className="bg-card rounded-2xl border border-border overflow-hidden">
+          <div className="bg-card rounded-2xl border border-border overflow-hidden overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50">

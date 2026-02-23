@@ -131,7 +131,7 @@ const AdminUserDetail = () => {
         </TabsList>
 
         <TabsContent value="listings">
-          <div className="bg-card rounded-2xl border border-border overflow-hidden">
+          <div className="bg-card rounded-2xl border border-border overflow-hidden overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
@@ -166,7 +166,7 @@ const AdminUserDetail = () => {
         </TabsContent>
 
         <TabsContent value="signs">
-          <div className="bg-card rounded-2xl border border-border overflow-hidden">
+          <div className="bg-card rounded-2xl border border-border overflow-hidden overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
@@ -201,7 +201,7 @@ const AdminUserDetail = () => {
         </TabsContent>
 
         <TabsContent value="purchases">
-          <div className="bg-card rounded-2xl border border-border overflow-hidden">
+          <div className="bg-card rounded-2xl border border-border overflow-hidden overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
