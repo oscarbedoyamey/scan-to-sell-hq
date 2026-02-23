@@ -240,7 +240,8 @@ export default function MySigns() {
           <CardDescription>{t('mySignsDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          {/* Desktop table view */}
+          <div className="hidden md:block overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -284,32 +285,18 @@ export default function MySigns() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1 flex-wrap">
-                          {/* Assign listing (only for unassigned signs) */}
                           {!sign.listing_id && (
-                            <Button
-                              variant="default"
-                              size="sm"
-                              className="gap-1"
-                              onClick={() => handleOpenAssign(sign.id)}
-                            >
+                            <Button variant="default" size="sm" className="gap-1" onClick={() => handleOpenAssign(sign.id)}>
                               <LinkIcon className="h-3.5 w-3.5" /> {t('assignListing')}
                             </Button>
                           )}
-                          {/* Generate / Regenerate */}
                           {sign.listing_id && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="gap-1"
-                              disabled={isGenerating}
-                              onClick={() => setShowGenerateDialog(sign.id)}
-                            >
+                            <Button variant="ghost" size="sm" className="gap-1" disabled={isGenerating} onClick={() => setShowGenerateDialog(sign.id)}>
                               {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> :
                                 sign.qr_image_path ? <RefreshCw className="h-3.5 w-3.5" /> : <QrCode className="h-3.5 w-3.5" />}
                               {sign.qr_image_path ? t('regenerate') : t('generate')}
                             </Button>
                           )}
-                          {/* Generating indicator */}
                           {sign.listing_id && !sign.sign_pdf_path && !isGenerating && (
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -317,23 +304,14 @@ export default function MySigns() {
                                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                                 </span>
                               </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{t('generatingTooltip')}</p>
-                              </TooltipContent>
+                              <TooltipContent><p>{t('generatingTooltip')}</p></TooltipContent>
                             </Tooltip>
                           )}
-                          {/* QR preview */}
                           {qrUrl && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="gap-1"
-                              onClick={() => setQrPreview({ code: sign.sign_code, url: qrUrl })}
-                            >
+                            <Button variant="ghost" size="sm" className="gap-1" onClick={() => setQrPreview({ code: sign.sign_code, url: qrUrl })}>
                               <Eye className="h-3.5 w-3.5" /> {t('viewQR')}
                             </Button>
                           )}
-                          {/* Download PDF */}
                           {pdfUrl && (
                             <Button variant="ghost" size="sm" className="gap-1" asChild>
                               <a href={pdfUrl} download={`sign-${sign.sign_code}.pdf`} target="_blank" rel="noopener noreferrer">
@@ -341,7 +319,6 @@ export default function MySigns() {
                               </a>
                             </Button>
                           )}
-                          {/* Preview public URL */}
                           {sign.public_url && (
                             <Button variant="ghost" size="sm" className="gap-1" asChild>
                               <a href={sign.public_url} target="_blank" rel="noopener noreferrer">
@@ -349,14 +326,8 @@ export default function MySigns() {
                               </a>
                             </Button>
                           )}
-                          {/* Unassign */}
                           {sign.listing_id && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="gap-1 text-destructive hover:text-destructive"
-                              onClick={() => setUnassignSignId(sign.id)}
-                            >
+                            <Button variant="ghost" size="sm" className="gap-1 text-destructive hover:text-destructive" onClick={() => setUnassignSignId(sign.id)}>
                               <Unlink className="h-3.5 w-3.5" /> {t('unassign')}
                             </Button>
                           )}
@@ -367,6 +338,83 @@ export default function MySigns() {
                 })}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Mobile card view */}
+          <div className="md:hidden space-y-3">
+            {signs.map((sign) => {
+              const qrUrl = getPublicUrl(sign.qr_image_path);
+              const pdfUrl = getPublicUrl(sign.sign_pdf_path);
+              const isGenerating = generating === sign.id;
+
+              return (
+                <div key={sign.id} className="rounded-xl border border-border p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-sm font-semibold">{sign.sign_code}</span>
+                    <Badge variant={sign.listing_id ? 'default' : 'outline'} className="gap-1">
+                      <span className={`h-2 w-2 rounded-full ${sign.listing_id ? 'bg-green-500' : 'bg-gray-400'}`} />
+                      {sign.listing_id ? t('assigned') : t('unassigned')}
+                    </Badge>
+                  </div>
+
+                  {sign.listing && (
+                    <Link to={`/app/listings/${sign.listing_id}`} className="text-sm text-primary hover:underline block">
+                      {sign.listing.title || sign.listing.listing_code}
+                    </Link>
+                  )}
+
+                  <p className="text-xs text-muted-foreground">
+                    {sign.created_at
+                      ? new Date(sign.created_at).toLocaleDateString(language === 'es' ? 'es-ES' : 'en-US')
+                      : '—'}
+                  </p>
+
+                  <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border">
+                    {!sign.listing_id && (
+                      <Button variant="default" size="sm" className="gap-1" onClick={() => handleOpenAssign(sign.id)}>
+                        <LinkIcon className="h-3.5 w-3.5" /> {t('assignListing')}
+                      </Button>
+                    )}
+                    {sign.listing_id && (
+                      <Button variant="ghost" size="sm" className="gap-1" disabled={isGenerating} onClick={() => setShowGenerateDialog(sign.id)}>
+                        {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> :
+                          sign.qr_image_path ? <RefreshCw className="h-3.5 w-3.5" /> : <QrCode className="h-3.5 w-3.5" />}
+                        {sign.qr_image_path ? t('regenerate') : t('generate')}
+                      </Button>
+                    )}
+                    {sign.listing_id && !sign.sign_pdf_path && !isGenerating && (
+                      <span className="inline-flex items-center gap-1 text-xs text-primary">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      </span>
+                    )}
+                    {qrUrl && (
+                      <Button variant="ghost" size="sm" className="gap-1" onClick={() => setQrPreview({ code: sign.sign_code, url: qrUrl })}>
+                        <Eye className="h-3.5 w-3.5" /> {t('viewQR')}
+                      </Button>
+                    )}
+                    {pdfUrl && (
+                      <Button variant="ghost" size="sm" className="gap-1" asChild>
+                        <a href={pdfUrl} download={`sign-${sign.sign_code}.pdf`} target="_blank" rel="noopener noreferrer">
+                          <Download className="h-3.5 w-3.5" /> {t('downloadPDF')}
+                        </a>
+                      </Button>
+                    )}
+                    {sign.public_url && (
+                      <Button variant="ghost" size="sm" className="gap-1" asChild>
+                        <a href={sign.public_url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-3.5 w-3.5" /> {t('preview')}
+                        </a>
+                      </Button>
+                    )}
+                    {sign.listing_id && (
+                      <Button variant="ghost" size="sm" className="gap-1 text-destructive hover:text-destructive" onClick={() => setUnassignSignId(sign.id)}>
+                        <Unlink className="h-3.5 w-3.5" /> {t('unassign')}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
