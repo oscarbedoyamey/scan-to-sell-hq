@@ -198,14 +198,14 @@ const ListingDetail = () => {
       </Link>
 
       {/* Listing header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">{listing.title || 'Untitled listing'}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
+        <div className="min-w-0">
+          <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground">{listing.title || 'Untitled listing'}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {[listing.city, listing.region].filter(Boolean).join(', ') || 'No location'}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <Button variant="outline" size="sm" asChild>
             <Link to={`/app/listings/new?listing_id=${listing.id}`}>
               <Pencil className="h-3 w-3 mr-1" /> {t('edit')}
@@ -224,25 +224,28 @@ const ListingDetail = () => {
             <Link2 className="h-5 w-5 text-primary" />
             <span className="font-medium text-foreground">{t('directLink')}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <code className="bg-secondary px-3 py-1.5 rounded-lg text-sm font-mono flex-1 truncate">
               {window.location.origin}/l/{(listing as any).listing_code}
             </code>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/l/${(listing as any).listing_code}`);
-                toast({ title: '✅', description: t('copied') });
-              }}
-            >
-              <Copy className="h-3 w-3 mr-1" /> Copy
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <a href={`/l/${(listing as any).listing_code}`} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-3 w-3 mr-1" /> Open
-              </a>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 sm:flex-none"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/l/${(listing as any).listing_code}`);
+                  toast({ title: '✅', description: t('copied') });
+                }}
+              >
+                <Copy className="h-3 w-3 mr-1" /> Copy
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1 sm:flex-none" asChild>
+                <a href={`/l/${(listing as any).listing_code}`} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-3 w-3 mr-1" /> Open
+                </a>
+              </Button>
+            </div>
           </div>
         </div>
       )}
