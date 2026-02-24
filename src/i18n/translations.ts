@@ -41,7 +41,7 @@ const en = {
   howItWorks: {
     sectionLabel: 'Simple Process',
     title: 'Create your smart poster in',
-    titleHighlight: '3 easy steps',
+    titleHighlight: '4 easy steps',
     subtitle: 'No technical skills required. Go from property listing to printed poster in minutes.',
     step1: {
       title: 'Complete your listing',
@@ -52,8 +52,12 @@ const en = {
       description: 'We automatically create a beautiful, scannable poster with your unique QR code.',
     },
     step3: {
-      title: 'Print anywhere you want',
-      description: 'Download and print yourself, choose a trusted partner, or let our AI find the best local printer for you.',
+      title: 'Print your way',
+      description: 'Download and print it yourself at home or the office, or pick one of our trusted printing partners near you for a professional finish.',
+    },
+    step4: {
+      title: 'Set your sign & start selling smarter',
+      description: 'Place your poster and let it work for you 24/7. Filter out irrelevant calls and focus only on genuinely interested leads—sell more with less effort.',
     },
   },
 
@@ -267,7 +271,7 @@ const fr = {
   howItWorks: {
     sectionLabel: 'Processus Simple',
     title: 'Créez votre affiche intelligente en',
-    titleHighlight: '3 étapes faciles',
+    titleHighlight: '4 étapes faciles',
     subtitle: 'Aucune compétence technique requise. De l\'annonce à l\'affiche en quelques minutes.',
     step1: {
       title: 'Complétez votre fiche',
@@ -278,8 +282,12 @@ const fr = {
       description: 'Nous créons automatiquement une belle affiche scannable avec votre code QR unique.',
     },
     step3: {
-      title: 'Imprimez où vous voulez',
-      description: 'Téléchargez et imprimez vous-même, choisissez un partenaire de confiance, ou laissez notre IA trouver le meilleur imprimeur local.',
+      title: 'Imprimez à votre façon',
+      description: 'Téléchargez et imprimez chez vous ou au bureau, ou choisissez l\'un de nos partenaires d\'impression de confiance près de chez vous pour un résultat professionnel.',
+    },
+    step4: {
+      title: 'Posez votre affiche et vendez plus intelligemment',
+      description: 'Placez votre affiche et laissez-la travailler pour vous 24h/24. Filtrez les appels non pertinents et concentrez-vous uniquement sur les prospects réellement intéressés.',
     },
   },
   demo: {
@@ -477,7 +485,7 @@ const es = {
   howItWorks: {
     sectionLabel: 'Proceso Simple',
     title: 'Crea tu cartel inteligente en',
-    titleHighlight: '3 sencillos pasos',
+    titleHighlight: '4 sencillos pasos',
     subtitle: 'Sin conocimientos técnicos. De anuncio a cartel impreso en minutos.',
     step1: {
       title: 'Completa tu ficha',
@@ -488,8 +496,12 @@ const es = {
       description: 'Creamos automáticamente un cartel atractivo y escaneable con tu código QR único.',
     },
     step3: {
-      title: 'Imprime donde quieras',
-      description: 'Descarga e imprime tú mismo, elige una imprenta de confianza, o deja que nuestra IA encuentre la mejor opción local.',
+      title: 'Imprime a tu manera',
+      description: 'Descarga e imprime en casa o en la oficina, o elige una de nuestras imprentas asociadas cerca de ti para un acabado profesional.',
+    },
+    step4: {
+      title: 'Coloca tu cartel y vende más inteligente',
+      description: 'Pon tu cartel y deja que trabaje por ti las 24 horas. Filtra llamadas irrelevantes y céntrate solo en los leads realmente interesados—vende más con menos esfuerzo.',
     },
   },
   demo: {
@@ -687,7 +699,7 @@ const de = {
   howItWorks: {
     sectionLabel: 'Einfacher Prozess',
     title: 'Erstelle dein smartes Plakat in',
-    titleHighlight: '3 einfachen Schritten',
+    titleHighlight: '4 einfachen Schritten',
     subtitle: 'Keine technischen Kenntnisse nötig. Von der Anzeige zum gedruckten Plakat in Minuten.',
     step1: {
       title: 'Vervollständige dein Inserat',
@@ -698,8 +710,12 @@ const de = {
       description: 'Wir erstellen automatisch ein schönes, scanbares Plakat mit deinem einzigartigen QR-Code.',
     },
     step3: {
-      title: 'Drucke wo du willst',
-      description: 'Lade herunter und drucke selbst, wähle einen vertrauenswürdigen Partner, oder lass unsere KI die beste lokale Druckerei finden.',
+      title: 'Drucke auf deine Art',
+      description: 'Lade es herunter und drucke zu Hause oder im Büro, oder wähle einen unserer vertrauenswürdigen Druckpartner in deiner Nähe für ein professionelles Ergebnis.',
+    },
+    step4: {
+      title: 'Plakat aufhängen & smarter verkaufen',
+      description: 'Hänge dein Plakat auf und lass es rund um die Uhr für dich arbeiten. Filtere irrelevante Anrufe und konzentriere dich nur auf echte Interessenten—verkaufe mehr mit weniger Aufwand.',
     },
   },
   demo: {
@@ -897,7 +913,7 @@ const it = {
   howItWorks: {
     sectionLabel: 'Processo Semplice',
     title: 'Crea il tuo cartello intelligente in',
-    titleHighlight: '3 semplici passaggi',
+    titleHighlight: '4 semplici passaggi',
     subtitle: 'Nessuna competenza tecnica richiesta. Dall\'annuncio al poster stampato in pochi minuti.',
     step1: {
       title: 'Completa la tua scheda',
@@ -908,8 +924,12 @@ const it = {
       description: 'Creiamo automaticamente un bellissimo poster scansionabile con il tuo codice QR unico.',
     },
     step3: {
-      title: 'Stampa dove vuoi',
-      description: 'Scarica e stampa tu stesso, scegli un partner di fiducia, o lascia che la nostra IA trovi la migliore tipografia locale.',
+      title: 'Stampa a modo tuo',
+      description: 'Scarica e stampa a casa o in ufficio, oppure scegli uno dei nostri partner di stampa di fiducia vicino a te per un risultato professionale.',
+    },
+    step4: {
+      title: 'Posiziona il cartello e vendi in modo più intelligente',
+      description: 'Posiziona il tuo poster e lascialo lavorare per te 24 ore su 24. Filtra le chiamate irrilevanti e concentrati solo sui contatti realmente interessati—vendi di più con meno sforzo.',
     },
   },
   demo: {
@@ -1107,7 +1127,7 @@ const pt = {
   howItWorks: {
     sectionLabel: 'Processo Simples',
     title: 'Crie seu cartaz inteligente em',
-    titleHighlight: '3 passos fáceis',
+    titleHighlight: '4 passos fáceis',
     subtitle: 'Sem conhecimentos técnicos necessários. Do anúncio ao cartaz impresso em minutos.',
     step1: {
       title: 'Complete sua ficha',
@@ -1118,8 +1138,12 @@ const pt = {
       description: 'Criamos automaticamente um lindo cartaz digitalizável com seu código QR único.',
     },
     step3: {
-      title: 'Imprima onde quiser',
-      description: 'Baixe e imprima você mesmo, escolha um parceiro de confiança, ou deixe nossa IA encontrar a melhor gráfica local.',
+      title: 'Imprima à sua maneira',
+      description: 'Baixe e imprima em casa ou no escritório, ou escolha um dos nossos parceiros de impressão de confiança perto de si para um acabamento profissional.',
+    },
+    step4: {
+      title: 'Coloque seu cartaz e venda de forma mais inteligente',
+      description: 'Coloque seu cartaz e deixe-o trabalhar por si 24 horas por dia. Filtre chamadas irrelevantes e concentre-se apenas nos contactos realmente interessados—venda mais com menos esforço.',
     },
   },
   demo: {
@@ -1317,7 +1341,7 @@ const pl = {
   howItWorks: {
     sectionLabel: 'Prosty Proces',
     title: 'Stwórz swój inteligentny plakat w',
-    titleHighlight: '3 łatwych krokach',
+    titleHighlight: '4 łatwych krokach',
     subtitle: 'Nie wymagane umiejętności techniczne. Od ogłoszenia do wydrukowanego plakatu w kilka minut.',
     step1: {
       title: 'Uzupełnij swoją kartę',
@@ -1328,8 +1352,12 @@ const pl = {
       description: 'Automatycznie tworzymy piękny, skanowalny plakat z Twoim unikalnym kodem QR.',
     },
     step3: {
-      title: 'Wydrukuj gdzie chcesz',
-      description: 'Pobierz i wydrukuj samodzielnie, wybierz zaufanego partnera, lub pozwól naszej AI znaleźć najlepszą lokalną drukarnię.',
+      title: 'Wydrukuj po swojemu',
+      description: 'Pobierz i wydrukuj w domu lub w biurze, albo wybierz jednego z naszych zaufanych partnerów drukarskich w Twojej okolicy dla profesjonalnego wykończenia.',
+    },
+    step4: {
+      title: 'Umieść plakat i sprzedawaj mądrzej',
+      description: 'Umieść plakat i pozwól mu pracować dla Ciebie 24/7. Odfiltruj nieistotne telefony i skup się tylko na naprawdę zainteresowanych klientach—sprzedawaj więcej przy mniejszym wysiłku.',
     },
   },
   demo: {

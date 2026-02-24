@@ -1,4 +1,4 @@
-import { FileText, QrCode, Printer } from 'lucide-react';
+import { FileText, QrCode, Printer, Rocket } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 const steps = [
@@ -14,6 +14,10 @@ const steps = [
     icon: Printer,
     gradient: 'from-cyan-500 to-teal-500',
   },
+  {
+    icon: Rocket,
+    gradient: 'from-teal-500 to-emerald-500',
+  },
 ];
 
 export const HowItWorks = () => {
@@ -23,6 +27,7 @@ export const HowItWorks = () => {
     t.howItWorks.step1,
     t.howItWorks.step2,
     t.howItWorks.step3,
+    t.howItWorks.step4,
   ];
 
   return (
@@ -43,7 +48,7 @@ export const HowItWorks = () => {
         </div>
 
         {/* Steps */}
-        <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
           {steps.map((step, index) => {
             const Icon = step.icon;
             const content = stepTranslations[index];
@@ -54,7 +59,7 @@ export const HowItWorks = () => {
               >
                 {/* Connector line */}
                 {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-16 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-border to-transparent" />
+                  <div className="hidden lg:block absolute top-16 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-border to-transparent" />
                 )}
 
                 <div className="bg-card rounded-2xl p-8 shadow-md hover:shadow-card-hover transition-all duration-300 border border-border/50 h-full">
