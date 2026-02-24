@@ -28,7 +28,7 @@ const en = {
   // Hero Section
   hero: {
     badge: 'Already trusted in 31+ countries',
-    title: 'Turn your For Sale sign into a',
+    title: 'Turn your property sign into a',
     titleHighlight: '24/7 enquiry machine',
     subtitle: 'Every Zigno sign includes a QR code that takes the interested party to a page with all the property details. You receive their contact info without answering a single message and without any hassle.',
     cta: 'Start free',
@@ -262,7 +262,7 @@ const fr = {
   },
   hero: {
     badge: 'Déjà présent dans 31+ pays',
-    title: 'Transformez votre panneau À Vendre en une',
+    title: 'Transformez votre panneau immobilier en une',
     titleHighlight: 'machine à contacts 24h/24',
     subtitle: 'Chaque panneau Zigno inclut un QR code qui dirige l\'intéressé vers une page avec toutes les informations du bien. Vous recevez les coordonnées du contact, sans répondre à aucun message et sans aucune gêne.',
     cta: 'Commencer gratuitement',
@@ -478,7 +478,7 @@ const es = {
   },
   hero: {
     badge: 'Ya presente en 31+ países',
-    title: 'Convierte tu cartel de venta en una',
+    title: 'Convierte tu cartel inmobiliario en una',
     titleHighlight: 'máquina de captación 24/7',
     subtitle: 'Cada cartel Zigno incluye un QR que lleva al interesado a una página con toda la información del inmueble. Tú recibes la información del contacto, sin contestar ningún mensaje y sin molestias.',
     cta: 'Empieza gratis',
@@ -694,7 +694,7 @@ const de = {
   },
   hero: {
     badge: 'Bereits in 31+ Ländern vertreten',
-    title: 'Verwandle dein Verkaufsschild in eine',
+    title: 'Verwandle dein Immobilienschild in eine',
     titleHighlight: '24/7-Kontaktmaschine',
     subtitle: 'Jedes Zigno-Schild enthält einen QR-Code, der den Interessenten zu einer Seite mit allen Immobiliendetails führt. Du erhältst die Kontaktdaten, ohne eine einzige Nachricht zu beantworten und ohne jede Störung.',
     cta: 'Kostenlos starten',
@@ -910,7 +910,7 @@ const it = {
   },
   hero: {
     badge: 'Già presente in 31+ paesi',
-    title: 'Trasforma il tuo cartello Vendesi in una',
+    title: 'Trasforma il tuo cartello immobiliare in una',
     titleHighlight: 'macchina di contatti 24/7',
     subtitle: 'Ogni cartello Zigno include un QR che porta l\'interessato a una pagina con tutte le informazioni dell\'immobile. Tu ricevi i dati di contatto, senza rispondere a nessun messaggio e senza alcun disturbo.',
     cta: 'Inizia gratis',
@@ -1126,7 +1126,7 @@ const pt = {
   },
   hero: {
     badge: 'Já presente em 31+ países',
-    title: 'Transforme seu cartaz de venda numa',
+    title: 'Transforme seu cartaz imobiliário numa',
     titleHighlight: 'máquina de captação 24/7',
     subtitle: 'Cada cartaz Zigno inclui um QR que leva o interessado a uma página com todas as informações do imóvel. Você recebe os dados de contacto, sem responder a nenhuma mensagem e sem qualquer incómodo.',
     cta: 'Comece grátis',
@@ -1342,7 +1342,7 @@ const pl = {
   },
   hero: {
     badge: 'Już obecni w 31+ krajach',
-    title: 'Zamień swój szyld Na Sprzedaż w',
+    title: 'Zamień swój szyld nieruchomości w',
     titleHighlight: 'maszynę kontaktową 24/7',
     subtitle: 'Każda tabliczka Zigno zawiera kod QR, który kieruje zainteresowanego na stronę ze wszystkimi informacjami o nieruchomości. Otrzymujesz dane kontaktowe, nie odpowiadając na żadną wiadomość i bez żadnych kłopotów.',
     cta: 'Zacznij za darmo',
