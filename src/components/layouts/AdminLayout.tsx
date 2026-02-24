@@ -7,6 +7,7 @@ import {
   CreditCard,
   Palette,
   QrCode,
+  Package,
   ArrowLeft,
   LogOut,
   Menu,
@@ -22,6 +23,7 @@ const navItems = [
   { path: '/admin/purchases', icon: CreditCard, label: 'Purchases' },
   { path: '/admin/signs', icon: QrCode, label: 'Signs' },
   { path: '/admin/templates', icon: Palette, label: 'Templates' },
+  { path: '/admin/unassigned-signs', icon: Package, label: 'Unassigned Signs' },
 ];
 
 export const AdminLayout = () => {
