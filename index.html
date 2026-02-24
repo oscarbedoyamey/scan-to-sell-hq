@@ -21,10 +21,62 @@
     <meta name="twitter:title" content="Zigno — Carteles inteligentes con QR para inmobiliarias" />
     <meta name="twitter:description" content="Convierte cada cartel de venta o alquiler en una máquina de captación de leads. QR dinámico + landing page profesional incluida. Pruébalo gratis." />
     <meta name="twitter:image" content="https://zigno.lovable.app/hero_es.png" />
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Zigno",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "url": "https://zignoqr.com/",
+      "description": "Carteles inteligentes con QR para inmobiliarias. QR dinámico + landing page profesional + captación de leads.",
+      "offers": {
+        "@type": "AggregateOffer",
+        "priceCurrency": "EUR",
+        "lowPrice": "49",
+        "highPrice": "94",
+        "offerCount": "3"
+      },
+      "provider": {
+        "@type": "Organization",
+        "name": "Zigno",
+        "url": "https://zignoqr.com/"
+      }
+    }
+    </script>
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Static fallback content for SEO crawlers that don't execute JS -->
+      <noscript>
+        <header>
+          <h1>Zigno — Carteles inteligentes con QR para inmobiliarias</h1>
+          <p>Convierte cada cartel de venta o alquiler en una máquina de captación de leads. QR dinámico + landing page profesional incluida.</p>
+        </header>
+        <main>
+          <section>
+            <h2>Cómo funciona</h2>
+            <ol>
+              <li>Crea tu anuncio — Sube fotos, descripción y datos de contacto en 2 minutos.</li>
+              <li>Genera tu cartel QR — Descarga un cartel profesional con QR único listo para imprimir.</li>
+              <li>Imprime y coloca — Imprime en A4/A3 y colócalo en la propiedad.</li>
+              <li>Recibe interesados — Los compradores escanean el QR y contactan directamente.</li>
+            </ol>
+          </section>
+          <section>
+            <h2>Precios</h2>
+            <ul>
+              <li>3 meses — 49 €</li>
+              <li>6 meses — 64 € (mejor precio)</li>
+              <li>12 meses — 94 €</li>
+            </ul>
+            <p>Cada plan incluye: landing page profesional, código QR único, cartel imprimible, hasta 30 fotos + vídeo, formulario de captación y analíticas.</p>
+          </section>
+        </main>
+      </noscript>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
