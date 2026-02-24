@@ -164,7 +164,7 @@ const AdminPurchaseDetail = () => {
           </div>
           <div>
             <span className="text-muted-foreground">Amount:</span>{' '}
-            <span className="text-foreground font-medium">€{((purchase.amount_eur || 0) / 100).toFixed(2)}</span>
+            <span className="text-foreground font-medium">€{(purchase.amount_eur || 0).toFixed(2)}</span>
           </div>
           <div>
             <span className="text-muted-foreground">Start:</span>{' '}
