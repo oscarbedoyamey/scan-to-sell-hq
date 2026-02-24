@@ -79,6 +79,9 @@ export const HowItWorks = () => {
                   </h3>
                   <p className="text-muted-foreground leading-relaxed">
                     {content.description}
+                    {(content as any).descriptionBold && (
+                      <> <strong className="text-foreground">{(content as any).descriptionBold}</strong></>
+                    )}
                   </p>
                 </div>
               </div>

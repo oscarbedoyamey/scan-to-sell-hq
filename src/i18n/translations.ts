@@ -46,6 +46,7 @@ const en = {
     step1: {
       title: 'Complete your listing',
       description: 'Add photos, description, price, and contact details. Our guided form makes it effortless.',
+      descriptionBold: 'You choose what contact info to show, when, and how—keep your privacy and avoid unwanted calls.',
     },
     step2: {
       title: 'Generate your QR & poster',
@@ -276,6 +277,7 @@ const fr = {
     step1: {
       title: 'Complétez votre fiche',
       description: 'Ajoutez photos, description, prix et coordonnées. Notre formulaire guidé rend tout simple.',
+      descriptionBold: 'Vous choisissez quelles infos de contact afficher, quand et comment—préservez votre vie privée et évitez les appels indésirables.',
     },
     step2: {
       title: 'Générez votre QR et affiche',
@@ -490,6 +492,7 @@ const es = {
     step1: {
       title: 'Completa tu ficha',
       description: 'Añade fotos, descripción, precio y datos de contacto. Nuestro formulario guiado lo hace muy fácil.',
+      descriptionBold: 'Tú decides qué datos de contacto mostrar, cuándo y cómo—mantén tu privacidad y evita llamadas innecesarias.',
     },
     step2: {
       title: 'Genera tu QR y cartel',
@@ -704,6 +707,7 @@ const de = {
     step1: {
       title: 'Vervollständige dein Inserat',
       description: 'Füge Fotos, Beschreibung, Preis und Kontaktdaten hinzu. Unser geführtes Formular macht es kinderleicht.',
+      descriptionBold: 'Du entscheidest, welche Kontaktdaten angezeigt werden, wann und wie—schütze deine Privatsphäre und vermeide unnötige Anrufe.',
     },
     step2: {
       title: 'Generiere deinen QR & Plakat',
@@ -918,6 +922,7 @@ const it = {
     step1: {
       title: 'Completa la tua scheda',
       description: 'Aggiungi foto, descrizione, prezzo e contatti. Il nostro modulo guidato lo rende facilissimo.',
+      descriptionBold: 'Scegli tu quali informazioni di contatto mostrare, quando e come—proteggi la tua privacy ed evita chiamate inutili.',
     },
     step2: {
       title: 'Genera il tuo QR e cartello',
@@ -1132,6 +1137,7 @@ const pt = {
     step1: {
       title: 'Complete sua ficha',
       description: 'Adicione fotos, descrição, preço e dados de contacto. Nosso formulário guiado torna tudo fácil.',
+      descriptionBold: 'Você escolhe quais dados de contacto exibir, quando e como—mantenha sua privacidade e evite chamadas desnecessárias.',
     },
     step2: {
       title: 'Gere seu QR e cartaz',
@@ -1346,6 +1352,7 @@ const pl = {
     step1: {
       title: 'Uzupełnij swoją kartę',
       description: 'Dodaj zdjęcia, opis, cenę i dane kontaktowe. Nasz przewodnik po formularzu czyni to łatwym.',
+      descriptionBold: 'Sam decydujesz, jakie dane kontaktowe pokazać, kiedy i jak—chroń swoją prywatność i unikaj niepotrzebnych telefonów.',
     },
     step2: {
       title: 'Wygeneruj swój QR i plakat',
