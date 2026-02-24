@@ -3,9 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Play, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 const heroPosterByLang: Record<string, string> = {
   en: '/hero_en.png',
   es: '/hero_es.png',
@@ -18,41 +15,12 @@ const heroPosterByLang: Record<string, string> = {
 
 export const Hero = () => {
   const { t, language } = useLanguage();
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-
-  const loginFirstLabel: Record<string, string> = {
-    en: 'Please log in first', es: 'Inicia sesión primero', fr: 'Connectez-vous d\'abord',
-    de: 'Bitte zuerst anmelden', it: 'Accedi prima', pt: 'Faça login primeiro', pl: 'Zaloguj się najpierw',
-  };
-
-  const handleCheckout = async () => {
-    if (!user) {
-      toast({ title: loginFirstLabel[language] || loginFirstLabel.en, variant: 'destructive' });
-      navigate('/auth?redirect=/#pricing');
-      return;
-    }
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { package_id: '6m' },
-      });
-      if (error) throw error;
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const scrollToHowItWorks = () => {
     document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
   };
+
   return (
     <section className="relative min-h-screen bg-hero-gradient pt-20 overflow-hidden">
       {/* Background decoration */}
@@ -87,13 +55,9 @@ export const Hero = () => {
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
-              <Button variant="hero" size="xl" className="group" onClick={handleCheckout} disabled={loading}>
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
-                  <>
-                    {t.hero.cta}
-                    <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                  </>
-                )}
+              <Button variant="hero" size="xl" className="group" onClick={() => navigate('/auth')}>
+                {t.hero.cta}
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Button>
               <Button variant="heroOutline" size="xl" className="group" onClick={scrollToHowItWorks}>
                 <Play className="h-5 w-5" />
