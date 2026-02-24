@@ -18,15 +18,51 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { signId, batchId, token, qrUrl, language, type, propertyType, phone } = await req.json();
+    const { signId, batchId, token, language, type, propertyType, phone } = await req.json();
 
     console.log(`Generating sign for token: ${token}`);
 
-    // Call n8n webhook
+    // 1. Generate QR code image pointing to the activation URL
+    const activationUrl = `https://zignoqr.com/activate/${token}`;
+    const qrApiUrl = `https://quickchart.io/qr?text=${encodeURIComponent(activationUrl)}&size=600&margin=2&format=png`;
+    const qrResponse = await fetch(qrApiUrl);
+    if (!qrResponse.ok) throw new Error("Failed to generate QR code");
+    const qrBuffer = new Uint8Array(await qrResponse.arrayBuffer());
+
+    // 2. Upload QR to storage
+    const qrPath = `signs/${batchId}/${token}_qr.png`;
+    const { error: qrUploadError } = await supabase.storage
+      .from("sign-assets")
+      .upload(qrPath, qrBuffer, { contentType: "image/png", upsert: true });
+
+    if (qrUploadError) {
+      console.error("QR upload error:", qrUploadError);
+      throw new Error(`QR upload failed: ${qrUploadError.message}`);
+    }
+
+    // 3. Get public URL of the uploaded QR
+    const { data: qrPublicUrlData } = supabase.storage.from("sign-assets").getPublicUrl(qrPath);
+    const qrPublicUrl = qrPublicUrlData.publicUrl;
+    console.log("QR uploaded, public URL:", qrPublicUrl);
+
+    // 4. Map transaction type to display text
+    const textValue = type === "rent" ? "ON RENT" : "ON SALE";
+
+    // 5. Call n8n webhook with correct parameter names
+    const webhookBody = {
+      qrUrl: qrPublicUrl,
+      language: language || "es",
+      Text: textValue,
+      size: "A4",
+      type: propertyType || "apartment",
+      phone: phone ? "" : "",
+    };
+
+    console.log("Calling n8n webhook:", JSON.stringify(webhookBody));
     const webhookResp = await fetch(N8N_WEBHOOK_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ qrUrl, language, type, propertyType, phone, token }),
+      body: JSON.stringify(webhookBody),
     });
 
     if (!webhookResp.ok) {
@@ -51,10 +87,28 @@ serve(async (req) => {
       if (uploadErr) console.error("Upload error:", uploadErr);
       else uploaded = true;
     } else {
-      const json = await webhookResp.json();
-      console.log("Webhook JSON response:", JSON.stringify(json));
-      if (json.url) {
-        const imgResp = await fetch(json.url);
+      // Try to parse as JSON with a URL
+      const responseBytes = new Uint8Array(await webhookResp.arrayBuffer());
+      const responseText = new TextDecoder().decode(responseBytes);
+      console.log("Webhook response body:", responseText);
+
+      let imageUrl: string | null = null;
+      try {
+        const parsed = JSON.parse(responseText);
+        imageUrl = parsed.url || parsed.imageUrl || parsed.image_url || parsed.data?.url || null;
+        if (!imageUrl && Array.isArray(parsed) && parsed.length > 0) {
+          const first = parsed[0];
+          imageUrl = typeof first === "string" ? first : (first.url || first.imageUrl || null);
+        }
+      } catch {
+        if (responseText.startsWith("http")) {
+          imageUrl = responseText.trim();
+        }
+      }
+
+      if (imageUrl) {
+        console.log("Fetching poster from URL:", imageUrl);
+        const imgResp = await fetch(imageUrl);
         const blob = await imgResp.blob();
         const arrayBuffer = await blob.arrayBuffer();
         const { error: uploadErr } = await supabase.storage
