@@ -1,34 +1,47 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { ActivationError, type ActivationErrorType } from '@/components/activation/ActivationError';
+import zignoLogo from '@/assets/zigno-logo.png';
 
 const ACTIVATION_TOKEN_KEY = 'zigno_activation_token';
 
-const ActivateSignSetup = () => {
-  const { token } = useParams<{ token: string }>();
+const ActivateComplete = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
-  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+  const [error, setError] = useState<ActivationErrorType | null>(null);
   const [processing, setProcessing] = useState(true);
 
   useEffect(() => {
     if (authLoading) return;
 
     if (!user) {
-      // Not logged in — redirect to activation page
-      if (token) {
-        navigate(`/activate/${token}`, { replace: true });
-      }
-      return;
+      // Wait — supabase may still be processing the OTP callback
+      const timeout = setTimeout(() => {
+        if (!user) {
+          // Still no user after waiting, try to get session
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (!session) {
+              setError('EXPIRED_MAGIC_LINK');
+              setProcessing(false);
+            }
+          });
+        }
+      }, 3000);
+      return () => clearTimeout(timeout);
     }
 
     const activate = async () => {
-      const activationToken = token || localStorage.getItem(ACTIVATION_TOKEN_KEY);
+      const activationToken = localStorage.getItem(ACTIVATION_TOKEN_KEY);
+
       if (!activationToken) {
-        setError('No activation token found.');
-        setProcessing(false);
+        // No token — user just logged in normally
+        toast({ title: 'Sesión iniciada correctamente.' });
+        navigate('/app', { replace: true });
         return;
       }
 
@@ -41,14 +54,14 @@ const ActivateSignSetup = () => {
           .maybeSingle();
 
         if (fetchErr || !sign) {
-          setError('Token no válido.');
+          setError('INVALID_TOKEN');
           setProcessing(false);
           return;
         }
 
         // Already assigned to a different user
         if (sign.customer_id && sign.customer_id !== user.id) {
-          setError('Este código ya fue activado por otra persona. Contacta con soporte.');
+          setError('ALREADY_CLAIMED_OTHER_USER');
           setProcessing(false);
           return;
         }
@@ -56,7 +69,7 @@ const ActivateSignSetup = () => {
         // Already assigned to current user — redirect to listing
         if (sign.customer_id === user.id && sign.listing_id) {
           localStorage.removeItem(ACTIVATION_TOKEN_KEY);
-          navigate(`/app/listings/${sign.listing_id}`, { replace: true });
+          navigate(`/app/listings/new?listing_id=${sign.listing_id}`, { replace: true });
           return;
         }
 
@@ -67,8 +80,12 @@ const ActivateSignSetup = () => {
           .eq('id', sign.batch_id)
           .maybeSingle();
 
-        const operationType = batch?.transaction_type === 'rent' ? 'rent' : 
-                              batch?.transaction_type === 'sale' ? 'sale' : null;
+        const operationType =
+          batch?.transaction_type === 'rent'
+            ? 'rent'
+            : batch?.transaction_type === 'sale'
+            ? 'sale'
+            : null;
         const propertyType = batch?.property_type || 'apartment';
 
         // Step 1: Claim the sign
@@ -109,35 +126,36 @@ const ActivateSignSetup = () => {
         // Clean up
         localStorage.removeItem(ACTIVATION_TOKEN_KEY);
 
-        // Redirect to listing editing
-        navigate(`/app/listings/${newListing.id}`, { replace: true });
+        // Redirect to listing editor with onboarding flag
+        navigate(`/app/listings/new?listing_id=${newListing.id}&onboarding=true`, { replace: true });
       } catch (err: any) {
         console.error('Activation error:', err);
-        setError(err.message || 'Error activating sign.');
+        setError('GENERIC_ERROR');
         setProcessing(false);
       }
     };
 
     activate();
-  }, [user, authLoading, token, navigate]);
+  }, [user, authLoading, navigate, toast]);
 
   if (error) {
+    const token = localStorage.getItem(ACTIVATION_TOKEN_KEY) || undefined;
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="text-center max-w-md">
-          <AlertTriangle className="h-16 w-16 text-destructive mx-auto mb-4" />
-          <p className="text-lg text-foreground">{error}</p>
-        </div>
-      </div>
+      <ActivationError
+        type={error}
+        token={token}
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+      <img src={zignoLogo} alt="Zigno" className="h-8 w-auto mb-6" />
       <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-      <p className="text-muted-foreground">Activando tu cartel...</p>
+      <p className="text-muted-foreground">Activando tu cartel…</p>
     </div>
   );
 };
 
-export default ActivateSignSetup;
+export default ActivateComplete;

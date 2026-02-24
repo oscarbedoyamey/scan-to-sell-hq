@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Check, QrCode, Signpost, Link2 } from 'lucide-react';
+import { OnboardingOverlay } from '@/components/activation/OnboardingOverlay';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -88,12 +89,14 @@ const ListingNew = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { invalidateAll } = useListingMutations();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const editId = searchParams.get('listing_id');
   const isNew = searchParams.get('new') === '1';
+  const hasOnboarding = searchParams.get('onboarding') === 'true';
   const isEdit = !!editId && !isNew;
 
   const [step, setStep] = useState(0);
+  const [showOnboarding, setShowOnboarding] = useState(hasOnboarding);
   const [listingId, setListingId] = useState<string | null>(editId);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -345,6 +348,16 @@ const ListingNew = () => {
 
   return (
     <div className="max-w-3xl mx-auto">
+      <OnboardingOverlay
+        open={showOnboarding}
+        onClose={() => {
+          setShowOnboarding(false);
+          // Remove onboarding param from URL
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete('onboarding');
+          setSearchParams(newParams, { replace: true });
+        }}
+      />
       <SEO title={seo.title} description={seo.description} />
       <Link
         to="/app/listings"

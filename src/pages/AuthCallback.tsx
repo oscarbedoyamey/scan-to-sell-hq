@@ -15,7 +15,7 @@ const AuthCallback = () => {
     const getRedirect = () => {
       if (activationToken) {
         localStorage.setItem(ACTIVATION_TOKEN_KEY, activationToken);
-        return `/activate/${activationToken}/setup`;
+        return '/activate/complete';
       }
       return '/app';
     };
