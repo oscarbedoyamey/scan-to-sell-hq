@@ -139,12 +139,12 @@ export const PosterGallery = () => {
         </div>
 
         {/* Poster Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+        <div className="flex flex-wrap justify-center gap-4 md:gap-6">
           {filteredPosters.map((poster) => (
             <div
               key={poster.id}
               onClick={() => setSelectedPoster(poster)}
-              className="group relative bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+              className="group relative bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 w-[calc(50%-0.5rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(20%-1.2rem)]"
             >
               {/* Poster Image */}
               <div className="aspect-[3/4] overflow-hidden">
