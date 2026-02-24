@@ -44,9 +44,9 @@ const en = {
     titleHighlight: '4 easy steps',
     subtitle: 'No technical skills required. Go from property listing to printed poster in minutes.',
     step1: {
-      title: 'Complete your listing',
-      description: 'Add photos, description, price, and contact details. Our guided form makes it effortless.',
-      descriptionBold: 'You choose what contact info to show, when, and how—keep your privacy and avoid unwanted calls.',
+      title: 'Complete your listing & contact format',
+      description: 'Add photos, description, price. Then choose what contact info to show, when, and how.',
+      descriptionBold: 'Keep your privacy and avoid unwanted contacts.',
     },
     step2: {
       title: 'Generate your QR & poster',
@@ -58,7 +58,8 @@ const en = {
     },
     step4: {
       title: 'Set your sign & start selling smarter',
-      description: 'Place your poster and let it work for you 24/7. Filter out irrelevant calls and focus only on genuinely interested leads—sell more with less effort.',
+      description: 'Place your poster and let it work for you 24/7. Filter out irrelevant calls and focus only on genuinely interested leads.',
+      descriptionBold: 'Sell more with less effort.',
     },
   },
 
@@ -275,9 +276,9 @@ const fr = {
     titleHighlight: '4 étapes faciles',
     subtitle: 'Aucune compétence technique requise. De l\'annonce à l\'affiche en quelques minutes.',
     step1: {
-      title: 'Complétez votre fiche',
-      description: 'Ajoutez photos, description, prix et coordonnées. Notre formulaire guidé rend tout simple.',
-      descriptionBold: 'Vous choisissez quelles infos de contact afficher, quand et comment—préservez votre vie privée et évitez les appels indésirables.',
+      title: 'Complétez votre fiche & format de contact',
+      description: 'Ajoutez photos, description, prix. Puis choisissez quelles infos de contact afficher, quand et comment.',
+      descriptionBold: 'Préservez votre vie privée et évitez les contacts indésirables.',
     },
     step2: {
       title: 'Générez votre QR et affiche',
@@ -290,6 +291,7 @@ const fr = {
     step4: {
       title: 'Posez votre affiche et vendez plus intelligemment',
       description: 'Placez votre affiche et laissez-la travailler pour vous 24h/24. Filtrez les appels non pertinents et concentrez-vous uniquement sur les prospects réellement intéressés.',
+      descriptionBold: 'Vendez plus avec moins d\'effort.',
     },
   },
   demo: {
@@ -490,9 +492,9 @@ const es = {
     titleHighlight: '4 sencillos pasos',
     subtitle: 'Sin conocimientos técnicos. De anuncio a cartel impreso en minutos.',
     step1: {
-      title: 'Completa tu ficha',
-      description: 'Añade fotos, descripción, precio y datos de contacto. Nuestro formulario guiado lo hace muy fácil.',
-      descriptionBold: 'Tú decides qué datos de contacto mostrar, cuándo y cómo—mantén tu privacidad y evita llamadas innecesarias.',
+      title: 'Completa tu ficha y formato de contacto',
+      description: 'Añade fotos, descripción, precio. Luego elige qué datos de contacto mostrar, cuándo y cómo.',
+      descriptionBold: 'Mantén tu privacidad y evita contactos innecesarios.',
     },
     step2: {
       title: 'Genera tu QR y cartel',
@@ -504,7 +506,8 @@ const es = {
     },
     step4: {
       title: 'Coloca tu cartel y vende más inteligente',
-      description: 'Pon tu cartel y deja que trabaje por ti las 24 horas. Filtra llamadas irrelevantes y céntrate solo en los leads realmente interesados—vende más con menos esfuerzo.',
+      description: 'Pon tu cartel y deja que trabaje por ti las 24 horas. Filtra llamadas irrelevantes y céntrate solo en los leads realmente interesados.',
+      descriptionBold: 'Vende más con menos esfuerzo.',
     },
   },
   demo: {
@@ -705,9 +708,9 @@ const de = {
     titleHighlight: '4 einfachen Schritten',
     subtitle: 'Keine technischen Kenntnisse nötig. Von der Anzeige zum gedruckten Plakat in Minuten.',
     step1: {
-      title: 'Vervollständige dein Inserat',
-      description: 'Füge Fotos, Beschreibung, Preis und Kontaktdaten hinzu. Unser geführtes Formular macht es kinderleicht.',
-      descriptionBold: 'Du entscheidest, welche Kontaktdaten angezeigt werden, wann und wie—schütze deine Privatsphäre und vermeide unnötige Anrufe.',
+      title: 'Inserat & Kontaktformat ausfüllen',
+      description: 'Füge Fotos, Beschreibung, Preis hinzu. Dann wähle, welche Kontaktdaten angezeigt werden, wann und wie.',
+      descriptionBold: 'Schütze deine Privatsphäre und vermeide unerwünschte Kontakte.',
     },
     step2: {
       title: 'Generiere deinen QR & Plakat',
@@ -719,7 +722,8 @@ const de = {
     },
     step4: {
       title: 'Plakat aufhängen & smarter verkaufen',
-      description: 'Hänge dein Plakat auf und lass es rund um die Uhr für dich arbeiten. Filtere irrelevante Anrufe und konzentriere dich nur auf echte Interessenten—verkaufe mehr mit weniger Aufwand.',
+      description: 'Hänge dein Plakat auf und lass es rund um die Uhr für dich arbeiten. Filtere irrelevante Anrufe und konzentriere dich nur auf echte Interessenten.',
+      descriptionBold: 'Verkaufe mehr mit weniger Aufwand.',
     },
   },
   demo: {
@@ -920,9 +924,9 @@ const it = {
     titleHighlight: '4 semplici passaggi',
     subtitle: 'Nessuna competenza tecnica richiesta. Dall\'annuncio al poster stampato in pochi minuti.',
     step1: {
-      title: 'Completa la tua scheda',
-      description: 'Aggiungi foto, descrizione, prezzo e contatti. Il nostro modulo guidato lo rende facilissimo.',
-      descriptionBold: 'Scegli tu quali informazioni di contatto mostrare, quando e come—proteggi la tua privacy ed evita chiamate inutili.',
+      title: 'Completa la scheda e il formato di contatto',
+      description: 'Aggiungi foto, descrizione, prezzo. Poi scegli quali informazioni di contatto mostrare, quando e come.',
+      descriptionBold: 'Proteggi la tua privacy ed evita contatti indesiderati.',
     },
     step2: {
       title: 'Genera il tuo QR e cartello',
@@ -934,7 +938,8 @@ const it = {
     },
     step4: {
       title: 'Posiziona il cartello e vendi in modo più intelligente',
-      description: 'Posiziona il tuo poster e lascialo lavorare per te 24 ore su 24. Filtra le chiamate irrilevanti e concentrati solo sui contatti realmente interessati—vendi di più con meno sforzo.',
+      description: 'Posiziona il tuo poster e lascialo lavorare per te 24 ore su 24. Filtra le chiamate irrilevanti e concentrati solo sui contatti realmente interessati.',
+      descriptionBold: 'Vendi di più con meno sforzo.',
     },
   },
   demo: {
@@ -1135,9 +1140,9 @@ const pt = {
     titleHighlight: '4 passos fáceis',
     subtitle: 'Sem conhecimentos técnicos necessários. Do anúncio ao cartaz impresso em minutos.',
     step1: {
-      title: 'Complete sua ficha',
-      description: 'Adicione fotos, descrição, preço e dados de contacto. Nosso formulário guiado torna tudo fácil.',
-      descriptionBold: 'Você escolhe quais dados de contacto exibir, quando e como—mantenha sua privacidade e evite chamadas desnecessárias.',
+      title: 'Complete sua ficha e formato de contacto',
+      description: 'Adicione fotos, descrição, preço. Depois escolha quais dados de contacto exibir, quando e como.',
+      descriptionBold: 'Mantenha sua privacidade e evite contactos indesejados.',
     },
     step2: {
       title: 'Gere seu QR e cartaz',
@@ -1149,7 +1154,8 @@ const pt = {
     },
     step4: {
       title: 'Coloque seu cartaz e venda de forma mais inteligente',
-      description: 'Coloque seu cartaz e deixe-o trabalhar por si 24 horas por dia. Filtre chamadas irrelevantes e concentre-se apenas nos contactos realmente interessados—venda mais com menos esforço.',
+      description: 'Coloque seu cartaz e deixe-o trabalhar por si 24 horas por dia. Filtre chamadas irrelevantes e concentre-se apenas nos contactos realmente interessados.',
+      descriptionBold: 'Venda mais com menos esforço.',
     },
   },
   demo: {
@@ -1350,9 +1356,9 @@ const pl = {
     titleHighlight: '4 łatwych krokach',
     subtitle: 'Nie wymagane umiejętności techniczne. Od ogłoszenia do wydrukowanego plakatu w kilka minut.',
     step1: {
-      title: 'Uzupełnij swoją kartę',
-      description: 'Dodaj zdjęcia, opis, cenę i dane kontaktowe. Nasz przewodnik po formularzu czyni to łatwym.',
-      descriptionBold: 'Sam decydujesz, jakie dane kontaktowe pokazać, kiedy i jak—chroń swoją prywatność i unikaj niepotrzebnych telefonów.',
+      title: 'Uzupełnij kartę i format kontaktu',
+      description: 'Dodaj zdjęcia, opis, cenę. Następnie wybierz, jakie dane kontaktowe pokazać, kiedy i jak.',
+      descriptionBold: 'Chroń swoją prywatność i unikaj niechcianych kontaktów.',
     },
     step2: {
       title: 'Wygeneruj swój QR i plakat',
@@ -1364,7 +1370,8 @@ const pl = {
     },
     step4: {
       title: 'Umieść plakat i sprzedawaj mądrzej',
-      description: 'Umieść plakat i pozwól mu pracować dla Ciebie 24/7. Odfiltruj nieistotne telefony i skup się tylko na naprawdę zainteresowanych klientach—sprzedawaj więcej przy mniejszym wysiłku.',
+      description: 'Umieść plakat i pozwól mu pracować dla Ciebie 24/7. Odfiltruj nieistotne telefony i skup się tylko na naprawdę zainteresowanych klientach.',
+      descriptionBold: 'Sprzedawaj więcej przy mniejszym wysiłku.',
     },
   },
   demo: {
