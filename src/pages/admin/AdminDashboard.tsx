@@ -80,7 +80,7 @@ const AdminDashboard = () => {
   const kpiCards = [
     { label: 'Total Users', value: kpis.totalUsers, icon: Users, color: 'text-primary' },
     { label: 'Active Listings', value: kpis.activeListings, icon: FileText, color: 'text-success' },
-    { label: 'Revenue (€)', value: `€${(kpis.totalRevenue / 100).toFixed(0)}`, icon: CreditCard, color: 'text-accent' },
+    { label: 'Revenue (€)', value: `€${kpis.totalRevenue.toFixed(0)}`, icon: CreditCard, color: 'text-accent' },
     { label: 'Scans (30d)', value: kpis.scans30d, icon: BarChart3, color: 'text-primary' },
     { label: 'Total Signs', value: kpis.totalSigns, icon: QrCode, color: 'text-muted-foreground' },
     { label: 'Expiring (14d)', value: kpis.expiringSoon, icon: AlertTriangle, color: kpis.expiringSoon > 0 ? 'text-destructive' : 'text-muted-foreground' },

@@ -128,7 +128,7 @@ const AdminPurchases = () => {
                   <td className="px-4 py-3">
                     <Badge variant={statusVariant(p.status)}>{p.status}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-right text-foreground">€{((p.amount_eur || 0) / 100).toFixed(2)}</td>
+                  <td className="px-4 py-3 text-right text-foreground">€{(p.amount_eur || 0).toFixed(2)}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{p.start_at ? new Date(p.start_at).toLocaleDateString() : '—'}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{p.end_at ? new Date(p.end_at).toLocaleDateString() : '—'}</td>
                   <td className="px-4 py-3 text-xs font-mono text-muted-foreground truncate max-w-[100px]">{p.stripe_payment_intent_id || '—'}</td>
