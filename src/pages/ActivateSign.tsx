@@ -14,7 +14,7 @@ const ActivateSign = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<'INVALID_TOKEN' | 'ALREADY_CLAIMED_OTHER_USER' | null>(null);
+  const [error, setError] = useState<'INVALID_TOKEN' | 'ALREADY_CLAIMED_OTHER_USER' | 'GENERIC_ERROR' | null>(null);
   const [signValid, setSignValid] = useState(false);
 
   useEffect(() => {
@@ -32,17 +32,26 @@ const ActivateSign = () => {
         return;
       }
 
-      if (data.status === 'assigned' && data.customer_id) {
-        setError('ALREADY_CLAIMED_OTHER_USER');
-        setLoading(false);
-        return;
+      // CONTEXT B: Sign is already assigned — redirect to public listing page
+      if (data.status === 'assigned') {
+        if (data.listing_id) {
+          navigate(`/listing/${data.listing_id}`, { replace: true });
+          return;
+        } else {
+          // Data inconsistency: assigned but no listing
+          console.error('Data inconsistency: sign assigned but no listing_id', { signId: data.id, token });
+          setError('GENERIC_ERROR');
+          setLoading(false);
+          return;
+        }
       }
 
+      // CONTEXT A: unassigned or sold — show activation onboarding
       setSignValid(true);
       setLoading(false);
     };
     fetchSign();
-  }, [token]);
+  }, [token, navigate]);
 
   // If user is already logged in, redirect to complete
   useEffect(() => {

@@ -39,6 +39,7 @@ import AdminUnassignedSigns from "./pages/admin/AdminUnassignedSigns";
 import ActivateSign from "./pages/ActivateSign";
 import ActivateSignAuth from "./pages/ActivateSignAuth";
 import ActivateComplete from "./pages/ActivateComplete";
+import PublicListingById from "./pages/PublicListingById";
 
 import { queryClient } from "@/lib/queryClient";
 
@@ -66,6 +67,7 @@ const App = () => (
               <Route path="/activate/complete" element={<ActivateComplete />} />
               <Route path="/activate/:token" element={<ActivateSign />} />
               <Route path="/activate/:token/auth" element={<ActivateSignAuth />} />
+              <Route path="/listing/:listingId" element={<PublicListingById />} />
 
               {/* Protected app routes */}
               <Route
