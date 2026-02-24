@@ -2,6 +2,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Footer } from '@/components/landing/Footer';
+import { TrustStrip } from '@/components/landing/TrustStrip';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import zignoLogo from '@/assets/zigno-logo.png';
 
@@ -62,6 +63,7 @@ export const LegalPageLayout = ({ content }: LegalPageLayoutProps) => {
         </div>
       </main>
 
+      <TrustStrip />
       <Footer />
     </div>
   );
