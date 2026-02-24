@@ -9,8 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
 import { Plus, Loader2, ArrowLeft, Download, FileSpreadsheet, Copy, Check } from 'lucide-react';
-import QRCode from 'qrcode';
 import JSZip from 'jszip';
 
 interface Batch {
@@ -58,6 +58,7 @@ const AdminUnassignedSigns = () => {
   const [signs, setSigns] = useState<UnassignedSign[]>([]);
   const [signsLoading, setSignsLoading] = useState(false);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [genProgress, setGenProgress] = useState<{ current: number; total: number } | null>(null);
 
   // Form state
   const [formLang, setFormLang] = useState('es');
@@ -140,29 +141,54 @@ const AdminUnassignedSigns = () => {
 
       if (insertErr) throw insertErr;
 
-      // Generate QR PNGs and upload to storage
+      // Call n8n webhook to generate sign for each unassigned sign
+      let completed = 0;
+      setGenProgress({ current: 0, total: signsToInsert.length });
+
       for (const s of signsToInsert) {
         try {
-          const pngBuffer = await QRCode.toBuffer(s.qr_url, {
-            errorCorrectionLevel: 'H',
-            width: 800,
-            margin: 2,
-            color: { dark: '#0F1F3D', light: '#FFFFFF' },
+          const webhookResp = await fetch('https://obminversion.app.n8n.cloud/webhook/43dc4fb9-fc7a-4af6-b06c-0fecc7dee9f9', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              qrUrl: s.qr_url,
+              language: formLang,
+              type: formTxType,
+              propertyType: formPropType,
+              phone: formPhone,
+              token: s.activation_token,
+            }),
           });
 
           const filePath = `signs/${batch.id}/${s.activation_token}.png`;
-          await supabase.storage
-            .from('sign-assets')
-            .upload(filePath, pngBuffer, { contentType: 'image/png', upsert: true });
+          const contentType = webhookResp.headers.get('content-type') || '';
+
+          if (contentType.includes('image') || contentType.includes('octet-stream')) {
+            const blob = await webhookResp.blob();
+            await supabase.storage.from('sign-assets').upload(filePath, blob, { contentType: 'image/png', upsert: true });
+          } else {
+            const json = await webhookResp.json();
+            if (json.url) {
+              const imgResp = await fetch(json.url);
+              const blob = await imgResp.blob();
+              await supabase.storage.from('sign-assets').upload(filePath, blob, { contentType: 'image/png', upsert: true });
+            }
+          }
 
           await (supabase as any)
             .from('unassigned_signs')
             .update({ png_filename: filePath })
             .eq('activation_token', s.activation_token);
-        } catch (qrErr) {
-          console.error('QR generation error for', s.activation_token, qrErr);
+
+          completed++;
+          setGenProgress({ current: completed, total: signsToInsert.length });
+        } catch (err) {
+          console.error('Webhook error for', s.activation_token, err);
+          completed++;
+          setGenProgress({ current: completed, total: signsToInsert.length });
         }
       }
+      setGenProgress(null);
 
       toast({ title: `Batch generado: ${formCount} carteles creados.` });
       setDialogOpen(false);
@@ -341,10 +367,20 @@ const AdminUnassignedSigns = () => {
                     <TableCell className="text-sm">{formatDate(s.sold_at)}</TableCell>
                     <TableCell className="text-sm">{formatDate(s.assigned_at)}</TableCell>
                     <TableCell>
-                      {s.png_filename && (
-                        <button onClick={() => downloadPng(s)} className="text-primary hover:text-primary/80">
-                          <Download className="h-4 w-4" />
-                        </button>
+                      {s.png_filename ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-primary"
+                          onClick={() => {
+                            const { data } = supabase.storage.from('sign-assets').getPublicUrl(s.png_filename!);
+                            window.open(data.publicUrl, '_blank');
+                          }}
+                        >
+                          Ver
+                        </Button>
+                      ) : (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                       )}
                     </TableCell>
                   </TableRow>
@@ -431,6 +467,15 @@ const AdminUnassignedSigns = () => {
                 />
               </div>
 
+              {genProgress && (
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Generando carteles…</span>
+                    <span>{genProgress.current}/{genProgress.total}</span>
+                  </div>
+                  <Progress value={(genProgress.current / genProgress.total) * 100} className="h-2" />
+                </div>
+              )}
               <Button className="w-full" onClick={handleGenerate} disabled={generating}>
                 {generating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Generar batch
