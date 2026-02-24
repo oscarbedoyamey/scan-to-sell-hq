@@ -552,6 +552,39 @@ export type Database = {
           },
         ]
       }
+      sign_batches: {
+        Row: {
+          created_at: string
+          created_by: string
+          has_phone_space: boolean
+          id: string
+          language: string
+          property_type: string
+          total_count: number
+          transaction_type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          has_phone_space?: boolean
+          id?: string
+          language?: string
+          property_type?: string
+          total_count?: number
+          transaction_type?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          has_phone_space?: boolean
+          id?: string
+          language?: string
+          property_type?: string
+          total_count?: number
+          transaction_type?: string
+        }
+        Relationships: []
+      }
       signs: {
         Row: {
           created_at: string | null
@@ -659,6 +692,70 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      unassigned_signs: {
+        Row: {
+          activation_token: string
+          assigned_at: string | null
+          batch_id: string
+          created_at: string
+          customer_id: string | null
+          id: string
+          listing_id: string | null
+          png_filename: string | null
+          qr_url: string
+          sold_at: string | null
+          status: string
+        }
+        Insert: {
+          activation_token: string
+          assigned_at?: string | null
+          batch_id: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          listing_id?: string | null
+          png_filename?: string | null
+          qr_url: string
+          sold_at?: string | null
+          status?: string
+        }
+        Update: {
+          activation_token?: string
+          assigned_at?: string | null
+          batch_id?: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          listing_id?: string | null
+          png_filename?: string | null
+          qr_url?: string
+          sold_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unassigned_signs_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "sign_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unassigned_signs_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unassigned_signs_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

@@ -1,27 +1,39 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 
+const ACTIVATION_TOKEN_KEY = 'zigno_activation_token';
+
 const AuthCallback = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
+    const activationToken = searchParams.get('activation') || localStorage.getItem(ACTIVATION_TOKEN_KEY);
+
+    const getRedirect = () => {
+      if (activationToken) {
+        localStorage.setItem(ACTIVATION_TOKEN_KEY, activationToken);
+        return `/activate/${activationToken}/setup`;
+      }
+      return '/app';
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        navigate('/app', { replace: true });
+        navigate(getRedirect(), { replace: true });
       }
     });
 
-    // Also check if we already have a session (in case the event already fired)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate('/app', { replace: true });
+        navigate(getRedirect(), { replace: true });
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background">

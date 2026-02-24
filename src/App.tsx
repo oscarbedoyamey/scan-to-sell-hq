@@ -35,6 +35,9 @@ import AdminPurchases from "./pages/admin/AdminPurchases";
 import AdminPurchaseDetail from "./pages/admin/AdminPurchaseDetail";
 import AdminSigns from "./pages/admin/AdminSigns";
 import AdminTemplates from "./pages/admin/AdminTemplates";
+import AdminUnassignedSigns from "./pages/admin/AdminUnassignedSigns";
+import ActivateSign from "./pages/ActivateSign";
+import ActivateSignSetup from "./pages/ActivateSignSetup";
 
 import { queryClient } from "@/lib/queryClient";
 
@@ -59,6 +62,8 @@ const App = () => (
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/cookies" element={<Cookies />} />
+              <Route path="/activate/:token" element={<ActivateSign />} />
+              <Route path="/activate/:token/setup" element={<ActivateSignSetup />} />
 
               {/* Protected app routes */}
               <Route
@@ -95,6 +100,7 @@ const App = () => (
                 <Route path="purchases/:purchaseId" element={<AdminPurchaseDetail />} />
                 <Route path="signs" element={<AdminSigns />} />
                 <Route path="templates" element={<AdminTemplates />} />
+                <Route path="unassigned-signs" element={<AdminUnassignedSigns />} />
               </Route>
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
