@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Loader2, ArrowLeft, Download, FileSpreadsheet, Copy, Check } from 'lucide-react';
+import { Plus, Loader2, ArrowLeft, Download, FileSpreadsheet, Copy, Check, RefreshCw, Eye } from 'lucide-react';
 import JSZip from 'jszip';
 
 interface Batch {
@@ -59,7 +59,8 @@ const AdminUnassignedSigns = () => {
   const [signsLoading, setSignsLoading] = useState(false);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [genProgress, setGenProgress] = useState<{ current: number; total: number } | null>(null);
-
+  const [generatingSignIds, setGeneratingSignIds] = useState<Set<string>>(new Set());
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Form state
   const [formLang, setFormLang] = useState('es');
   const [formPropType, setFormPropType] = useState('apartment');
@@ -141,52 +142,44 @@ const AdminUnassignedSigns = () => {
 
       if (insertErr) throw insertErr;
 
-      // Call n8n webhook to generate sign for each unassigned sign
+      // Call edge function to generate sign via n8n webhook for each sign
       let completed = 0;
       setGenProgress({ current: 0, total: signsToInsert.length });
 
+      // Get inserted signs with their DB ids
+      const { data: insertedSigns } = await (supabase as any)
+        .from('unassigned_signs')
+        .select('id, activation_token')
+        .eq('batch_id', batch.id);
+
+      const signMap = new Map((insertedSigns || []).map((s: any) => [s.activation_token, s.id]));
+
       for (const s of signsToInsert) {
         try {
-          const webhookResp = await fetch('https://obminversion.app.n8n.cloud/webhook/43dc4fb9-fc7a-4af6-b06c-0fecc7dee9f9', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+          const signId = signMap.get(s.activation_token);
+          const { data: fnData, error: fnError } = await supabase.functions.invoke('generate-unassigned-sign', {
+            body: {
+              signId,
+              batchId: batch.id,
+              token: s.activation_token,
               qrUrl: s.qr_url,
               language: formLang,
               type: formTxType,
               propertyType: formPropType,
               phone: formPhone,
-              token: s.activation_token,
-            }),
+            },
           });
 
-          const filePath = `signs/${batch.id}/${s.activation_token}.png`;
-          const contentType = webhookResp.headers.get('content-type') || '';
-
-          if (contentType.includes('image') || contentType.includes('octet-stream')) {
-            const blob = await webhookResp.blob();
-            await supabase.storage.from('sign-assets').upload(filePath, blob, { contentType: 'image/png', upsert: true });
+          if (fnError) {
+            console.error('Edge function error for', s.activation_token, fnError);
           } else {
-            const json = await webhookResp.json();
-            if (json.url) {
-              const imgResp = await fetch(json.url);
-              const blob = await imgResp.blob();
-              await supabase.storage.from('sign-assets').upload(filePath, blob, { contentType: 'image/png', upsert: true });
-            }
+            console.log('Sign generated:', s.activation_token, fnData);
           }
-
-          await (supabase as any)
-            .from('unassigned_signs')
-            .update({ png_filename: filePath })
-            .eq('activation_token', s.activation_token);
-
-          completed++;
-          setGenProgress({ current: completed, total: signsToInsert.length });
         } catch (err) {
-          console.error('Webhook error for', s.activation_token, err);
-          completed++;
-          setGenProgress({ current: completed, total: signsToInsert.length });
+          console.error('Error generating sign', s.activation_token, err);
         }
+        completed++;
+        setGenProgress({ current: completed, total: signsToInsert.length });
       }
       setGenProgress(null);
 
@@ -226,6 +219,104 @@ const AdminUnassignedSigns = () => {
     }
     setSigns(enriched);
     setSignsLoading(false);
+
+    // Start polling for signs without png_filename
+    startPolling(batchId);
+  };
+
+  const startPolling = (batchId: string) => {
+    if (pollingRef.current) clearInterval(pollingRef.current);
+    pollingRef.current = setInterval(async () => {
+      const { data } = await (supabase as any)
+        .from('unassigned_signs')
+        .select('id, png_filename')
+        .eq('batch_id', batchId)
+        .is('png_filename', null);
+
+      if (!data || data.length === 0) {
+        // All signs have PNGs, stop polling and refresh
+        if (pollingRef.current) clearInterval(pollingRef.current);
+        pollingRef.current = null;
+        // Refresh the full sign list
+        const { data: refreshed } = await (supabase as any)
+          .from('unassigned_signs')
+          .select('*')
+          .eq('batch_id', batchId)
+          .order('created_at', { ascending: true });
+        if (refreshed) {
+          const enriched: UnassignedSign[] = refreshed.map((s: any) => ({ ...s, customer_email: '—' }));
+          setSigns(enriched);
+        }
+        return;
+      }
+
+      // Partial update: update signs that now have png_filename
+      setSigns(prev => {
+        const updatedIds = new Set(data.map((d: any) => d.id));
+        return prev; // no change needed, we'll refresh on next poll
+      });
+
+      // Also refresh to get updated png_filenames
+      const { data: allSigns } = await (supabase as any)
+        .from('unassigned_signs')
+        .select('*')
+        .eq('batch_id', batchId)
+        .order('created_at', { ascending: true });
+      if (allSigns) {
+        const enriched: UnassignedSign[] = allSigns.map((s: any) => ({ ...s, customer_email: s.customer_email || '—' }));
+        setSigns(enriched);
+      }
+    }, 3000);
+  };
+
+  // Cleanup polling on unmount or batch change
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [selectedBatch]);
+
+  const generateSingleSign = async (sign: UnassignedSign) => {
+    if (!selectedBatch) return;
+    setGeneratingSignIds(prev => new Set(prev).add(sign.id));
+
+    // Get batch info
+    const batch = batches.find(b => b.id === selectedBatch);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-unassigned-sign', {
+        body: {
+          signId: sign.id,
+          batchId: selectedBatch,
+          token: sign.activation_token,
+          qrUrl: sign.qr_url,
+          language: batch?.language || 'es',
+          type: batch?.transaction_type || 'sale',
+          propertyType: batch?.property_type || 'apartment',
+          phone: batch?.has_phone_space || false,
+        },
+      });
+
+      if (error) {
+        console.error('Error generating sign:', error);
+        toast({ title: `Error generando cartel ${sign.activation_token}`, variant: 'destructive' });
+      } else {
+        // Update the sign in local state
+        setSigns(prev => prev.map(s =>
+          s.id === sign.id ? { ...s, png_filename: data.filePath } : s
+        ));
+        toast({ title: `Cartel ${sign.activation_token} generado correctamente` });
+      }
+    } catch (err: any) {
+      console.error('Error:', err);
+      toast({ title: err.message || 'Error', variant: 'destructive' });
+    } finally {
+      setGeneratingSignIds(prev => {
+        const next = new Set(prev);
+        next.delete(sign.id);
+        return next;
+      });
+    }
   };
 
   const downloadPng = async (sign: UnassignedSign) => {
@@ -377,10 +468,18 @@ const AdminUnassignedSigns = () => {
                             window.open(data.publicUrl, '_blank');
                           }}
                         >
-                          Ver
+                          <Eye className="h-4 w-4 mr-1" /> Ver
                         </Button>
-                      ) : (
+                      ) : generatingSignIds.has(s.id) ? (
                         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => generateSingleSign(s)}
+                        >
+                          <RefreshCw className="h-3 w-3 mr-1" /> Generar
+                        </Button>
                       )}
                     </TableCell>
                   </TableRow>
