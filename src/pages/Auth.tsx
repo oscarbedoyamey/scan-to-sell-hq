@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Mail, Loader2, CheckCircle } from 'lucide-react';
 import zignoLogo from '@/assets/zigno-logo.png';
+import { SEO } from '@/components/SEO';
+import { seoTranslations } from '@/i18n/seoTranslations';
 
 const labels: Record<string, Record<string, string>> = {
   title: { en: 'Welcome to Zigno', es: 'Bienvenido a Zigno', fr: 'Bienvenue sur Zigno', de: 'Willkommen bei Zigno', it: 'Benvenuto su Zigno', pt: 'Bem-vindo ao Zigno', pl: 'Witaj w Zigno' },
@@ -60,8 +62,11 @@ const Auth = () => {
     }
   };
 
+  const seo = seoTranslations[language].auth;
+
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
+      <SEO title={seo.title} description={seo.description} canonical="https://zigno.lovable.app/auth" />
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">

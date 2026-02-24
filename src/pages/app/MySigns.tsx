@@ -12,6 +12,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useToast } from '@/hooks/use-toast';
 import { QrCode, Download, ExternalLink, Unlink, RefreshCw, Loader2, AlertTriangle, Eye, LinkIcon, Plus } from 'lucide-react';
 import { useUserSigns } from '@/hooks/useSigns';
+import { SEO } from '@/components/SEO';
+import { seoTranslations } from '@/i18n/seoTranslations';
 import { useListingMutations } from '@/hooks/useListingMutations';
 import { SignGenerateDialog, type SignGenerateOptions } from '@/components/listing/SignGenerateDialog';
 
@@ -198,9 +200,12 @@ export default function MySigns() {
     }
   };
 
+  const seo = seoTranslations[language].signs;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
+        <SEO title={seo.title} description={seo.description} />
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -209,6 +214,7 @@ export default function MySigns() {
   if (!signs.length) {
     return (
       <div className="max-w-4xl mx-auto">
+        <SEO title={seo.title} description={seo.description} />
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">{t('mySignsTitle')}</h1>
           <p className="text-muted-foreground mt-2">{t('mySignsDescription')}</p>
@@ -226,6 +232,7 @@ export default function MySigns() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
+      <SEO title={seo.title} description={seo.description} />
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground">{t('mySignsTitle')}</h1>
         <p className="text-muted-foreground mt-2">{t('mySignsDescription')}</p>

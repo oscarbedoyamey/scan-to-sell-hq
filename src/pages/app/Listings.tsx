@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, FileText, Pencil, Home, MapPin, QrCode } from 'lucide-react';
 import { useUserListings } from '@/hooks/useListings';
+import { SEO } from '@/components/SEO';
+import { seoTranslations } from '@/i18n/seoTranslations';
 
 const labels: Record<string, Record<string, string>> = {
   title: { en: 'My Listings', es: 'Mis anuncios', fr: 'Mes annonces', de: 'Meine Inserate', it: 'I miei annunci', pt: 'Meus anúncios', pl: 'Moje ogłoszenia' },
@@ -34,8 +36,11 @@ const Listings = () => {
 
   const currencySymbol: Record<string, string> = { EUR: '€', GBP: '£', CHF: 'CHF', PLN: 'zł', CZK: 'Kč' };
 
+  const seo = seoTranslations[language].listings;
+
   return (
     <div className="max-w-5xl">
+      <SEO title={seo.title} description={seo.description} />
       <div className="flex items-center justify-between mb-8">
         <h1 className="font-display text-2xl font-bold text-foreground">{t('title')}</h1>
         <Button asChild variant="hero">

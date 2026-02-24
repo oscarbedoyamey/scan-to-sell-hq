@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, FileText, AlertTriangle, BarChart3 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useDashboardStats, useDashboardScans } from '@/hooks/useListings';
+import { SEO } from '@/components/SEO';
+import { seoTranslations } from '@/i18n/seoTranslations';
 
 const labels: Record<string, Record<string, string>> = {
   welcome: { en: 'Welcome back', es: 'Bienvenido de nuevo', fr: 'Bon retour', de: 'Willkommen zurück', it: 'Bentornato', pt: 'Bem-vindo de volta', pl: 'Witaj ponownie' },
@@ -65,8 +67,11 @@ const Dashboard = () => {
   const chartData = useMemo(() => aggregateScans(scans || [], granularity), [scans, granularity]);
   const totalScans = scans?.length || 0;
 
+  const seo = seoTranslations[language].dashboard;
+
   return (
     <div className="max-w-5xl">
+      <SEO title={seo.title} description={seo.description} />
       {/* Welcome */}
       <div className="mb-8">
         <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground">
