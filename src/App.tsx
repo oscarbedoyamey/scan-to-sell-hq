@@ -37,7 +37,8 @@ import AdminSigns from "./pages/admin/AdminSigns";
 import AdminTemplates from "./pages/admin/AdminTemplates";
 import AdminUnassignedSigns from "./pages/admin/AdminUnassignedSigns";
 import ActivateSign from "./pages/ActivateSign";
-import ActivateSignSetup from "./pages/ActivateSignSetup";
+import ActivateSignAuth from "./pages/ActivateSignAuth";
+import ActivateComplete from "./pages/ActivateComplete";
 
 import { queryClient } from "@/lib/queryClient";
 
@@ -62,8 +63,9 @@ const App = () => (
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/cookies" element={<Cookies />} />
+              <Route path="/activate/complete" element={<ActivateComplete />} />
               <Route path="/activate/:token" element={<ActivateSign />} />
-              <Route path="/activate/:token/setup" element={<ActivateSignSetup />} />
+              <Route path="/activate/:token/auth" element={<ActivateSignAuth />} />
 
               {/* Protected app routes */}
               <Route

@@ -10,8 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Loader2, ArrowLeft, Download, FileSpreadsheet, Copy, Check, RefreshCw, Eye } from 'lucide-react';
+import { Plus, Loader2, ArrowLeft, Download, FileSpreadsheet, Copy, Check, RefreshCw, Eye, FileText } from 'lucide-react';
 import JSZip from 'jszip';
+import { ActivationInstructionsModal } from '@/components/activation/ActivationInstructionsModal';
 
 interface Batch {
   id: string;
@@ -60,6 +61,7 @@ const AdminUnassignedSigns = () => {
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [genProgress, setGenProgress] = useState<{ current: number; total: number } | null>(null);
   const [generatingSignIds, setGeneratingSignIds] = useState<Set<string>>(new Set());
+  const [instructionsToken, setInstructionsToken] = useState<string | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Form state
   const [formLang, setFormLang] = useState('es');
@@ -401,13 +403,22 @@ const AdminUnassignedSigns = () => {
           <h1 className="text-xl font-bold text-foreground">Carteles del batch</h1>
         </div>
 
-        <div className="flex gap-3 mb-4">
+        <div className="flex flex-wrap gap-3 mb-4">
           <Button variant="outline" size="sm" onClick={downloadAllPngs}>
             <Download className="h-4 w-4 mr-1" /> Descargar todos los PNGs
           </Button>
           <Button variant="outline" size="sm" onClick={exportCsv}>
             <FileSpreadsheet className="h-4 w-4 mr-1" /> Exportar CSV
           </Button>
+          {signs.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setInstructionsToken(signs[0].activation_token)}
+            >
+              <FileText className="h-4 w-4 mr-1" /> Ver instrucciones de activación
+            </Button>
+          )}
         </div>
 
         {signsLoading ? (
@@ -487,6 +498,15 @@ const AdminUnassignedSigns = () => {
               </TableBody>
             </Table>
           </div>
+        )}
+
+        {/* Instructions modal for individual sign */}
+        {instructionsToken && (
+          <ActivationInstructionsModal
+            open={!!instructionsToken}
+            onOpenChange={(open) => !open && setInstructionsToken(null)}
+            token={instructionsToken}
+          />
         )}
       </div>
     );
