@@ -9,6 +9,7 @@ import { Pricing } from '@/components/landing/Pricing';
 import { Testimonials } from '@/components/landing/Testimonials';
 import { FAQ } from '@/components/landing/FAQ';
 import { Footer } from '@/components/landing/Footer';
+import { TrustStrip } from '@/components/landing/TrustStrip';
 import { SEO } from '@/components/SEO';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { seoTranslations } from '@/i18n/seoTranslations';
@@ -32,6 +33,7 @@ const Index = () => {
         <Testimonials />
         <FAQ />
       </main>
+      <TrustStrip />
       <Footer />
     </div>
   );
