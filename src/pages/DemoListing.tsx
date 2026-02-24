@@ -6,6 +6,8 @@ import zignoLogo from '@/assets/zigno-logo.png';
 import propertyMockup from '@/assets/property-listing-mockup.jpg';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useState, useMemo } from 'react';
+import { SEO } from '@/components/SEO';
+import { seoTranslations } from '@/i18n/seoTranslations';
 import { useSearchParams } from 'react-router-dom';
 
 const demoData = {
@@ -80,6 +82,7 @@ const DemoListing = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO title={seoTranslations[contextLanguage].demo.title} description={seoTranslations[contextLanguage].demo.description} canonical="https://zigno.lovable.app/demo" />
       {/* Demo banner */}
       <div className="bg-accent text-accent-foreground text-center py-2.5 text-sm font-medium">
         {l('demoBanner')}{' '}

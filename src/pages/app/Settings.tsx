@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Check } from 'lucide-react';
+import { SEO } from '@/components/SEO';
+import { seoTranslations } from '@/i18n/seoTranslations';
 
 const labels: Record<string, Record<string, string>> = {
   title: { en: 'Settings', es: 'Ajustes', fr: 'Paramètres', de: 'Einstellungen', it: 'Impostazioni', pt: 'Configurações', pl: 'Ustawienia' },
@@ -50,8 +52,11 @@ const Settings = () => {
     setTimeout(() => setSaved(false), 2000);
   };
 
+  const seo = seoTranslations[language].settings;
+
   return (
     <div className="max-w-lg">
+      <SEO title={seo.title} description={seo.description} />
       <h1 className="font-display text-2xl font-bold text-foreground mb-8">{t('title')}</h1>
 
       <div className="bg-card rounded-2xl border border-border p-6 space-y-6">

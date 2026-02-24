@@ -11,6 +11,8 @@ import { StepProperty } from '@/components/wizard/StepProperty';
 import { StepMedia } from '@/components/wizard/StepMedia';
 import { StepContact } from '@/components/wizard/StepContact';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { SEO } from '@/components/SEO';
+import { seoTranslations } from '@/i18n/seoTranslations';
 import type { Tables } from '@/integrations/supabase/types';
 import { useListingMutations } from '@/hooks/useListingMutations';
 
@@ -339,8 +341,11 @@ const ListingNew = () => {
     );
   }
 
+  const seo = seoTranslations[language].listingNew;
+
   return (
     <div className="max-w-3xl mx-auto">
+      <SEO title={seo.title} description={seo.description} />
       <Link
         to="/app/listings"
         className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
