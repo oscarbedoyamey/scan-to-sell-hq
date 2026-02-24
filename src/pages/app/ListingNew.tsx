@@ -265,6 +265,25 @@ const ListingNew = () => {
         setListingId(savedId);
       }
 
+      const currentListingId = savedId || listingId;
+
+      // Check if this listing was created from an unassigned sign activation
+      // If so, the sign is already linked — skip sign selection and go straight to payment
+      if (currentListingId) {
+        const { data: linkedSign } = await (supabase as any)
+          .from('unassigned_signs')
+          .select('id')
+          .eq('listing_id', currentListingId)
+          .maybeSingle();
+
+        if (linkedSign) {
+          // Sign already exists via activation — go straight to payment
+          setShowPlanSelection(true);
+          setPublishing(false);
+          return;
+        }
+      }
+
       // Check for available unassigned signs
       const { data: poolSigns } = await (supabase as any)
         .from('signs')
