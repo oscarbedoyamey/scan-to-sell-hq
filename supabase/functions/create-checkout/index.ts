@@ -159,6 +159,7 @@ serve(async (req) => {
       customer: customerId,
       line_items: [{ price: recurringPriceId, quantity: 1 }],
       mode: "subscription",
+      allow_promotion_codes: true,
       locale: userLocale as any,
       success_url: `${origin}/payment-success?purchase_id=${purchase.id}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/app/listings/${listing_id || ""}`,
