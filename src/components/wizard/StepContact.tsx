@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useWizardLabels } from './wizardLabels';
+import { CountryCodeSelect } from './CountryCodeSelect';
 import { Home, MapPin, Bed, Bath, Ruler, AlertCircle } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -15,16 +16,33 @@ interface StepContactProps {
   onChange: (patch: Listing) => void;
 }
 
+/** Extract country code prefix from a full phone string, e.g. "+34612…" → "+34" */
+const extractCountryCode = (phone: string | null | undefined): string => {
+  if (!phone) return '+34';
+  const match = phone.match(/^(\+\d{1,4})/);
+  return match ? match[1] : '+34';
+};
+
+/** Extract phone number without country code */
+const extractLocalNumber = (phone: string | null | undefined, countryCode: string): string => {
+  if (!phone) return '';
+  if (phone.startsWith(countryCode)) return phone.slice(countryCode.length).trim();
+  // fallback: strip any leading +XX
+  return phone.replace(/^\+\d{1,4}\s?/, '').trim();
+};
+
 export const StepContact = ({ data, onChange }: StepContactProps) => {
   const t = useWizardLabels();
   const [whatsappSameAsPhone, setWhatsappSameAsPhone] = useState(
     data.contact_whatsapp === data.contact_phone && !!data.contact_phone
   );
+  const [waCountryCode, setWaCountryCode] = useState(() => extractCountryCode(data.contact_whatsapp));
+  const [waLocalNumber, setWaLocalNumber] = useState(() => extractLocalNumber(data.contact_whatsapp, extractCountryCode(data.contact_whatsapp)));
 
   const price = data.operation_type === 'rent' ? data.price_rent : data.price_sale;
   const currencySymbol: Record<string, string> = { EUR: '€', GBP: '£', CHF: 'CHF', PLN: 'zł', CZK: 'Kč' };
 
-  const showPhone = data.show_phone ?? true;
+  const showPhone = data.show_phone ?? false;
   const showEmail = data.show_email ?? true;
   const showWhatsapp = data.show_whatsapp ?? false;
   const showForm = data.lead_form_enabled ?? true;
@@ -38,6 +56,10 @@ export const StepContact = ({ data, onChange }: StepContactProps) => {
     setWhatsappSameAsPhone(same);
     if (same) {
       onChange({ contact_whatsapp: data.contact_phone || '' });
+    } else {
+      // Build from country code + local
+      const full = waCountryCode + waLocalNumber;
+      onChange({ contact_whatsapp: full });
     }
   };
 
@@ -47,6 +69,18 @@ export const StepContact = ({ data, onChange }: StepContactProps) => {
       patch.contact_whatsapp = phone;
     }
     onChange(patch);
+  };
+
+  const handleWaCountryCode = (code: string) => {
+    setWaCountryCode(code);
+    const full = code + waLocalNumber;
+    onChange({ contact_whatsapp: full });
+  };
+
+  const handleWaLocalNumber = (num: string) => {
+    setWaLocalNumber(num);
+    const full = waCountryCode + num;
+    onChange({ contact_whatsapp: full });
   };
 
   return (
@@ -90,17 +124,35 @@ export const StepContact = ({ data, onChange }: StepContactProps) => {
           </div>
         </div>
 
-        {/* WhatsApp number field (only when not same as phone) */}
-        {showWhatsapp && !whatsappSameAsPhone && (
+        {/* WhatsApp number field (only when whatsapp enabled and not same as phone) */}
+        {showWhatsapp && (
           <div className="space-y-2">
-            <Label className="text-sm font-semibold">{t('whatsappNumber')}</Label>
-            <Input
-              type="tel"
-              value={data.contact_whatsapp || ''}
-              onChange={(e) => onChange({ contact_whatsapp: e.target.value })}
-              maxLength={20}
-              placeholder="+34 600 000 000"
-            />
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-semibold">{t('whatsappNumber')}</Label>
+              {data.contact_phone?.trim() && (
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={whatsappSameAsPhone}
+                    onCheckedChange={handleWhatsappToggle}
+                    className="scale-90"
+                  />
+                  <span className="text-xs text-muted-foreground">{t('sameAsPhone')}</span>
+                </div>
+              )}
+            </div>
+            {!whatsappSameAsPhone && (
+              <div className="flex gap-2">
+                <CountryCodeSelect value={waCountryCode} onChange={handleWaCountryCode} />
+                <Input
+                  type="tel"
+                  value={waLocalNumber}
+                  onChange={(e) => handleWaLocalNumber(e.target.value)}
+                  maxLength={15}
+                  placeholder="612 345 678"
+                  className="flex-1"
+                />
+              </div>
+            )}
           </div>
         )}
 
@@ -121,27 +173,16 @@ export const StepContact = ({ data, onChange }: StepContactProps) => {
             <Checkbox checked={showEmail} onCheckedChange={(v) => onChange({ show_email: !!v })} />
             <span className="text-sm">{t('showEmail')}</span>
           </label>
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <Checkbox checked={showWhatsapp} onCheckedChange={(v) => {
-                const checked = !!v;
-                onChange({ show_whatsapp: checked });
-                if (checked && whatsappSameAsPhone) {
-                  onChange({ show_whatsapp: true, contact_whatsapp: data.contact_phone || '' });
-                }
-              }} />
-              <span className="text-sm">{t('showWhatsapp')}</span>
-            </label>
-            {showWhatsapp && data.contact_phone?.trim() && (
-              <div className="flex items-center gap-2 ml-6">
-                <Switch
-                  checked={whatsappSameAsPhone}
-                  onCheckedChange={handleWhatsappToggle}
-                />
-                <span className="text-sm text-muted-foreground">{t('sameAsPhone')}</span>
-              </div>
-            )}
-          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox checked={showWhatsapp} onCheckedChange={(v) => {
+              const checked = !!v;
+              onChange({ show_whatsapp: checked });
+              if (checked && whatsappSameAsPhone) {
+                onChange({ show_whatsapp: true, contact_whatsapp: data.contact_phone || '' });
+              }
+            }} />
+            <span className="text-sm">{t('showWhatsapp')}</span>
+          </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <Checkbox checked={showForm} onCheckedChange={(v) => onChange({ lead_form_enabled: !!v })} />
             <span className="text-sm">{t('showContactForm')}</span>
