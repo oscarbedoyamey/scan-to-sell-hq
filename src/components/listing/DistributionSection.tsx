@@ -39,6 +39,7 @@ const labels: Record<string, Record<string, string>> = {
   regenerate: { en: 'Regenerate', es: 'Regenerar', fr: 'Régénérer', de: 'Neu generieren', it: 'Rigenera', pt: 'Regenerar', pl: 'Regeneruj' },
   generate: { en: 'Generate assets', es: 'Generar activos', fr: 'Générer', de: 'Generieren', it: 'Genera', pt: 'Gerar', pl: 'Generuj' },
   generatingTooltip: { en: 'Sign is being generated', es: 'El cartel se está generando', fr: 'L\'affiche est en cours de génération', de: 'Plakat wird erstellt', it: 'Il cartello è in fase di generazione', pt: 'O cartaz está sendo gerado', pl: 'Plakat jest generowany' },
+  viewSign: { en: 'View sign', es: 'Ver cartel', fr: 'Voir l\'affiche', de: 'Plakat ansehen', it: 'Vedi cartello', pt: 'Ver cartaz', pl: 'Zobacz plakat' },
 };
 
 interface DistributionSectionProps {
@@ -290,8 +291,8 @@ const DistributionSection = ({
                       )}
                       {pdfUrl && (
                         <Button size="sm" variant="outline" asChild>
-                          <a href={pdfUrl} download={`sign-${sign.sign_code}.pdf`}>
-                            <FileText className="h-3 w-3 mr-1" /> PDF
+                          <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                            <FileText className="h-3 w-3 mr-1" /> {t('viewSign')}
                           </a>
                         </Button>
                       )}
