@@ -585,34 +585,30 @@ const ListingNew = () => {
               {t('prev')}
             </Button>
             <div className="flex gap-3">
-              {step < STEPS.length - 1 ? (
-                <Button onClick={handleNext} disabled={!canAdvance() || saving}>
-                  {t('next')}
-                </Button>
-              ) : originalStatus && originalStatus !== 'draft' ? (
-                /* Editing an already published listing — save directly */
+              {/* Save changes shortcut on any step when editing a non-draft listing */}
+              {originalStatus && originalStatus !== 'draft' && (
                 <Button variant="hero" onClick={async () => {
-                  if (!canAdvance()) {
-                    toast({ title: t('required'), description: t('atLeastOneContact'), variant: 'destructive' });
-                    return;
-                  }
                   setPublishing(true);
                   if (saveTimer.current) clearTimeout(saveTimer.current);
                   await autoSave(data, listingId);
                   toast({ title: '✅', description: tp('changesSaved') });
                   invalidateAll();
                   navigate(`/app/listings/${listingId}`);
-                }} disabled={publishing || saving || !canAdvance()}>
+                }} disabled={publishing || saving}>
                   {publishing && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                   {tp('saveChanges')}
                 </Button>
-              ) : (
-                /* New/draft listing — go to publish flow */
+              )}
+              {step < STEPS.length - 1 ? (
+                <Button onClick={handleNext} disabled={!canAdvance() || saving}>
+                  {t('next')}
+                </Button>
+              ) : !originalStatus || originalStatus === 'draft' ? (
                 <Button variant="hero" onClick={handlePublish} disabled={publishing || saving || !canAdvance()}>
                   {publishing && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                   {t('publish')}
                 </Button>
-              )}
+              ) : null}
             </div>
           </div>
         </>
