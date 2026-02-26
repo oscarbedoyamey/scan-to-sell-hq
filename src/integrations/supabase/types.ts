@@ -154,10 +154,13 @@ export type Database = {
         Row: {
           agency_logo_url: string | null
           agency_name: string | null
+          air_conditioning: string | null
           auto_renew: boolean
+          availability_date: string | null
           base_language: string | null
           bathrooms: number | null
           bedrooms: number | null
+          buildability: string | null
           built_area_m2: number | null
           city: string | null
           condition: Database["public"]["Enums"]["property_condition"] | null
@@ -170,49 +173,79 @@ export type Database = {
           created_at: string | null
           currency: string | null
           description: string | null
+          electrical_power_kw: number | null
           elevator: boolean | null
           energy_rating: string | null
+          ev_charging: string | null
+          expenses_included: string | null
+          facade_meters: number | null
           features: Json | null
           floor: string | null
           floorplan_url: string | null
+          free_height_m: string | null
+          furnished: string | null
           gallery_urls: Json | null
+          garage_access: string | null
+          garage_location: string | null
+          garage_type: string | null
+          has_transfer: boolean | null
           hide_exact_address: boolean | null
           id: string
+          land_type: string | null
+          large_car: string | null
           lat: number | null
           lead_form_enabled: boolean | null
           listing_code: string | null
           lng: number | null
+          num_offices: number | null
           number: string | null
           operation_type: Database["public"]["Enums"]["operation_type"] | null
+          orientation: string | null
           owner_user_id: string
           parking: boolean | null
+          parking_type: string | null
+          permitted_use: string | null
           plot_area_m2: number | null
+          pool: boolean | null
           postal_code: string | null
           price_rent: number | null
           price_sale: number | null
           property_type: Database["public"]["Enums"]["property_type"] | null
           reference_code: string | null
           region: string | null
+          rental_type: string | null
+          road_access: boolean | null
           show_email: boolean | null
           show_phone: boolean | null
           show_price: boolean | null
           show_whatsapp: boolean | null
+          smoke_outlet: string | null
           status: Database["public"]["Enums"]["listing_status"] | null
           street: string | null
+          street_level: boolean | null
+          terrace: boolean | null
           title: string | null
+          trailer_access: string | null
+          transfer_amount: number | null
           updated_at: string | null
+          utilities: string[] | null
           video_url: string | null
           virtual_tour_url: string | null
+          warehouse_area_m2: number | null
           website_url: string | null
+          yard_area_m2: number | null
           year_built: number | null
         }
         Insert: {
           agency_logo_url?: string | null
           agency_name?: string | null
+          air_conditioning?: string | null
           auto_renew?: boolean
+          availability_date?: string | null
           base_language?: string | null
           bathrooms?: number | null
           bedrooms?: number | null
+          buildability?: string | null
           built_area_m2?: number | null
           city?: string | null
           condition?: Database["public"]["Enums"]["property_condition"] | null
@@ -225,49 +258,79 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           description?: string | null
+          electrical_power_kw?: number | null
           elevator?: boolean | null
           energy_rating?: string | null
+          ev_charging?: string | null
+          expenses_included?: string | null
+          facade_meters?: number | null
           features?: Json | null
           floor?: string | null
           floorplan_url?: string | null
+          free_height_m?: string | null
+          furnished?: string | null
           gallery_urls?: Json | null
+          garage_access?: string | null
+          garage_location?: string | null
+          garage_type?: string | null
+          has_transfer?: boolean | null
           hide_exact_address?: boolean | null
           id?: string
+          land_type?: string | null
+          large_car?: string | null
           lat?: number | null
           lead_form_enabled?: boolean | null
           listing_code?: string | null
           lng?: number | null
+          num_offices?: number | null
           number?: string | null
           operation_type?: Database["public"]["Enums"]["operation_type"] | null
+          orientation?: string | null
           owner_user_id: string
           parking?: boolean | null
+          parking_type?: string | null
+          permitted_use?: string | null
           plot_area_m2?: number | null
+          pool?: boolean | null
           postal_code?: string | null
           price_rent?: number | null
           price_sale?: number | null
           property_type?: Database["public"]["Enums"]["property_type"] | null
           reference_code?: string | null
           region?: string | null
+          rental_type?: string | null
+          road_access?: boolean | null
           show_email?: boolean | null
           show_phone?: boolean | null
           show_price?: boolean | null
           show_whatsapp?: boolean | null
+          smoke_outlet?: string | null
           status?: Database["public"]["Enums"]["listing_status"] | null
           street?: string | null
+          street_level?: boolean | null
+          terrace?: boolean | null
           title?: string | null
+          trailer_access?: string | null
+          transfer_amount?: number | null
           updated_at?: string | null
+          utilities?: string[] | null
           video_url?: string | null
           virtual_tour_url?: string | null
+          warehouse_area_m2?: number | null
           website_url?: string | null
+          yard_area_m2?: number | null
           year_built?: number | null
         }
         Update: {
           agency_logo_url?: string | null
           agency_name?: string | null
+          air_conditioning?: string | null
           auto_renew?: boolean
+          availability_date?: string | null
           base_language?: string | null
           bathrooms?: number | null
           bedrooms?: number | null
+          buildability?: string | null
           built_area_m2?: number | null
           city?: string | null
           condition?: Database["public"]["Enums"]["property_condition"] | null
@@ -280,40 +343,67 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           description?: string | null
+          electrical_power_kw?: number | null
           elevator?: boolean | null
           energy_rating?: string | null
+          ev_charging?: string | null
+          expenses_included?: string | null
+          facade_meters?: number | null
           features?: Json | null
           floor?: string | null
           floorplan_url?: string | null
+          free_height_m?: string | null
+          furnished?: string | null
           gallery_urls?: Json | null
+          garage_access?: string | null
+          garage_location?: string | null
+          garage_type?: string | null
+          has_transfer?: boolean | null
           hide_exact_address?: boolean | null
           id?: string
+          land_type?: string | null
+          large_car?: string | null
           lat?: number | null
           lead_form_enabled?: boolean | null
           listing_code?: string | null
           lng?: number | null
+          num_offices?: number | null
           number?: string | null
           operation_type?: Database["public"]["Enums"]["operation_type"] | null
+          orientation?: string | null
           owner_user_id?: string
           parking?: boolean | null
+          parking_type?: string | null
+          permitted_use?: string | null
           plot_area_m2?: number | null
+          pool?: boolean | null
           postal_code?: string | null
           price_rent?: number | null
           price_sale?: number | null
           property_type?: Database["public"]["Enums"]["property_type"] | null
           reference_code?: string | null
           region?: string | null
+          rental_type?: string | null
+          road_access?: boolean | null
           show_email?: boolean | null
           show_phone?: boolean | null
           show_price?: boolean | null
           show_whatsapp?: boolean | null
+          smoke_outlet?: string | null
           status?: Database["public"]["Enums"]["listing_status"] | null
           street?: string | null
+          street_level?: boolean | null
+          terrace?: boolean | null
           title?: string | null
+          trailer_access?: string | null
+          transfer_amount?: number | null
           updated_at?: string | null
+          utilities?: string[] | null
           video_url?: string | null
           virtual_tour_url?: string | null
+          warehouse_area_m2?: number | null
           website_url?: string | null
+          yard_area_m2?: number | null
           year_built?: number | null
         }
         Relationships: []
@@ -959,7 +1049,7 @@ export type Database = {
       app_role: "admin" | "customer"
       listing_status: "draft" | "active" | "paused" | "expired"
       operation_type: "sale" | "rent"
-      property_condition: "new" | "good" | "needs_renovation"
+      property_condition: "new" | "good" | "needs_renovation" | "renovated"
       property_type:
         | "apartment"
         | "house"
@@ -969,6 +1059,7 @@ export type Database = {
         | "office"
         | "garage"
         | "other"
+        | "warehouse"
       purchase_status: "pending" | "paid" | "failed" | "refunded"
       sign_orientation: "portrait" | "landscape"
       sign_size: "A4" | "A3"
@@ -1102,7 +1193,7 @@ export const Constants = {
       app_role: ["admin", "customer"],
       listing_status: ["draft", "active", "paused", "expired"],
       operation_type: ["sale", "rent"],
-      property_condition: ["new", "good", "needs_renovation"],
+      property_condition: ["new", "good", "needs_renovation", "renovated"],
       property_type: [
         "apartment",
         "house",
@@ -1112,6 +1203,7 @@ export const Constants = {
         "office",
         "garage",
         "other",
+        "warehouse",
       ],
       purchase_status: ["pending", "paid", "failed", "refunded"],
       sign_orientation: ["portrait", "landscape"],

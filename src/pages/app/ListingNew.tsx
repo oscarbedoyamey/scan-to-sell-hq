@@ -14,10 +14,11 @@ import { StepContact } from '@/components/wizard/StepContact';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { SEO } from '@/components/SEO';
 import { seoTranslations } from '@/i18n/seoTranslations';
-import type { Tables } from '@/integrations/supabase/types';
+
 import { useListingMutations } from '@/hooks/useListingMutations';
 
-type Listing = Partial<Tables<'listings'>>;
+// Use Record<string,any> for dynamic fields not yet in generated types
+type Listing = Record<string, any>;
 
 const STEPS = ['step1', 'step2', 'step3'] as const;
 
@@ -227,7 +228,45 @@ const ListingNew = () => {
 
   const canAdvance = () => {
     if (step === 0) {
-      return !!data.operation_type && !!data.property_type && !!data.title?.trim();
+      if (!data.operation_type || !data.property_type || !data.title?.trim()) return false;
+      const isRent = data.operation_type === 'rent';
+      const pt = data.property_type as string;
+      const residential = ['apartment', 'house', 'villa'].includes(pt);
+
+      // Price required
+      if (isRent && !data.price_rent) return false;
+      if (!isRent && !data.price_sale) return false;
+
+      // Rent-specific for residential
+      if (isRent && residential) {
+        if (!data.rental_type || !data.availability_date || !data.furnished) return false;
+      }
+      if (isRent && !data.expenses_included) return false;
+
+      // Type-specific required fields
+      if (pt === 'apartment') {
+        if (!data.built_area_m2 || data.bedrooms == null || data.bathrooms == null) return false;
+        if (data.elevator == null || !data.orientation || !data.condition) return false;
+      } else if (pt === 'house' || pt === 'villa') {
+        if (!data.built_area_m2 || !data.plot_area_m2 || data.bedrooms == null || data.bathrooms == null) return false;
+        if (!data.condition) return false;
+      } else if (pt === 'land') {
+        if (!data.land_type || !data.plot_area_m2) return false;
+        if ((data.land_type === 'urban' || data.land_type === 'developable') && (!data.buildability || !data.permitted_use)) return false;
+        if (data.road_access == null) return false;
+      } else if (pt === 'garage') {
+        if (!data.garage_type || !data.garage_location || !data.garage_access || !data.large_car) return false;
+      } else if (pt === 'office') {
+        if (!data.built_area_m2 || !data.air_conditioning || !data.condition) return false;
+      } else if (pt === 'commercial') {
+        if (!data.built_area_m2 || data.street_level == null || !data.smoke_outlet || !data.condition) return false;
+        if (isRent && data.has_transfer == null) return false;
+        if (isRent && data.has_transfer && !data.transfer_amount) return false;
+      } else if (pt === 'warehouse') {
+        if (!data.warehouse_area_m2 || !data.free_height_m || !data.trailer_access || !data.condition) return false;
+      }
+
+      return true;
     }
     if (step === 2) {
       const showPhone = data.show_phone ?? false;
