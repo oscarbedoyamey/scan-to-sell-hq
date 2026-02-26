@@ -183,7 +183,8 @@ const ListingDetail = () => {
   }
 
   const isExpired = purchase?.end_at ? new Date(purchase.end_at) < new Date() : false;
-  const needsPayment = !purchase || isExpired;
+  const hasActiveSubscription = !!(purchase && !isExpired);
+  const needsPayment = !hasActiveSubscription;
 
   const plans = [
     { id: '3m', months: 3, price: 49 },
@@ -257,7 +258,7 @@ const ListingDetail = () => {
           <span className="font-medium text-foreground">{t('purchase')}</span>
         </div>
 
-        {purchase && !isExpired ? (
+        {hasActiveSubscription ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
@@ -376,22 +377,54 @@ const ListingDetail = () => {
             )}
           </div>
         ) : (
-          <div>
-            <p className="text-sm text-muted-foreground mb-4">{t('noPurchase')}</p>
-            <div className="grid sm:grid-cols-3 gap-3">
-              {plans.map((plan) => (
-                <Button
-                  key={plan.id}
-                  variant="outline"
-                  className="flex flex-col h-auto py-3"
-                  onClick={() => handleCheckout(plan.id)}
-                  disabled={loadingPlan !== null}
-                >
-                  {loadingPlan === plan.id && <Loader2 className="w-3 h-3 animate-spin" />}
-                  <span className="font-bold">{plan.months} mo — €{plan.price}</span>
-                </Button>
-              ))}
-            </div>
+          <div className="space-y-4">
+            {listing.status === 'draft' ? (
+              <>
+                <p className="text-sm text-muted-foreground mb-4">{t('noPurchase')}</p>
+                <div className="grid sm:grid-cols-3 gap-3">
+                  {plans.map((plan) => (
+                    <Button
+                      key={plan.id}
+                      variant="outline"
+                      className="flex flex-col h-auto py-3"
+                      onClick={() => handleCheckout(plan.id)}
+                      disabled={loadingPlan !== null}
+                    >
+                      {loadingPlan === plan.id && <Loader2 className="w-3 h-3 animate-spin" />}
+                      <span className="font-bold">{plan.months} mo — €{plan.price}</span>
+                    </Button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground">{t('noPurchase')}</p>
+                <Separator />
+                {/* Deactivate / Reactivate for non-draft listings without active subscription */}
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-foreground">
+                    {listing.status === 'active' ? t('deactivate') : t('reactivate')}
+                  </p>
+                  <Button
+                    variant={listing.status === 'active' ? 'destructive' : 'default'}
+                    size="sm"
+                    disabled={togglingStatus}
+                    onClick={async () => {
+                      setTogglingStatus(true);
+                      const newStatus = listing.status === 'active' ? 'paused' : 'active';
+                      await supabase.from('listings').update({ status: newStatus }).eq('id', listing.id);
+                      if (id) { invalidateListingDetail(id); invalidateListings(); }
+                      toast({ title: '✅', description: newStatus === 'paused' ? t('deactivated') : t('reactivated') });
+                      setTogglingStatus(false);
+                    }}
+                  >
+                    {togglingStatus && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
+                    <Power className="h-4 w-4 mr-1" />
+                    {listing.status === 'active' ? t('deactivate') : t('reactivate')}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
