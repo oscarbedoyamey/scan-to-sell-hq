@@ -13,7 +13,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose
 } from '@/components/ui/dialog';
 import {
-  QrCode, ExternalLink, Download, RefreshCw, Eye, FileText, Loader2, Unlink, ArrowRightLeft, Plus, AlertTriangle
+  QrCode, Download, RefreshCw, FileText, Loader2, Unlink, ArrowRightLeft, Plus, AlertTriangle
 } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -273,22 +273,9 @@ const DistributionSection = ({
                       <p className="text-sm font-semibold text-foreground mb-1">{sign.headline_text}</p>
                     )}
 
-                    {sign.public_url && (
-                      <a href={sign.public_url} target="_blank" rel="noopener noreferrer"
-                        className="text-xs text-primary hover:underline flex items-center gap-1 mb-2">
-                        <ExternalLink className="h-3 w-3" /> {sign.public_url.replace('https://', '')}
-                      </a>
-                    )}
 
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2">
-                      {sign.public_url && (
-                        <Button size="sm" variant="outline" asChild>
-                          <a href={sign.public_url} target="_blank" rel="noopener noreferrer">
-                            <Eye className="h-3 w-3 mr-1" /> {t('preview')}
-                          </a>
-                        </Button>
-                      )}
                       <Button size="sm" onClick={() => setShowGenerateDialog(sign.id)} disabled={isGenerating}>
                         {isGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> :
                           sign.qr_image_path ? <RefreshCw className="h-3 w-3 mr-1" /> : <QrCode className="h-3 w-3 mr-1" />}
