@@ -210,7 +210,7 @@ const ListingNew = () => {
         setSaving(false);
       }
     },
-    [user]
+    [user, originalStatus]
   );
 
   const handleChange = useCallback(
