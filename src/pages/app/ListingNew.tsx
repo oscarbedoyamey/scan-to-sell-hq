@@ -53,6 +53,7 @@ const INITIAL_DATA: Listing = {
   show_phone: true,
   show_email: true,
   show_whatsapp: false,
+  lead_form_enabled: true,
 };
 
 const plans = [
@@ -228,6 +229,18 @@ const ListingNew = () => {
     if (step === 0) {
       return !!data.operation_type && !!data.property_type && !!data.title?.trim();
     }
+    if (step === 2) {
+      const showPhone = data.show_phone ?? true;
+      const showEmail = data.show_email ?? true;
+      const showWhatsapp = data.show_whatsapp ?? false;
+      const showForm = data.lead_form_enabled ?? true;
+      const hasAtLeastOne = showPhone || showEmail || showWhatsapp || showForm;
+      if (!hasAtLeastOne) return false;
+      if ((showPhone || showWhatsapp) && !data.contact_phone?.trim()) return false;
+      if (showEmail && !data.contact_email?.trim()) return false;
+      if (!data.contact_name?.trim()) return false;
+      return true;
+    }
     return true;
   };
 
@@ -253,8 +266,8 @@ const ListingNew = () => {
   };
 
   const handlePublish = async () => {
-    if (!data.contact_name?.trim()) {
-      toast({ title: t('required'), description: t('contactName'), variant: 'destructive' });
+    if (!canAdvance()) {
+      toast({ title: t('required'), description: t('atLeastOneContact'), variant: 'destructive' });
       return;
     }
     setPublishing(true);
