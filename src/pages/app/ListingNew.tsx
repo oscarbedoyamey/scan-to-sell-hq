@@ -50,7 +50,7 @@ const INITIAL_DATA: Listing = {
   contact_email: '',
   contact_whatsapp: '',
   agency_name: '',
-  show_phone: true,
+  show_phone: false,
   show_email: true,
   show_whatsapp: false,
   lead_form_enabled: true,
@@ -230,7 +230,7 @@ const ListingNew = () => {
       return !!data.operation_type && !!data.property_type && !!data.title?.trim();
     }
     if (step === 2) {
-      const showPhone = data.show_phone ?? true;
+      const showPhone = data.show_phone ?? false;
       const showEmail = data.show_email ?? true;
       const showWhatsapp = data.show_whatsapp ?? false;
       const showForm = data.lead_form_enabled ?? true;
