@@ -24,7 +24,7 @@ const labels: Record<string, Record<string, string>> = {
   assignedSigns: { en: 'Assigned Signs', es: 'Carteles asignados', fr: 'Affiches assignées', de: 'Zugewiesene Plakate', it: 'Cartelli assegnati', pt: 'Cartazes atribuídos', pl: 'Przypisane plakaty' },
   noAssigned: { en: 'No signs assigned to this listing.', es: 'No hay carteles asignados a este anuncio.', fr: 'Aucune affiche assignée.', de: 'Keine Plakate zugewiesen.', it: 'Nessun cartello assegnato.', pt: 'Nenhum cartaz atribuído.', pl: 'Brak przypisanych plakatów.' },
   addSign: { en: 'Assign a sign', es: 'Asignar cartel', fr: 'Assigner une affiche', de: 'Plakat zuweisen', it: 'Assegna cartello', pt: 'Atribuir cartaz', pl: 'Przypisz plakat' },
-  unassign: { en: 'Unassign', es: 'Desasignar', fr: 'Désassigner', de: 'Zuordnung aufheben', it: 'Rimuovi', pt: 'Desatribuir', pl: 'Odłącz' },
+  unassign: { en: 'Unassign sign from listing', es: 'Desvincular cartel del anuncio', fr: 'Détacher l\'affiche de l\'annonce', de: 'Plakat vom Inserat lösen', it: 'Scollega cartello dall\'annuncio', pt: 'Desvincular cartaz do anúncio', pl: 'Odłącz plakat od ogłoszenia' },
   unassignConfirm: { en: 'Unassign this sign?', es: '¿Desasignar este cartel?', fr: 'Désassigner cette affiche ?', de: 'Zuordnung aufheben?', it: 'Rimuovere questo cartello?', pt: 'Desatribuir este cartaz?', pl: 'Odłączyć ten plakat?' },
   unassignDesc: { en: 'The sign will go back to your available pool. People scanning the QR will see a "not found" page until you reassign it.', es: 'El cartel volverá a tu pool disponible. Quienes escaneen el QR verán una página "no encontrado" hasta que lo reasignes.', fr: 'L\'affiche retournera dans votre pool. Les personnes scannant le QR verront une page "introuvable".', de: 'Das Plakat kehrt in Ihren Pool zurück. QR-Scanner sehen eine "nicht gefunden" Seite.', it: 'Il cartello tornerà nel tuo pool. Chi scansiona il QR vedrà "non trovato".', pt: 'O cartaz voltará ao seu pool. Quem escanear o QR verá "não encontrado".', pl: 'Plakat wróci do puli. Skanujący QR zobaczą stronę "nie znaleziono".' },
   confirm: { en: 'Confirm', es: 'Confirmar', fr: 'Confirmer', de: 'Bestätigen', it: 'Conferma', pt: 'Confirmar', pl: 'Potwierdź' },
@@ -267,7 +267,6 @@ const DistributionSection = ({
                     <div className="flex items-center gap-2 mb-1">
                       <code className="bg-secondary px-2 py-0.5 rounded text-xs font-mono">{sign.sign_code}</code>
                       <Badge variant="outline" className="text-xs">{sign.size || 'A4'}</Badge>
-                      <Badge variant="outline" className="text-xs">{sign.orientation || 'portrait'}</Badge>
                     </div>
 
                     {sign.headline_text && (
