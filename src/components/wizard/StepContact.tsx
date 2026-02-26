@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useWizardLabels } from './wizardLabels';
-import { Home, MapPin, Bed, Bath, Ruler } from 'lucide-react';
+import { Home, MapPin, Bed, Bath, Ruler, AlertCircle } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Listing = Partial<Tables<'listings'>>;
@@ -15,9 +17,37 @@ interface StepContactProps {
 
 export const StepContact = ({ data, onChange }: StepContactProps) => {
   const t = useWizardLabels();
+  const [whatsappSameAsPhone, setWhatsappSameAsPhone] = useState(
+    data.contact_whatsapp === data.contact_phone && !!data.contact_phone
+  );
 
   const price = data.operation_type === 'rent' ? data.price_rent : data.price_sale;
   const currencySymbol: Record<string, string> = { EUR: '€', GBP: '£', CHF: 'CHF', PLN: 'zł', CZK: 'Kč' };
+
+  const showPhone = data.show_phone ?? true;
+  const showEmail = data.show_email ?? true;
+  const showWhatsapp = data.show_whatsapp ?? false;
+  const showForm = data.lead_form_enabled ?? true;
+
+  const hasAtLeastOne = showPhone || showEmail || showWhatsapp || showForm;
+
+  const phoneNeeded = (showPhone || showWhatsapp) && !data.contact_phone?.trim();
+  const emailNeeded = showEmail && !data.contact_email?.trim();
+
+  const handleWhatsappToggle = (same: boolean) => {
+    setWhatsappSameAsPhone(same);
+    if (same) {
+      onChange({ contact_whatsapp: data.contact_phone || '' });
+    }
+  };
+
+  const handlePhoneChange = (phone: string) => {
+    const patch: Listing = { contact_phone: phone };
+    if (whatsappSameAsPhone) {
+      patch.contact_whatsapp = phone;
+    }
+    onChange(patch);
+  };
 
   return (
     <div className="space-y-8">
@@ -29,18 +59,51 @@ export const StepContact = ({ data, onChange }: StepContactProps) => {
             <Input value={data.contact_name || ''} onChange={(e) => onChange({ contact_name: e.target.value })} maxLength={100} />
           </div>
           <div className="space-y-2">
-            <Label className="text-sm font-semibold">{t('contactPhone')}</Label>
-            <Input type="tel" value={data.contact_phone || ''} onChange={(e) => onChange({ contact_phone: e.target.value })} maxLength={20} />
+            <Label className="text-sm font-semibold">{t('contactPhone')} {(showPhone || showWhatsapp) && '*'}</Label>
+            <Input
+              type="tel"
+              value={data.contact_phone || ''}
+              onChange={(e) => handlePhoneChange(e.target.value)}
+              maxLength={20}
+              className={phoneNeeded ? 'border-destructive' : ''}
+            />
+            {phoneNeeded && (
+              <p className="text-xs text-destructive flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {t('phoneRequiredForOption')}
+              </p>
+            )}
           </div>
           <div className="space-y-2">
-            <Label className="text-sm font-semibold">{t('contactEmail')}</Label>
-            <Input type="email" value={data.contact_email || ''} onChange={(e) => onChange({ contact_email: e.target.value })} maxLength={100} />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold">{t('contactWhatsapp')}</Label>
-            <Input type="tel" value={data.contact_whatsapp || ''} onChange={(e) => onChange({ contact_whatsapp: e.target.value })} maxLength={20} />
+            <Label className="text-sm font-semibold">{t('contactEmail')} {showEmail && '*'}</Label>
+            <Input
+              type="email"
+              value={data.contact_email || ''}
+              onChange={(e) => onChange({ contact_email: e.target.value })}
+              maxLength={100}
+              className={emailNeeded ? 'border-destructive' : ''}
+            />
+            {emailNeeded && (
+              <p className="text-xs text-destructive flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {t('emailRequiredForOption')}
+              </p>
+            )}
           </div>
         </div>
+
+        {/* WhatsApp number field (only when not same as phone) */}
+        {showWhatsapp && !whatsappSameAsPhone && (
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold">{t('whatsappNumber')}</Label>
+            <Input
+              type="tel"
+              value={data.contact_whatsapp || ''}
+              onChange={(e) => onChange({ contact_whatsapp: e.target.value })}
+              maxLength={20}
+              placeholder="+34 600 000 000"
+            />
+          </div>
+        )}
+
         <div className="space-y-2">
           <Label className="text-sm font-semibold">{t('agencyName')}</Label>
           <Input value={data.agency_name || ''} onChange={(e) => onChange({ agency_name: e.target.value })} maxLength={100} />
@@ -49,20 +112,47 @@ export const StepContact = ({ data, onChange }: StepContactProps) => {
 
       {/* Visibility toggles */}
       <div className="space-y-3">
-        <div className="flex flex-wrap gap-x-6 gap-y-3">
+        <div className="flex flex-col gap-3">
           <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox checked={data.show_phone ?? true} onCheckedChange={(v) => onChange({ show_phone: !!v })} />
+            <Checkbox checked={showPhone} onCheckedChange={(v) => onChange({ show_phone: !!v })} />
             <span className="text-sm">{t('showPhone')}</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox checked={data.show_email ?? true} onCheckedChange={(v) => onChange({ show_email: !!v })} />
+            <Checkbox checked={showEmail} onCheckedChange={(v) => onChange({ show_email: !!v })} />
             <span className="text-sm">{t('showEmail')}</span>
           </label>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox checked={showWhatsapp} onCheckedChange={(v) => {
+                const checked = !!v;
+                onChange({ show_whatsapp: checked });
+                if (checked && whatsappSameAsPhone) {
+                  onChange({ show_whatsapp: true, contact_whatsapp: data.contact_phone || '' });
+                }
+              }} />
+              <span className="text-sm">{t('showWhatsapp')}</span>
+            </label>
+            {showWhatsapp && data.contact_phone?.trim() && (
+              <div className="flex items-center gap-2 ml-6">
+                <Switch
+                  checked={whatsappSameAsPhone}
+                  onCheckedChange={handleWhatsappToggle}
+                />
+                <span className="text-sm text-muted-foreground">{t('sameAsPhone')}</span>
+              </div>
+            )}
+          </div>
           <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox checked={data.show_whatsapp ?? false} onCheckedChange={(v) => onChange({ show_whatsapp: !!v })} />
-            <span className="text-sm">{t('showWhatsapp')}</span>
+            <Checkbox checked={showForm} onCheckedChange={(v) => onChange({ lead_form_enabled: !!v })} />
+            <span className="text-sm">{t('showContactForm')}</span>
           </label>
         </div>
+
+        {!hasAtLeastOne && (
+          <p className="text-sm text-destructive flex items-center gap-1 bg-destructive/10 p-3 rounded-lg">
+            <AlertCircle className="w-4 h-4 shrink-0" /> {t('atLeastOneContact')}
+          </p>
+        )}
       </div>
 
       <Separator />
