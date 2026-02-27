@@ -558,22 +558,11 @@ export const StepProperty = ({ data, onChange }: StepPropertyProps) => {
         </div>
       )}
 
-      {/* ═══ ADDRESS ═══ */}
-      <div className="space-y-4">
+      {/* ═══ ADDRESS (street only) ═══ */}
+      <div className="space-y-2">
         <FieldLabel label={t('address')} />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input placeholder={t('street')} value={data.street || ''} onChange={(e) => onChange({ street: e.target.value })} />
-          <Input placeholder={t('city')} value={data.city || ''} onChange={(e) => onChange({ city: e.target.value })} />
-          <Input placeholder={t('postalCode')} value={data.postal_code || ''} onChange={(e) => onChange({ postal_code: e.target.value })} />
-          <Input placeholder={t('region')} value={data.region || ''} onChange={(e) => onChange({ region: e.target.value })} />
-          <Input placeholder={t('country')} value={data.country || ''} onChange={(e) => onChange({ country: e.target.value })} />
-        </div>
+        <Input placeholder={t('street')} value={data.street || ''} onChange={(e) => onChange({ street: e.target.value })} />
       </div>
-
-      {/* ═══ YEAR BUILT (for types that have condition) ═══ */}
-      {propType && !['land', 'garage'].includes(propType) && (
-        <NumberField label={t('yearBuilt')} value={data.year_built} onChange={(v) => onChange({ year_built: v })} min={1800} max={2030} />
-      )}
     </div>
   );
 };
