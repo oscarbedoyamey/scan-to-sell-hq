@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { format, differenceInDays, subDays, addDays, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfDay, startOfWeek, startOfMonth, isBefore, isAfter } from 'date-fns';
-import { CalendarIcon, TrendingUp, TrendingDown, Minus, FileText, CreditCard, Activity } from 'lucide-react';
+import { CalendarIcon, TrendingUp, TrendingDown, Minus, FileText, CreditCard, Activity, DollarSign } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,7 +19,7 @@ interface RangeMetric {
   growth: number | null;
 }
 
-interface RawRow { created_at: string; updated_at?: string; status?: string; package_id?: string; end_at?: string }
+interface RawRow { created_at: string; updated_at?: string; status?: string; package_id?: string; end_at?: string; amount_eur?: number }
 
 interface CustomMetrics {
   listingsCreated: RangeMetric;
@@ -27,6 +27,8 @@ interface CustomMetrics {
   subscriptions: RangeMetric;
   subsByPackage: Record<string, RangeMetric>;
   activeSubs: { total: number; byPackage: Record<string, number> };
+  revenue: RangeMetric;
+  revenueByPackage: Record<string, RangeMetric>;
 }
 
 interface TimePoint { label: string; from: Date; to: Date }
@@ -64,15 +66,17 @@ const PRESETS = [
   { label: '90d', days: 90 },
 ];
 
-const PACKAGE_LABELS: Record<string, string> = { '3m': '3 Months', '6m': '6 Months', '9m': '9 Months' };
+const PACKAGE_LABELS: Record<string, string> = { '3m': '3 Months', '6m': '6 Months', '9m': '9 Months', '12m': '12 Months' };
 
 const CHART_COLORS = {
   created: 'hsl(var(--primary))',
   edited: 'hsl(var(--accent))',
   subs: 'hsl(var(--primary))',
+  revenue: '#10b981',
   '3m': '#3b82f6',
   '6m': '#8b5cf6',
   '9m': '#f59e0b',
+  '12m': '#ef4444',
 };
 
 // Build time buckets based on range length
@@ -129,9 +133,11 @@ const AdminMetrics = () => {
   const [rawListings, setRawListings] = useState<RawRow[]>([]);
   const [rawPurchases, setRawPurchases] = useState<RawRow[]>([]);
   const [packageMap, setPackageMap] = useState<Record<string, string>>({});
+  const [packageKeys, setPackageKeys] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [cumulativeListings, setCumulativeListings] = useState(false);
   const [cumulativeSubs, setCumulativeSubs] = useState(false);
+  const [cumulativeRevenue, setCumulativeRevenue] = useState(false);
 
   const rangeDays = Math.max(1, differenceInDays(dateTo, dateFrom));
 
@@ -153,7 +159,7 @@ const AdminMetrics = () => {
 
       const [{ data: allListings }, { data: allPurchases }, { data: pkgs }] = await Promise.all([
         db.from('listings').select('id, created_at, updated_at'),
-        db.from('purchases').select('id, created_at, status, package_id, end_at'),
+        db.from('purchases').select('id, created_at, status, package_id, end_at, amount_eur'),
         db.from('packages').select('id, duration_months'),
       ]);
 
@@ -161,16 +167,18 @@ const AdminMetrics = () => {
       const purchases: RawRow[] = allPurchases || [];
 
       const pm: Record<string, string> = {};
+      const pkgKeys: string[] = [];
       (pkgs || []).forEach((p: any) => {
-        if (p.duration_months === 3) pm[p.id] = '3m';
-        else if (p.duration_months === 6) pm[p.id] = '6m';
-        else if (p.duration_months === 9) pm[p.id] = '9m';
-        else pm[p.id] = `${p.duration_months}m`;
+        const key = `${p.duration_months}m`;
+        pm[p.id] = key;
+        if (!pkgKeys.includes(key)) pkgKeys.push(key);
       });
+      pkgKeys.sort((a, b) => parseInt(a) - parseInt(b));
 
       setRawListings(listings);
       setRawPurchases(purchases);
       setPackageMap(pm);
+      setPackageKeys(pkgKeys);
 
       const createdIn = (f: string, t: string) => listings.filter(l => l.created_at >= f && l.created_at < t).length;
       const editedIn = (f: string, t: string) => listings.filter(l => {
@@ -191,13 +199,28 @@ const AdminMetrics = () => {
       const sc = paidIn(fromISO, toISO), sp = paidIn(prevFrom, prevTo);
 
       const subsByPackage: Record<string, RangeMetric> = {};
-      ['3m', '6m', '9m'].forEach(k => {
+      pkgKeys.forEach(k => {
         const c = paidIn(fromISO, toISO, k), p = paidIn(prevFrom, prevTo, k);
         subsByPackage[k] = { count: c, prevCount: p, growth: calcGrowth(c, p) };
       });
 
+      const revenueIn = (f: string, t: string, pk?: string) =>
+        paidPurchases.filter(p => {
+          if (p.created_at < f || p.created_at >= t) return false;
+          if (pk && pm[p.package_id!] !== pk) return false;
+          return true;
+        }).reduce((sum, p) => sum + (p.amount_eur || 0), 0);
+
+      const rc = revenueIn(fromISO, toISO), rp = revenueIn(prevFrom, prevTo);
+      const revenueByPackage: Record<string, RangeMetric> = {};
+      pkgKeys.forEach(k => {
+        const c = revenueIn(fromISO, toISO, k), p = revenueIn(prevFrom, prevTo, k);
+        revenueByPackage[k] = { count: c, prevCount: p, growth: calcGrowth(c, p) };
+      });
+
       const activePurchases = paidPurchases.filter(p => p.end_at && p.end_at >= nowISO);
-      const activeByPkg: Record<string, number> = { '3m': 0, '6m': 0, '9m': 0 };
+      const activeByPkg: Record<string, number> = {};
+      pkgKeys.forEach(k => activeByPkg[k] = 0);
       activePurchases.forEach(p => { const k = pm[p.package_id!]; if (k && activeByPkg[k] !== undefined) activeByPkg[k]++; });
 
       setData({
@@ -206,6 +229,8 @@ const AdminMetrics = () => {
         subscriptions: { count: sc, prevCount: sp, growth: calcGrowth(sc, sp) },
         subsByPackage,
         activeSubs: { total: activePurchases.length, byPackage: activeByPkg },
+        revenue: { count: rc, prevCount: rp, growth: calcGrowth(rc, rp) },
+        revenueByPackage,
       });
       setLoading(false);
     };
@@ -245,16 +270,44 @@ const AdminMetrics = () => {
     return buckets.map(b => {
       const row: any = { label: b.label };
       row['Total'] = countInBucket(paid, 'created_at', b.from, b.to);
-      ['3m', '6m', '9m'].forEach(k => {
-        row[PACKAGE_LABELS[k]] = countInBucket(paid, 'created_at', b.from, b.to, r => packageMap[r.package_id!] === k);
+      packageKeys.forEach(k => {
+        row[PACKAGE_LABELS[k] || k] = countInBucket(paid, 'created_at', b.from, b.to, r => packageMap[r.package_id!] === k);
       });
       return row;
     });
-  }, [buckets, rawPurchases, packageMap, loading]);
+  }, [buckets, rawPurchases, packageMap, packageKeys, loading]);
 
+  const subsChartKeys = useMemo(() => ['Total', ...packageKeys.map(k => PACKAGE_LABELS[k] || k)], [packageKeys]);
   const subsChartData = useMemo(
-    () => cumulativeSubs ? toCumulative(subsChartDataRaw, ['Total', '3 Months', '6 Months', '9 Months']) : subsChartDataRaw,
-    [subsChartDataRaw, cumulativeSubs]
+    () => cumulativeSubs ? toCumulative(subsChartDataRaw, subsChartKeys) : subsChartDataRaw,
+    [subsChartDataRaw, cumulativeSubs, subsChartKeys]
+  );
+
+  const sumInBucket = (rows: RawRow[], from: Date, to: Date, filter?: (r: RawRow) => boolean) => {
+    const f = from.toISOString();
+    const t = to.toISOString();
+    return rows.filter(r => {
+      if (!r.created_at || r.created_at < f || r.created_at >= t) return false;
+      return filter ? filter(r) : true;
+    }).reduce((sum, r) => sum + ((r.amount_eur || 0) / 100), 0);
+  };
+
+  const revenueChartDataRaw = useMemo(() => {
+    if (!rawPurchases.length && !loading) return [];
+    const paid = rawPurchases.filter(p => p.status === 'paid');
+    return buckets.map(b => {
+      const row: any = { label: b.label };
+      row['Total'] = Math.round(sumInBucket(paid, b.from, b.to) * 100) / 100;
+      packageKeys.forEach(k => {
+        row[PACKAGE_LABELS[k] || k] = Math.round(sumInBucket(paid, b.from, b.to, r => packageMap[r.package_id!] === k) * 100) / 100;
+      });
+      return row;
+    });
+  }, [buckets, rawPurchases, packageMap, packageKeys, loading]);
+
+  const revenueChartData = useMemo(
+    () => cumulativeRevenue ? toCumulative(revenueChartDataRaw, subsChartKeys) : revenueChartDataRaw,
+    [revenueChartDataRaw, cumulativeRevenue, subsChartKeys]
   );
 
   const DatePicker = ({ date, onChange }: { date: Date; onChange: (d: Date) => void }) => (
@@ -378,13 +431,13 @@ const AdminMetrics = () => {
                   <StatCard label="Growth" value={data.subscriptions.count} growth={data.subscriptions.growth} prevValue={data.subscriptions.prevCount} />
                 </div>
               </div>
-              {['3m', '6m', '9m'].map(k => (
+              {packageKeys.map(k => (
                 <div key={k}>
-                  <h3 className="text-sm font-semibold text-foreground mb-2">{PACKAGE_LABELS[k]}</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-2">{PACKAGE_LABELS[k] || k}</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    <StatCard label="In period" value={data.subsByPackage[k].count} />
-                    <StatCard label="Previous period" value={data.subsByPackage[k].prevCount} />
-                    <StatCard label="Growth" value={data.subsByPackage[k].count} growth={data.subsByPackage[k].growth} prevValue={data.subsByPackage[k].prevCount} />
+                    <StatCard label="In period" value={data.subsByPackage[k]?.count ?? 0} />
+                    <StatCard label="Previous period" value={data.subsByPackage[k]?.prevCount ?? 0} />
+                    <StatCard label="Growth" value={data.subsByPackage[k]?.count ?? 0} growth={data.subsByPackage[k]?.growth ?? null} prevValue={data.subsByPackage[k]?.prevCount ?? 0} />
                   </div>
                 </div>
               ))}
@@ -411,9 +464,9 @@ const AdminMetrics = () => {
                       <Tooltip contentStyle={chartTooltipStyle} />
                       <Legend wrapperStyle={{ fontSize: 12 }} />
                       <Area type="monotone" dataKey="Total" stroke={CHART_COLORS.subs} fill={CHART_COLORS.subs} fillOpacity={0.15} strokeWidth={2} />
-                      <Area type="monotone" dataKey="3 Months" stroke={CHART_COLORS['3m']} fill={CHART_COLORS['3m']} fillOpacity={0.1} strokeWidth={1.5} />
-                      <Area type="monotone" dataKey="6 Months" stroke={CHART_COLORS['6m']} fill={CHART_COLORS['6m']} fillOpacity={0.1} strokeWidth={1.5} />
-                      <Area type="monotone" dataKey="9 Months" stroke={CHART_COLORS['9m']} fill={CHART_COLORS['9m']} fillOpacity={0.1} strokeWidth={1.5} />
+                      {packageKeys.map(k => (
+                        <Area key={k} type="monotone" dataKey={PACKAGE_LABELS[k] || k} stroke={CHART_COLORS[k as keyof typeof CHART_COLORS] || '#888'} fill={CHART_COLORS[k as keyof typeof CHART_COLORS] || '#888'} fillOpacity={0.1} strokeWidth={1.5} />
+                      ))}
                     </AreaChart>
                   ) : (
                     <LineChart data={subsChartData}>
@@ -423,10 +476,79 @@ const AdminMetrics = () => {
                       <Tooltip contentStyle={chartTooltipStyle} />
                       <Legend wrapperStyle={{ fontSize: 12 }} />
                       <Line type="monotone" dataKey="Total" stroke={CHART_COLORS.subs} strokeWidth={2} dot={false} />
-                      <Line type="monotone" dataKey="3 Months" stroke={CHART_COLORS['3m']} strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
-                      <Line type="monotone" dataKey="6 Months" stroke={CHART_COLORS['6m']} strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
-                      <Line type="monotone" dataKey="9 Months" stroke={CHART_COLORS['9m']} strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
+                      {packageKeys.map(k => (
+                        <Line key={k} type="monotone" dataKey={PACKAGE_LABELS[k] || k} stroke={CHART_COLORS[k as keyof typeof CHART_COLORS] || '#888'} strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
+                      ))}
                     </LineChart>
+                  )}
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ── Revenue KPIs ── */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base"><DollarSign className="h-4 w-4 text-primary" />Revenue (EUR)</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-2">Total</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <StatCard label="In period" value={Math.round(data.revenue.count / 100)} />
+                  <StatCard label="Previous period" value={Math.round(data.revenue.prevCount / 100)} />
+                  <StatCard label="Growth" value={Math.round(data.revenue.count / 100)} growth={data.revenue.growth} prevValue={Math.round(data.revenue.prevCount / 100)} />
+                </div>
+              </div>
+              {packageKeys.map(k => (
+                <div key={k}>
+                  <h3 className="text-sm font-semibold text-foreground mb-2">{PACKAGE_LABELS[k] || k}</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <StatCard label="In period" value={Math.round((data.revenueByPackage[k]?.count ?? 0) / 100)} />
+                    <StatCard label="Previous period" value={Math.round((data.revenueByPackage[k]?.prevCount ?? 0) / 100)} />
+                    <StatCard label="Growth" value={Math.round((data.revenueByPackage[k]?.count ?? 0) / 100)} growth={data.revenueByPackage[k]?.growth ?? null} prevValue={Math.round((data.revenueByPackage[k]?.prevCount ?? 0) / 100)} />
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* ── Revenue Chart ── */}
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-base">Revenue Over Time (€)</CardTitle>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="cum-rev" className="text-xs text-muted-foreground cursor-pointer">Cumulative</Label>
+                <Switch id="cum-rev" checked={cumulativeRevenue} onCheckedChange={setCumulativeRevenue} />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  {cumulativeRevenue ? (
+                    <AreaChart data={revenueChartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} interval="preserveStartEnd" />
+                      <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                      <Tooltip contentStyle={chartTooltipStyle} formatter={(v: number) => `€${v.toFixed(2)}`} />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Area type="monotone" dataKey="Total" stroke={CHART_COLORS.revenue} fill={CHART_COLORS.revenue} fillOpacity={0.15} strokeWidth={2} />
+                      {packageKeys.map(k => (
+                        <Area key={k} type="monotone" dataKey={PACKAGE_LABELS[k] || k} stroke={CHART_COLORS[k as keyof typeof CHART_COLORS] || '#888'} fill={CHART_COLORS[k as keyof typeof CHART_COLORS] || '#888'} fillOpacity={0.1} strokeWidth={1.5} />
+                      ))}
+                    </AreaChart>
+                  ) : (
+                    <BarChart data={revenueChartData} barGap={2}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} interval="preserveStartEnd" />
+                      <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                      <Tooltip contentStyle={chartTooltipStyle} formatter={(v: number) => `€${v.toFixed(2)}`} />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Bar dataKey="Total" fill={CHART_COLORS.revenue} radius={[3, 3, 0, 0]} />
+                      {packageKeys.map(k => (
+                        <Bar key={k} dataKey={PACKAGE_LABELS[k] || k} fill={CHART_COLORS[k as keyof typeof CHART_COLORS] || '#888'} radius={[3, 3, 0, 0]} />
+                      ))}
+                    </BarChart>
                   )}
                 </ResponsiveContainer>
               </div>
@@ -441,8 +563,8 @@ const AdminMetrics = () => {
             <CardContent>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <StatCard label="Total Active" value={data.activeSubs.total} />
-                {['3m', '6m', '9m'].map(k => (
-                  <StatCard key={k} label={`Active ${PACKAGE_LABELS[k]}`} value={data.activeSubs.byPackage[k]} />
+                {packageKeys.map(k => (
+                  <StatCard key={k} label={`Active ${PACKAGE_LABELS[k] || k}`} value={data.activeSubs.byPackage[k] ?? 0} />
                 ))}
               </div>
             </CardContent>
