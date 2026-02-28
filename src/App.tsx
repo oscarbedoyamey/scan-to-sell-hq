@@ -36,6 +36,7 @@ import AdminPurchaseDetail from "./pages/admin/AdminPurchaseDetail";
 import AdminSigns from "./pages/admin/AdminSigns";
 import AdminTemplates from "./pages/admin/AdminTemplates";
 import AdminUnassignedSigns from "./pages/admin/AdminUnassignedSigns";
+import AdminMetrics from "./pages/admin/AdminMetrics";
 import ActivateSign from "./pages/ActivateSign";
 import ActivateSignAuth from "./pages/ActivateSignAuth";
 import ActivateComplete from "./pages/ActivateComplete";
@@ -105,6 +106,7 @@ const App = () => (
                 <Route path="signs" element={<AdminSigns />} />
                 <Route path="templates" element={<AdminTemplates />} />
                 <Route path="unassigned-signs" element={<AdminUnassignedSigns />} />
+                <Route path="metrics" element={<AdminMetrics />} />
               </Route>
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
