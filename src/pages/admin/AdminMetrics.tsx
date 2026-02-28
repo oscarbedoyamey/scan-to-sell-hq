@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { format, differenceInDays, startOfDay, subDays } from 'date-fns';
+import { useEffect, useState, useMemo } from 'react';
+import { format, differenceInDays, subDays, addDays, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfDay, startOfWeek, startOfMonth, isBefore, isAfter } from 'date-fns';
 import { CalendarIcon, TrendingUp, TrendingDown, Minus, FileText, CreditCard, Activity } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,12 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
+// ─── types ───
 interface RangeMetric {
   count: number;
   prevCount: number;
   growth: number | null;
 }
+
+interface RawRow { created_at: string; updated_at?: string; status?: string; package_id?: string; end_at?: string }
 
 interface CustomMetrics {
   listingsCreated: RangeMetric;
@@ -23,21 +27,19 @@ interface CustomMetrics {
   activeSubs: { total: number; byPackage: Record<string, number> };
 }
 
-const calcGrowth = (current: number, previous: number): number | null => {
-  if (previous === 0) return current > 0 ? 100 : null;
-  return Math.round(((current - previous) / previous) * 100);
+interface TimePoint { label: string; from: Date; to: Date }
+
+// ─── helpers ───
+const calcGrowth = (c: number, p: number): number | null => {
+  if (p === 0) return c > 0 ? 100 : null;
+  return Math.round(((c - p) / p) * 100);
 };
 
 const GrowthBadge = ({ value }: { value: number | null }) => {
   if (value === null) return <span className="text-xs text-muted-foreground">N/A</span>;
   const color = value > 0 ? 'text-green-600' : value < 0 ? 'text-red-500' : 'text-muted-foreground';
   const Icon = value > 0 ? TrendingUp : value < 0 ? TrendingDown : Minus;
-  return (
-    <span className={`inline-flex items-center gap-1 text-xs font-medium ${color}`}>
-      <Icon className="h-3 w-3" />
-      {value > 0 ? '+' : ''}{value}%
-    </span>
-  );
+  return <span className={`inline-flex items-center gap-1 text-xs font-medium ${color}`}><Icon className="h-3 w-3" />{value > 0 ? '+' : ''}{value}%</span>;
 };
 
 const StatCard = ({ label, value, prevValue, growth }: { label: string; value: number; prevValue?: number; growth?: number | null }) => (
@@ -47,9 +49,7 @@ const StatCard = ({ label, value, prevValue, growth }: { label: string; value: n
     {growth !== undefined && (
       <div className="flex items-center gap-2 mt-2">
         <GrowthBadge value={growth} />
-        {prevValue !== undefined && (
-          <span className="text-[10px] text-muted-foreground">vs {prevValue} prev</span>
-        )}
+        {prevValue !== undefined && <span className="text-[10px] text-muted-foreground">vs {prevValue} prev</span>}
       </div>
     )}
   </div>
@@ -62,16 +62,71 @@ const PRESETS = [
   { label: '90d', days: 90 },
 ];
 
-const PACKAGE_LABELS: Record<string, string> = {
-  '3m': '3 Months',
-  '6m': '6 Months',
-  '9m': '9 Months',
+const PACKAGE_LABELS: Record<string, string> = { '3m': '3 Months', '6m': '6 Months', '9m': '9 Months' };
+
+const CHART_COLORS = {
+  created: 'hsl(var(--primary))',
+  edited: 'hsl(var(--accent))',
+  subs: 'hsl(var(--primary))',
+  '3m': '#3b82f6',
+  '6m': '#8b5cf6',
+  '9m': '#f59e0b',
 };
 
+// Build time buckets based on range length
+const buildBuckets = (from: Date, to: Date): TimePoint[] => {
+  const days = differenceInDays(to, from);
+  if (days <= 1) {
+    // Hourly buckets (show every 4 hours)
+    const buckets: TimePoint[] = [];
+    for (let h = 0; h < 24; h += 4) {
+      const s = new Date(from);
+      s.setHours(h, 0, 0, 0);
+      const e = new Date(from);
+      e.setHours(h + 4, 0, 0, 0);
+      if (isBefore(s, to)) buckets.push({ label: `${String(h).padStart(2, '0')}:00`, from: s, to: e });
+    }
+    return buckets;
+  }
+  if (days <= 31) {
+    return eachDayOfInterval({ start: from, end: subDays(to, 1) }).map(d => ({
+      label: format(d, 'MMM d'),
+      from: startOfDay(d),
+      to: startOfDay(addDays(d, 1)),
+    }));
+  }
+  if (days <= 120) {
+    const weeks = eachWeekOfInterval({ start: from, end: to }, { weekStartsOn: 1 });
+    return weeks.map((w, i) => {
+      const end = i < weeks.length - 1 ? weeks[i + 1] : to;
+      return { label: format(w, 'MMM d'), from: w, to: end };
+    });
+  }
+  const months = eachMonthOfInterval({ start: from, end: to });
+  return months.map((m, i) => {
+    const end = i < months.length - 1 ? months[i + 1] : to;
+    return { label: format(m, 'MMM yyyy'), from: m, to: end };
+  });
+};
+
+const countInBucket = (rows: RawRow[], field: 'created_at' | 'updated_at', from: Date, to: Date, filter?: (r: RawRow) => boolean) => {
+  const f = from.toISOString();
+  const t = to.toISOString();
+  return rows.filter(r => {
+    const v = r[field];
+    if (!v || v < f || v >= t) return false;
+    return filter ? filter(r) : true;
+  }).length;
+};
+
+// ─── component ───
 const AdminMetrics = () => {
   const [dateFrom, setDateFrom] = useState<Date>(subDays(new Date(), 30));
   const [dateTo, setDateTo] = useState<Date>(new Date());
   const [data, setData] = useState<CustomMetrics | null>(null);
+  const [rawListings, setRawListings] = useState<RawRow[]>([]);
+  const [rawPurchases, setRawPurchases] = useState<RawRow[]>([]);
+  const [packageMap, setPackageMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   const rangeDays = Math.max(1, differenceInDays(dateTo, dateFrom));
@@ -98,61 +153,53 @@ const AdminMetrics = () => {
         db.from('packages').select('id, duration_months'),
       ]);
 
-      const listings = allListings || [];
-      const purchases = allPurchases || [];
+      const listings: RawRow[] = allListings || [];
+      const purchases: RawRow[] = allPurchases || [];
 
-      const packageMap: Record<string, string> = {};
+      const pm: Record<string, string> = {};
       (pkgs || []).forEach((p: any) => {
-        if (p.duration_months === 3) packageMap[p.id] = '3m';
-        else if (p.duration_months === 6) packageMap[p.id] = '6m';
-        else if (p.duration_months === 9) packageMap[p.id] = '9m';
-        else packageMap[p.id] = `${p.duration_months}m`;
+        if (p.duration_months === 3) pm[p.id] = '3m';
+        else if (p.duration_months === 6) pm[p.id] = '6m';
+        else if (p.duration_months === 9) pm[p.id] = '9m';
+        else pm[p.id] = `${p.duration_months}m`;
       });
 
-      // Listings created
-      const createdIn = (from: string, to: string) => listings.filter((l: any) => l.created_at >= from && l.created_at < to).length;
-      const createdCount = createdIn(fromISO, toISO);
-      const createdPrev = createdIn(prevFrom, prevTo);
+      setRawListings(listings);
+      setRawPurchases(purchases);
+      setPackageMap(pm);
 
-      // Listings edited (excl. creation day)
-      const editedIn = (from: string, to: string) => listings.filter((l: any) => {
-        if (!l.updated_at || l.updated_at < from || l.updated_at >= to) return false;
+      const createdIn = (f: string, t: string) => listings.filter(l => l.created_at >= f && l.created_at < t).length;
+      const editedIn = (f: string, t: string) => listings.filter(l => {
+        if (!l.updated_at || l.updated_at < f || l.updated_at >= t) return false;
         return l.created_at?.substring(0, 10) !== l.updated_at?.substring(0, 10);
       }).length;
-      const editedCount = editedIn(fromISO, toISO);
-      const editedPrev = editedIn(prevFrom, prevTo);
 
-      // Paid purchases
-      const paidPurchases = purchases.filter((p: any) => p.status === 'paid');
-      const paidIn = (from: string, to: string, pkgKey?: string) =>
-        paidPurchases.filter((p: any) => {
-          if (p.created_at < from || p.created_at >= to) return false;
-          if (pkgKey && packageMap[p.package_id] !== pkgKey) return false;
+      const paidPurchases = purchases.filter(p => p.status === 'paid');
+      const paidIn = (f: string, t: string, pk?: string) =>
+        paidPurchases.filter(p => {
+          if (p.created_at < f || p.created_at >= t) return false;
+          if (pk && pm[p.package_id!] !== pk) return false;
           return true;
         }).length;
 
-      const subsCount = paidIn(fromISO, toISO);
-      const subsPrev = paidIn(prevFrom, prevTo);
+      const cc = createdIn(fromISO, toISO), cp = createdIn(prevFrom, prevTo);
+      const ec = editedIn(fromISO, toISO), ep = editedIn(prevFrom, prevTo);
+      const sc = paidIn(fromISO, toISO), sp = paidIn(prevFrom, prevTo);
 
       const subsByPackage: Record<string, RangeMetric> = {};
       ['3m', '6m', '9m'].forEach(k => {
-        const c = paidIn(fromISO, toISO, k);
-        const p = paidIn(prevFrom, prevTo, k);
+        const c = paidIn(fromISO, toISO, k), p = paidIn(prevFrom, prevTo, k);
         subsByPackage[k] = { count: c, prevCount: p, growth: calcGrowth(c, p) };
       });
 
-      // Active subs (as of now)
-      const activePurchases = paidPurchases.filter((p: any) => p.end_at && p.end_at >= nowISO);
+      const activePurchases = paidPurchases.filter(p => p.end_at && p.end_at >= nowISO);
       const activeByPkg: Record<string, number> = { '3m': 0, '6m': 0, '9m': 0 };
-      activePurchases.forEach((p: any) => {
-        const k = packageMap[p.package_id];
-        if (k && activeByPkg[k] !== undefined) activeByPkg[k]++;
-      });
+      activePurchases.forEach(p => { const k = pm[p.package_id!]; if (k && activeByPkg[k] !== undefined) activeByPkg[k]++; });
 
       setData({
-        listingsCreated: { count: createdCount, prevCount: createdPrev, growth: calcGrowth(createdCount, createdPrev) },
-        listingsEdited: { count: editedCount, prevCount: editedPrev, growth: calcGrowth(editedCount, editedPrev) },
-        subscriptions: { count: subsCount, prevCount: subsPrev, growth: calcGrowth(subsCount, subsPrev) },
+        listingsCreated: { count: cc, prevCount: cp, growth: calcGrowth(cc, cp) },
+        listingsEdited: { count: ec, prevCount: ep, growth: calcGrowth(ec, ep) },
+        subscriptions: { count: sc, prevCount: sp, growth: calcGrowth(sc, sp) },
         subsByPackage,
         activeSubs: { total: activePurchases.length, byPackage: activeByPkg },
       });
@@ -161,41 +208,60 @@ const AdminMetrics = () => {
     load();
   }, [dateFrom, dateTo, rangeDays]);
 
-  const DatePicker = ({ date, onChange, label }: { date: Date; onChange: (d: Date) => void; label: string }) => (
+  // Build chart data
+  const buckets = useMemo(() => buildBuckets(dateFrom, dateTo), [dateFrom, dateTo]);
+
+  const listingsChartData = useMemo(() => {
+    if (!rawListings.length && !loading) return [];
+    return buckets.map(b => ({
+      label: b.label,
+      Created: countInBucket(rawListings, 'created_at', b.from, b.to),
+      Edited: countInBucket(rawListings, 'updated_at', b.from, b.to, r => r.created_at?.substring(0, 10) !== r.updated_at?.substring(0, 10)),
+    }));
+  }, [buckets, rawListings, loading]);
+
+  const subsChartData = useMemo(() => {
+    if (!rawPurchases.length && !loading) return [];
+    const paid = rawPurchases.filter(p => p.status === 'paid');
+    return buckets.map(b => {
+      const row: any = { label: b.label };
+      row['Total'] = countInBucket(paid, 'created_at', b.from, b.to);
+      ['3m', '6m', '9m'].forEach(k => {
+        row[PACKAGE_LABELS[k]] = countInBucket(paid, 'created_at', b.from, b.to, r => packageMap[r.package_id!] === k);
+      });
+      return row;
+    });
+  }, [buckets, rawPurchases, packageMap, loading]);
+
+  const DatePicker = ({ date, onChange }: { date: Date; onChange: (d: Date) => void }) => (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className={cn("justify-start text-left font-normal gap-2 h-9", !date && "text-muted-foreground")}>
+        <Button variant="outline" size="sm" className={cn("justify-start text-left font-normal gap-2 h-9")}>
           <CalendarIcon className="h-3.5 w-3.5" />
           {format(date, 'MMM d, yyyy')}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={(d) => d && onChange(d)}
-          initialFocus
-          className={cn("p-3 pointer-events-auto")}
-        />
+        <Calendar mode="single" selected={date} onSelect={(d) => d && onChange(d)} initialFocus className={cn("p-3 pointer-events-auto")} />
       </PopoverContent>
     </Popover>
   );
 
+  const chartTooltipStyle = { backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 };
+
   return (
     <div className="max-w-6xl space-y-6">
+      {/* Header + date controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="font-display text-2xl font-bold text-foreground">Metrics</h1>
-
         <div className="flex flex-wrap items-center gap-2">
           {PRESETS.map(p => (
-            <Button key={p.label} variant="outline" size="sm" className="h-8 text-xs" onClick={() => applyPreset(p.days)}>
-              {p.label}
-            </Button>
+            <Button key={p.label} variant="outline" size="sm" className="h-8 text-xs" onClick={() => applyPreset(p.days)}>{p.label}</Button>
           ))}
           <div className="flex items-center gap-1.5">
-            <DatePicker date={dateFrom} onChange={setDateFrom} label="From" />
+            <DatePicker date={dateFrom} onChange={setDateFrom} />
             <span className="text-xs text-muted-foreground">→</span>
-            <DatePicker date={dateTo} onChange={setDateTo} label="To" />
+            <DatePicker date={dateTo} onChange={setDateTo} />
           </div>
         </div>
       </div>
@@ -205,17 +271,15 @@ const AdminMetrics = () => {
       </p>
 
       {loading ? (
-        <div className="space-y-4">
-          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-2xl" />)}
-        </div>
+        <div className="space-y-4">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-2xl" />)}</div>
       ) : data ? (
         <>
-          {/* Listings */}
+          {/* ── Listings Created ── */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base"><FileText className="h-4 w-4 text-primary" />Listings Created</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <StatCard label="In period" value={data.listingsCreated.count} />
                 <StatCard label="Previous period" value={data.listingsCreated.prevCount} />
@@ -224,11 +288,12 @@ const AdminMetrics = () => {
             </CardContent>
           </Card>
 
+          {/* ── Listings Edited ── */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base"><Activity className="h-4 w-4 text-primary" />Listings Edited (excl. creation day)</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <StatCard label="In period" value={data.listingsEdited.count} />
                 <StatCard label="Previous period" value={data.listingsEdited.prevCount} />
@@ -237,7 +302,29 @@ const AdminMetrics = () => {
             </CardContent>
           </Card>
 
-          {/* Subscriptions */}
+          {/* ── Listings Chart ── */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Listings Over Time</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={listingsChartData} barGap={2}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} interval="preserveStartEnd" />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                    <Tooltip contentStyle={chartTooltipStyle} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="Created" fill={CHART_COLORS.created} radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="Edited" fill={CHART_COLORS.edited} radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ── Subscriptions KPIs ── */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base"><CreditCard className="h-4 w-4 text-primary" />New Paid Subscriptions</CardTitle>
@@ -264,7 +351,31 @@ const AdminMetrics = () => {
             </CardContent>
           </Card>
 
-          {/* Active */}
+          {/* ── Subscriptions Chart ── */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Subscriptions Over Time</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={subsChartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} interval="preserveStartEnd" />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                    <Tooltip contentStyle={chartTooltipStyle} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Line type="monotone" dataKey="Total" stroke={CHART_COLORS.subs} strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="3 Months" stroke={CHART_COLORS['3m']} strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
+                    <Line type="monotone" dataKey="6 Months" stroke={CHART_COLORS['6m']} strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
+                    <Line type="monotone" dataKey="9 Months" stroke={CHART_COLORS['9m']} strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ── Active Subscriptions ── */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base"><TrendingUp className="h-4 w-4 text-primary" />Active Subscriptions (now)</CardTitle>
