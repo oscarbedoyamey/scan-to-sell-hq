@@ -1,31 +1,26 @@
 import { useEffect, useState } from 'react';
+import { format, differenceInDays, startOfDay, subDays } from 'date-fns';
+import { CalendarIcon, TrendingUp, TrendingDown, Minus, FileText, CreditCard, Activity } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, TrendingDown, Minus, FileText, CreditCard, Activity } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
-interface PeriodMetric {
-  last24h: number;
-  last7d: number;
-  last30d: number;
-  growth7d: number | null;
-  growth30d: number | null;
+interface RangeMetric {
+  count: number;
+  prevCount: number;
+  growth: number | null;
 }
 
-interface SubMetrics extends PeriodMetric {
-  byPackage: Record<string, PeriodMetric>;
-}
-
-interface ActiveSubs {
-  total: number;
-  byPackage: Record<string, number>;
-}
-
-interface MetricsData {
-  listingsCreated: PeriodMetric;
-  listingsEdited: PeriodMetric;
-  subscriptions: SubMetrics;
-  activeSubs: ActiveSubs;
+interface CustomMetrics {
+  listingsCreated: RangeMetric;
+  listingsEdited: RangeMetric;
+  subscriptions: RangeMetric;
+  subsByPackage: Record<string, RangeMetric>;
+  activeSubs: { total: number; byPackage: Record<string, number> };
 }
 
 const calcGrowth = (current: number, previous: number): number | null => {
@@ -45,31 +40,27 @@ const GrowthBadge = ({ value }: { value: number | null }) => {
   );
 };
 
-const MetricCard = ({ label, value, growth7d, growth30d }: { label: string; value: number | string; growth7d?: number | null; growth30d?: number | null }) => (
+const StatCard = ({ label, value, prevValue, growth }: { label: string; value: number; prevValue?: number; growth?: number | null }) => (
   <div className="bg-card rounded-xl border border-border p-4">
     <p className="text-xs text-muted-foreground mb-1">{label}</p>
     <p className="font-display text-2xl font-bold text-foreground">{value}</p>
-    {(growth7d !== undefined || growth30d !== undefined) && (
-      <div className="flex gap-3 mt-2">
-        {growth7d !== undefined && <div><span className="text-[10px] text-muted-foreground mr-1">7d:</span><GrowthBadge value={growth7d} /></div>}
-        {growth30d !== undefined && <div><span className="text-[10px] text-muted-foreground mr-1">30d:</span><GrowthBadge value={growth30d} /></div>}
+    {growth !== undefined && (
+      <div className="flex items-center gap-2 mt-2">
+        <GrowthBadge value={growth} />
+        {prevValue !== undefined && (
+          <span className="text-[10px] text-muted-foreground">vs {prevValue} prev</span>
+        )}
       </div>
     )}
   </div>
 );
 
-const PeriodRow = ({ label, metric }: { label: string; metric: PeriodMetric }) => (
-  <div className="space-y-3">
-    <h3 className="text-sm font-semibold text-foreground">{label}</h3>
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-      <MetricCard label="Last 24h" value={metric.last24h} />
-      <MetricCard label="Last 7 days" value={metric.last7d} />
-      <MetricCard label="Last 30 days" value={metric.last30d} />
-      <MetricCard label="Growth 7d" value={metric.growth7d !== null ? `${metric.growth7d > 0 ? '+' : ''}${metric.growth7d}%` : 'N/A'} />
-      <MetricCard label="Growth 30d" value={metric.growth30d !== null ? `${metric.growth30d > 0 ? '+' : ''}${metric.growth30d}%` : 'N/A'} />
-    </div>
-  </div>
-);
+const PRESETS = [
+  { label: '24h', days: 1 },
+  { label: '7d', days: 7 },
+  { label: '30d', days: 30 },
+  { label: '90d', days: 90 },
+];
 
 const PACKAGE_LABELS: Record<string, string> = {
   '3m': '3 Months',
@@ -78,53 +69,38 @@ const PACKAGE_LABELS: Record<string, string> = {
 };
 
 const AdminMetrics = () => {
-  const [data, setData] = useState<MetricsData | null>(null);
+  const [dateFrom, setDateFrom] = useState<Date>(subDays(new Date(), 30));
+  const [dateTo, setDateTo] = useState<Date>(new Date());
+  const [data, setData] = useState<CustomMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const rangeDays = Math.max(1, differenceInDays(dateTo, dateFrom));
+
+  const applyPreset = (days: number) => {
+    setDateTo(new Date());
+    setDateFrom(subDays(new Date(), days));
+  };
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       const db = supabase as any;
-      const now = Date.now();
-      const d24h = new Date(now - 86400000).toISOString();
-      const d7d = new Date(now - 7 * 86400000).toISOString();
-      const d14d = new Date(now - 14 * 86400000).toISOString();
-      const d30d = new Date(now - 30 * 86400000).toISOString();
-      const d60d = new Date(now - 60 * 86400000).toISOString();
-      const nowISO = new Date(now).toISOString();
 
-      // Fetch all listings with created_at and updated_at
-      const { data: allListings } = await db.from('listings').select('id, created_at, updated_at');
+      const toISO = dateTo.toISOString();
+      const fromISO = dateFrom.toISOString();
+      const prevFrom = subDays(dateFrom, rangeDays).toISOString();
+      const prevTo = fromISO;
+      const nowISO = new Date().toISOString();
+
+      const [{ data: allListings }, { data: allPurchases }, { data: pkgs }] = await Promise.all([
+        db.from('listings').select('id, created_at, updated_at'),
+        db.from('purchases').select('id, created_at, status, package_id, end_at'),
+        db.from('packages').select('id, duration_months'),
+      ]);
+
       const listings = allListings || [];
-
-      // Listings created
-      const createdIn = (from: string, to: string) => listings.filter((l: any) => l.created_at >= from && l.created_at < to).length;
-      const created24h = createdIn(d24h, nowISO);
-      const created7d = createdIn(d7d, nowISO);
-      const created7dPrev = createdIn(d14d, d7d);
-      const created30d = createdIn(d30d, nowISO);
-      const created30dPrev = createdIn(d60d, d30d);
-
-      // Listings edited (updated but not created same day)
-      const editedIn = (from: string, to: string) => listings.filter((l: any) => {
-        if (!l.updated_at || l.updated_at < from || l.updated_at >= to) return false;
-        // Exclude if created on the same calendar day as updated
-        const createdDay = l.created_at?.substring(0, 10);
-        const updatedDay = l.updated_at?.substring(0, 10);
-        return createdDay !== updatedDay;
-      }).length;
-      const edited24h = editedIn(d24h, nowISO);
-      const edited7d = editedIn(d7d, nowISO);
-      const edited7dPrev = editedIn(d14d, d7d);
-      const edited30d = editedIn(d30d, nowISO);
-      const edited30dPrev = editedIn(d60d, d30d);
-
-      // Fetch purchases with package info
-      const { data: allPurchases } = await db.from('purchases').select('id, created_at, status, package_id, end_at');
       const purchases = allPurchases || [];
 
-      // Fetch packages to map id -> duration
-      const { data: pkgs } = await db.from('packages').select('id, duration_months');
       const packageMap: Record<string, string> = {};
       (pkgs || []).forEach((p: any) => {
         if (p.duration_months === 3) packageMap[p.id] = '3m';
@@ -133,8 +109,21 @@ const AdminMetrics = () => {
         else packageMap[p.id] = `${p.duration_months}m`;
       });
 
-      const paidPurchases = purchases.filter((p: any) => p.status === 'paid');
+      // Listings created
+      const createdIn = (from: string, to: string) => listings.filter((l: any) => l.created_at >= from && l.created_at < to).length;
+      const createdCount = createdIn(fromISO, toISO);
+      const createdPrev = createdIn(prevFrom, prevTo);
 
+      // Listings edited (excl. creation day)
+      const editedIn = (from: string, to: string) => listings.filter((l: any) => {
+        if (!l.updated_at || l.updated_at < from || l.updated_at >= to) return false;
+        return l.created_at?.substring(0, 10) !== l.updated_at?.substring(0, 10);
+      }).length;
+      const editedCount = editedIn(fromISO, toISO);
+      const editedPrev = editedIn(prevFrom, prevTo);
+
+      // Paid purchases
+      const paidPurchases = purchases.filter((p: any) => p.status === 'paid');
       const paidIn = (from: string, to: string, pkgKey?: string) =>
         paidPurchases.filter((p: any) => {
           if (p.created_at < from || p.created_at >= to) return false;
@@ -142,22 +131,18 @@ const AdminMetrics = () => {
           return true;
         }).length;
 
-      const buildPeriod = (pkgKey?: string): PeriodMetric => {
-        const l24 = paidIn(d24h, nowISO, pkgKey);
-        const l7 = paidIn(d7d, nowISO, pkgKey);
-        const l7p = paidIn(d14d, d7d, pkgKey);
-        const l30 = paidIn(d30d, nowISO, pkgKey);
-        const l30p = paidIn(d60d, d30d, pkgKey);
-        return { last24h: l24, last7d: l7, last30d: l30, growth7d: calcGrowth(l7, l7p), growth30d: calcGrowth(l30, l30p) };
-      };
+      const subsCount = paidIn(fromISO, toISO);
+      const subsPrev = paidIn(prevFrom, prevTo);
 
-      const subTotal = buildPeriod();
-      const byPackageSubs: Record<string, PeriodMetric> = {};
-      ['3m', '6m', '9m'].forEach(k => { byPackageSubs[k] = buildPeriod(k); });
+      const subsByPackage: Record<string, RangeMetric> = {};
+      ['3m', '6m', '9m'].forEach(k => {
+        const c = paidIn(fromISO, toISO, k);
+        const p = paidIn(prevFrom, prevTo, k);
+        subsByPackage[k] = { count: c, prevCount: p, growth: calcGrowth(c, p) };
+      });
 
-      // Active subscriptions
+      // Active subs (as of now)
       const activePurchases = paidPurchases.filter((p: any) => p.end_at && p.end_at >= nowISO);
-      const activeTotal = activePurchases.length;
       const activeByPkg: Record<string, number> = { '3m': 0, '6m': 0, '9m': 0 };
       activePurchases.forEach((p: any) => {
         const k = packageMap[p.package_id];
@@ -165,78 +150,136 @@ const AdminMetrics = () => {
       });
 
       setData({
-        listingsCreated: { last24h: created24h, last7d: created7d, last30d: created30d, growth7d: calcGrowth(created7d, created7dPrev), growth30d: calcGrowth(created30d, created30dPrev) },
-        listingsEdited: { last24h: edited24h, last7d: edited7d, last30d: edited30d, growth7d: calcGrowth(edited7d, edited7dPrev), growth30d: calcGrowth(edited30d, edited30dPrev) },
-        subscriptions: { ...subTotal, byPackage: byPackageSubs },
-        activeSubs: { total: activeTotal, byPackage: activeByPkg },
+        listingsCreated: { count: createdCount, prevCount: createdPrev, growth: calcGrowth(createdCount, createdPrev) },
+        listingsEdited: { count: editedCount, prevCount: editedPrev, growth: calcGrowth(editedCount, editedPrev) },
+        subscriptions: { count: subsCount, prevCount: subsPrev, growth: calcGrowth(subsCount, subsPrev) },
+        subsByPackage,
+        activeSubs: { total: activePurchases.length, byPackage: activeByPkg },
       });
       setLoading(false);
     };
     load();
-  }, []);
+  }, [dateFrom, dateTo, rangeDays]);
 
-  if (loading) {
-    return (
-      <div className="max-w-6xl space-y-6">
-        <h1 className="font-display text-2xl font-bold text-foreground">Metrics</h1>
-        {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40 rounded-2xl" />)}
-      </div>
-    );
-  }
-
-  if (!data) return null;
+  const DatePicker = ({ date, onChange, label }: { date: Date; onChange: (d: Date) => void; label: string }) => (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className={cn("justify-start text-left font-normal gap-2 h-9", !date && "text-muted-foreground")}>
+          <CalendarIcon className="h-3.5 w-3.5" />
+          {format(date, 'MMM d, yyyy')}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={(d) => d && onChange(d)}
+          initialFocus
+          className={cn("p-3 pointer-events-auto")}
+        />
+      </PopoverContent>
+    </Popover>
+  );
 
   return (
-    <div className="max-w-6xl space-y-8">
-      <h1 className="font-display text-2xl font-bold text-foreground">Metrics</h1>
+    <div className="max-w-6xl space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h1 className="font-display text-2xl font-bold text-foreground">Metrics</h1>
 
-      {/* Listings Created */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base"><FileText className="h-4 w-4 text-primary" />Listings Created</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PeriodRow label="" metric={data.listingsCreated} />
-        </CardContent>
-      </Card>
-
-      {/* Listings Edited */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base"><Activity className="h-4 w-4 text-primary" />Listings Edited (excl. creation day)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PeriodRow label="" metric={data.listingsEdited} />
-        </CardContent>
-      </Card>
-
-      {/* New Subscriptions */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base"><CreditCard className="h-4 w-4 text-primary" />New Paid Subscriptions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <PeriodRow label="Total" metric={data.subscriptions} />
-          {['3m', '6m', '9m'].map(k => (
-            <PeriodRow key={k} label={PACKAGE_LABELS[k] || k} metric={data.subscriptions.byPackage[k]} />
+        <div className="flex flex-wrap items-center gap-2">
+          {PRESETS.map(p => (
+            <Button key={p.label} variant="outline" size="sm" className="h-8 text-xs" onClick={() => applyPreset(p.days)}>
+              {p.label}
+            </Button>
           ))}
-        </CardContent>
-      </Card>
-
-      {/* Active Subscriptions */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base"><TrendingUp className="h-4 w-4 text-primary" />Active Subscriptions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <MetricCard label="Total Active" value={data.activeSubs.total} />
-            {['3m', '6m', '9m'].map(k => (
-              <MetricCard key={k} label={`Active ${PACKAGE_LABELS[k]}`} value={data.activeSubs.byPackage[k]} />
-            ))}
+          <div className="flex items-center gap-1.5">
+            <DatePicker date={dateFrom} onChange={setDateFrom} label="From" />
+            <span className="text-xs text-muted-foreground">→</span>
+            <DatePicker date={dateTo} onChange={setDateTo} label="To" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        Showing {rangeDays} day{rangeDays !== 1 ? 's' : ''}: {format(dateFrom, 'MMM d, yyyy')} – {format(dateTo, 'MMM d, yyyy')}. Growth compares to the equivalent previous period.
+      </p>
+
+      {loading ? (
+        <div className="space-y-4">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-2xl" />)}
+        </div>
+      ) : data ? (
+        <>
+          {/* Listings */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base"><FileText className="h-4 w-4 text-primary" />Listings Created</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <StatCard label="In period" value={data.listingsCreated.count} />
+                <StatCard label="Previous period" value={data.listingsCreated.prevCount} />
+                <StatCard label="Growth" value={data.listingsCreated.count} growth={data.listingsCreated.growth} prevValue={data.listingsCreated.prevCount} />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base"><Activity className="h-4 w-4 text-primary" />Listings Edited (excl. creation day)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <StatCard label="In period" value={data.listingsEdited.count} />
+                <StatCard label="Previous period" value={data.listingsEdited.prevCount} />
+                <StatCard label="Growth" value={data.listingsEdited.count} growth={data.listingsEdited.growth} prevValue={data.listingsEdited.prevCount} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Subscriptions */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base"><CreditCard className="h-4 w-4 text-primary" />New Paid Subscriptions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-2">Total</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <StatCard label="In period" value={data.subscriptions.count} />
+                  <StatCard label="Previous period" value={data.subscriptions.prevCount} />
+                  <StatCard label="Growth" value={data.subscriptions.count} growth={data.subscriptions.growth} prevValue={data.subscriptions.prevCount} />
+                </div>
+              </div>
+              {['3m', '6m', '9m'].map(k => (
+                <div key={k}>
+                  <h3 className="text-sm font-semibold text-foreground mb-2">{PACKAGE_LABELS[k]}</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <StatCard label="In period" value={data.subsByPackage[k].count} />
+                    <StatCard label="Previous period" value={data.subsByPackage[k].prevCount} />
+                    <StatCard label="Growth" value={data.subsByPackage[k].count} growth={data.subsByPackage[k].growth} prevValue={data.subsByPackage[k].prevCount} />
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Active */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base"><TrendingUp className="h-4 w-4 text-primary" />Active Subscriptions (now)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <StatCard label="Total Active" value={data.activeSubs.total} />
+                {['3m', '6m', '9m'].map(k => (
+                  <StatCard key={k} label={`Active ${PACKAGE_LABELS[k]}`} value={data.activeSubs.byPackage[k]} />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      ) : null}
     </div>
   );
 };
