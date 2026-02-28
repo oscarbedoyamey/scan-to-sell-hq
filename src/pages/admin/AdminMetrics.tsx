@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { format, differenceInDays, subDays, addDays, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfDay, startOfWeek, startOfMonth, isBefore, isAfter } from 'date-fns';
-import { CalendarIcon, TrendingUp, TrendingDown, Minus, FileText, CreditCard, Activity, DollarSign } from 'lucide-react';
+import { CalendarIcon, TrendingUp, TrendingDown, Minus, FileText, CreditCard, Activity, DollarSign, Users, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,7 +19,7 @@ interface RangeMetric {
   growth: number | null;
 }
 
-interface RawRow { created_at: string; updated_at?: string; status?: string; package_id?: string; end_at?: string; amount_eur?: number }
+interface RawRow { created_at: string; updated_at?: string; status?: string; package_id?: string; end_at?: string; amount_eur?: number; occurred_at?: string }
 
 interface CustomMetrics {
   listingsCreated: RangeMetric;
@@ -29,6 +29,8 @@ interface CustomMetrics {
   activeSubs: { total: number; byPackage: Record<string, number> };
   revenue: RangeMetric;
   revenueByPackage: Record<string, RangeMetric>;
+  leads: RangeMetric;
+  scans: RangeMetric;
 }
 
 interface TimePoint { label: string; from: Date; to: Date }
@@ -73,6 +75,8 @@ const CHART_COLORS = {
   edited: 'hsl(var(--accent))',
   subs: 'hsl(var(--primary))',
   revenue: '#10b981',
+  leads: '#f97316',
+  scans: '#06b6d4',
   '3m': '#3b82f6',
   '6m': '#8b5cf6',
   '9m': '#f59e0b',
@@ -115,11 +119,11 @@ const buildBuckets = (from: Date, to: Date): TimePoint[] => {
   });
 };
 
-const countInBucket = (rows: RawRow[], field: 'created_at' | 'updated_at', from: Date, to: Date, filter?: (r: RawRow) => boolean) => {
+const countInBucket = (rows: RawRow[], field: 'created_at' | 'updated_at' | 'occurred_at', from: Date, to: Date, filter?: (r: RawRow) => boolean) => {
   const f = from.toISOString();
   const t = to.toISOString();
   return rows.filter(r => {
-    const v = r[field];
+    const v = (r as any)[field];
     if (!v || v < f || v >= t) return false;
     return filter ? filter(r) : true;
   }).length;
@@ -132,12 +136,15 @@ const AdminMetrics = () => {
   const [data, setData] = useState<CustomMetrics | null>(null);
   const [rawListings, setRawListings] = useState<RawRow[]>([]);
   const [rawPurchases, setRawPurchases] = useState<RawRow[]>([]);
+  const [rawLeads, setRawLeads] = useState<RawRow[]>([]);
+  const [rawScans, setRawScans] = useState<RawRow[]>([]);
   const [packageMap, setPackageMap] = useState<Record<string, string>>({});
   const [packageKeys, setPackageKeys] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [cumulativeListings, setCumulativeListings] = useState(false);
   const [cumulativeSubs, setCumulativeSubs] = useState(false);
   const [cumulativeRevenue, setCumulativeRevenue] = useState(false);
+  const [cumulativeScans, setCumulativeScans] = useState(false);
 
   const rangeDays = Math.max(1, differenceInDays(dateTo, dateFrom));
 
@@ -157,14 +164,18 @@ const AdminMetrics = () => {
       const prevTo = fromISO;
       const nowISO = new Date().toISOString();
 
-      const [{ data: allListings }, { data: allPurchases }, { data: pkgs }] = await Promise.all([
+      const [{ data: allListings }, { data: allPurchases }, { data: pkgs }, { data: allLeads }, { data: allScans }] = await Promise.all([
         db.from('listings').select('id, created_at, updated_at'),
         db.from('purchases').select('id, created_at, status, package_id, end_at, amount_eur'),
         db.from('packages').select('id, duration_months'),
+        db.from('leads').select('id, created_at'),
+        db.from('scans').select('id, occurred_at'),
       ]);
 
       const listings: RawRow[] = allListings || [];
       const purchases: RawRow[] = allPurchases || [];
+      const leads: RawRow[] = (allLeads || []).map((l: any) => ({ created_at: l.created_at }));
+      const scans: RawRow[] = (allScans || []).map((s: any) => ({ created_at: s.occurred_at, occurred_at: s.occurred_at }));
 
       const pm: Record<string, string> = {};
       const pkgKeys: string[] = [];
@@ -177,6 +188,8 @@ const AdminMetrics = () => {
 
       setRawListings(listings);
       setRawPurchases(purchases);
+      setRawLeads(leads);
+      setRawScans(scans);
       setPackageMap(pm);
       setPackageKeys(pkgKeys);
 
@@ -218,6 +231,12 @@ const AdminMetrics = () => {
         revenueByPackage[k] = { count: c, prevCount: p, growth: calcGrowth(c, p) };
       });
 
+      const leadsIn = (f: string, t: string) => leads.filter(l => l.created_at >= f && l.created_at < t).length;
+      const lc = leadsIn(fromISO, toISO), lp = leadsIn(prevFrom, prevTo);
+
+      const scansIn = (f: string, t: string) => scans.filter(s => s.occurred_at && s.occurred_at >= f && s.occurred_at < t).length;
+      const scanC = scansIn(fromISO, toISO), scanP = scansIn(prevFrom, prevTo);
+
       const activePurchases = paidPurchases.filter(p => p.end_at && p.end_at >= nowISO);
       const activeByPkg: Record<string, number> = {};
       pkgKeys.forEach(k => activeByPkg[k] = 0);
@@ -231,6 +250,8 @@ const AdminMetrics = () => {
         activeSubs: { total: activePurchases.length, byPackage: activeByPkg },
         revenue: { count: rc, prevCount: rp, growth: calcGrowth(rc, rp) },
         revenueByPackage,
+        leads: { count: lc, prevCount: lp, growth: calcGrowth(lc, lp) },
+        scans: { count: scanC, prevCount: scanP, growth: calcGrowth(scanC, scanP) },
       });
       setLoading(false);
     };
@@ -308,6 +329,20 @@ const AdminMetrics = () => {
   const revenueChartData = useMemo(
     () => cumulativeRevenue ? toCumulative(revenueChartDataRaw, subsChartKeys) : revenueChartDataRaw,
     [revenueChartDataRaw, cumulativeRevenue, subsChartKeys]
+  );
+
+  const scansChartDataRaw = useMemo(() => {
+    if (!rawScans.length && !loading) return [];
+    return buckets.map(b => ({
+      label: b.label,
+      Scans: countInBucket(rawScans, 'occurred_at', b.from, b.to),
+      Leads: countInBucket(rawLeads, 'created_at', b.from, b.to),
+    }));
+  }, [buckets, rawScans, rawLeads, loading]);
+
+  const scansChartData = useMemo(
+    () => cumulativeScans ? toCumulative(scansChartDataRaw, ['Scans', 'Leads']) : scansChartDataRaw,
+    [scansChartDataRaw, cumulativeScans]
   );
 
   const DatePicker = ({ date, onChange }: { date: Date; onChange: (d: Date) => void }) => (
@@ -548,6 +583,71 @@ const AdminMetrics = () => {
                       {packageKeys.map(k => (
                         <Bar key={k} dataKey={PACKAGE_LABELS[k] || k} fill={CHART_COLORS[k as keyof typeof CHART_COLORS] || '#888'} radius={[3, 3, 0, 0]} />
                       ))}
+                    </BarChart>
+                  )}
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ── Leads & Scans KPIs ── */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base"><Users className="h-4 w-4 text-primary" />Leads Received</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <StatCard label="In period" value={data.leads.count} />
+                <StatCard label="Previous period" value={data.leads.prevCount} />
+                <StatCard label="Growth" value={data.leads.count} growth={data.leads.growth} prevValue={data.leads.prevCount} />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base"><Eye className="h-4 w-4 text-primary" />QR Scans</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <StatCard label="In period" value={data.scans.count} />
+                <StatCard label="Previous period" value={data.scans.prevCount} />
+                <StatCard label="Growth" value={data.scans.count} growth={data.scans.growth} prevValue={data.scans.prevCount} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ── Scans & Leads Chart ── */}
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-base">Scans & Leads Over Time</CardTitle>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="cum-scans" className="text-xs text-muted-foreground cursor-pointer">Cumulative</Label>
+                <Switch id="cum-scans" checked={cumulativeScans} onCheckedChange={setCumulativeScans} />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  {cumulativeScans ? (
+                    <AreaChart data={scansChartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} interval="preserveStartEnd" />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                      <Tooltip contentStyle={chartTooltipStyle} />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Area type="monotone" dataKey="Scans" stroke={CHART_COLORS.scans} fill={CHART_COLORS.scans} fillOpacity={0.15} strokeWidth={2} />
+                      <Area type="monotone" dataKey="Leads" stroke={CHART_COLORS.leads} fill={CHART_COLORS.leads} fillOpacity={0.15} strokeWidth={2} />
+                    </AreaChart>
+                  ) : (
+                    <BarChart data={scansChartData} barGap={2}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} interval="preserveStartEnd" />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                      <Tooltip contentStyle={chartTooltipStyle} />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Bar dataKey="Scans" fill={CHART_COLORS.scans} radius={[3, 3, 0, 0]} />
+                      <Bar dataKey="Leads" fill={CHART_COLORS.leads} radius={[3, 3, 0, 0]} />
                     </BarChart>
                   )}
                 </ResponsiveContainer>
