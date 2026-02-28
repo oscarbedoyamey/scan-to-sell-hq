@@ -8,6 +8,7 @@ import {
   Palette,
   QrCode,
   Package,
+  BarChart3,
   ArrowLeft,
   LogOut,
   Menu,
@@ -24,6 +25,7 @@ const navItems = [
   { path: '/admin/signs', icon: QrCode, label: 'Signs' },
   { path: '/admin/templates', icon: Palette, label: 'Templates' },
   { path: '/admin/unassigned-signs', icon: Package, label: 'Unassigned Signs' },
+  { path: '/admin/metrics', icon: BarChart3, label: 'Metrics' },
 ];
 
 export const AdminLayout = () => {
