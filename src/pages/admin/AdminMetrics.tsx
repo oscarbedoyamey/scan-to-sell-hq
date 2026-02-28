@@ -8,7 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { BarChart, Bar, AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 // ─── types ───
 interface RangeMetric {
@@ -128,6 +130,8 @@ const AdminMetrics = () => {
   const [rawPurchases, setRawPurchases] = useState<RawRow[]>([]);
   const [packageMap, setPackageMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [cumulativeListings, setCumulativeListings] = useState(false);
+  const [cumulativeSubs, setCumulativeSubs] = useState(false);
 
   const rangeDays = Math.max(1, differenceInDays(dateTo, dateFrom));
 
@@ -211,7 +215,17 @@ const AdminMetrics = () => {
   // Build chart data
   const buckets = useMemo(() => buildBuckets(dateFrom, dateTo), [dateFrom, dateTo]);
 
-  const listingsChartData = useMemo(() => {
+  const toCumulative = (data: any[], keys: string[]) => {
+    const acc: Record<string, number> = {};
+    keys.forEach(k => acc[k] = 0);
+    return data.map(row => {
+      const newRow: any = { label: row.label };
+      keys.forEach(k => { acc[k] += row[k] || 0; newRow[k] = acc[k]; });
+      return newRow;
+    });
+  };
+
+  const listingsChartDataRaw = useMemo(() => {
     if (!rawListings.length && !loading) return [];
     return buckets.map(b => ({
       label: b.label,
@@ -220,7 +234,12 @@ const AdminMetrics = () => {
     }));
   }, [buckets, rawListings, loading]);
 
-  const subsChartData = useMemo(() => {
+  const listingsChartData = useMemo(
+    () => cumulativeListings ? toCumulative(listingsChartDataRaw, ['Created', 'Edited']) : listingsChartDataRaw,
+    [listingsChartDataRaw, cumulativeListings]
+  );
+
+  const subsChartDataRaw = useMemo(() => {
     if (!rawPurchases.length && !loading) return [];
     const paid = rawPurchases.filter(p => p.status === 'paid');
     return buckets.map(b => {
@@ -232,6 +251,11 @@ const AdminMetrics = () => {
       return row;
     });
   }, [buckets, rawPurchases, packageMap, loading]);
+
+  const subsChartData = useMemo(
+    () => cumulativeSubs ? toCumulative(subsChartDataRaw, ['Total', '3 Months', '6 Months', '9 Months']) : subsChartDataRaw,
+    [subsChartDataRaw, cumulativeSubs]
+  );
 
   const DatePicker = ({ date, onChange }: { date: Date; onChange: (d: Date) => void }) => (
     <Popover>
@@ -304,21 +328,37 @@ const AdminMetrics = () => {
 
           {/* ── Listings Chart ── */}
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
               <CardTitle className="text-base">Listings Over Time</CardTitle>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="cum-listings" className="text-xs text-muted-foreground cursor-pointer">Cumulative</Label>
+                <Switch id="cum-listings" checked={cumulativeListings} onCheckedChange={setCumulativeListings} />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={listingsChartData} barGap={2}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} interval="preserveStartEnd" />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                    <Tooltip contentStyle={chartTooltipStyle} />
-                    <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="Created" fill={CHART_COLORS.created} radius={[3, 3, 0, 0]} />
-                    <Bar dataKey="Edited" fill={CHART_COLORS.edited} radius={[3, 3, 0, 0]} />
-                  </BarChart>
+                  {cumulativeListings ? (
+                    <AreaChart data={listingsChartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} interval="preserveStartEnd" />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                      <Tooltip contentStyle={chartTooltipStyle} />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Area type="monotone" dataKey="Created" stroke={CHART_COLORS.created} fill={CHART_COLORS.created} fillOpacity={0.15} strokeWidth={2} />
+                      <Area type="monotone" dataKey="Edited" stroke={CHART_COLORS.edited} fill={CHART_COLORS.edited} fillOpacity={0.15} strokeWidth={2} />
+                    </AreaChart>
+                  ) : (
+                    <BarChart data={listingsChartData} barGap={2}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} interval="preserveStartEnd" />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                      <Tooltip contentStyle={chartTooltipStyle} />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Bar dataKey="Created" fill={CHART_COLORS.created} radius={[3, 3, 0, 0]} />
+                      <Bar dataKey="Edited" fill={CHART_COLORS.edited} radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  )}
                 </ResponsiveContainer>
               </div>
             </CardContent>
@@ -353,23 +393,41 @@ const AdminMetrics = () => {
 
           {/* ── Subscriptions Chart ── */}
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
               <CardTitle className="text-base">Subscriptions Over Time</CardTitle>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="cum-subs" className="text-xs text-muted-foreground cursor-pointer">Cumulative</Label>
+                <Switch id="cum-subs" checked={cumulativeSubs} onCheckedChange={setCumulativeSubs} />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={subsChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} interval="preserveStartEnd" />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                    <Tooltip contentStyle={chartTooltipStyle} />
-                    <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Line type="monotone" dataKey="Total" stroke={CHART_COLORS.subs} strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="3 Months" stroke={CHART_COLORS['3m']} strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
-                    <Line type="monotone" dataKey="6 Months" stroke={CHART_COLORS['6m']} strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
-                    <Line type="monotone" dataKey="9 Months" stroke={CHART_COLORS['9m']} strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
-                  </LineChart>
+                  {cumulativeSubs ? (
+                    <AreaChart data={subsChartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} interval="preserveStartEnd" />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                      <Tooltip contentStyle={chartTooltipStyle} />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Area type="monotone" dataKey="Total" stroke={CHART_COLORS.subs} fill={CHART_COLORS.subs} fillOpacity={0.15} strokeWidth={2} />
+                      <Area type="monotone" dataKey="3 Months" stroke={CHART_COLORS['3m']} fill={CHART_COLORS['3m']} fillOpacity={0.1} strokeWidth={1.5} />
+                      <Area type="monotone" dataKey="6 Months" stroke={CHART_COLORS['6m']} fill={CHART_COLORS['6m']} fillOpacity={0.1} strokeWidth={1.5} />
+                      <Area type="monotone" dataKey="9 Months" stroke={CHART_COLORS['9m']} fill={CHART_COLORS['9m']} fillOpacity={0.1} strokeWidth={1.5} />
+                    </AreaChart>
+                  ) : (
+                    <LineChart data={subsChartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} interval="preserveStartEnd" />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                      <Tooltip contentStyle={chartTooltipStyle} />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Line type="monotone" dataKey="Total" stroke={CHART_COLORS.subs} strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="3 Months" stroke={CHART_COLORS['3m']} strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
+                      <Line type="monotone" dataKey="6 Months" stroke={CHART_COLORS['6m']} strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
+                      <Line type="monotone" dataKey="9 Months" stroke={CHART_COLORS['9m']} strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
+                    </LineChart>
+                  )}
                 </ResponsiveContainer>
               </div>
             </CardContent>
