@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { format, differenceInDays, subDays, addDays, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfDay, startOfWeek, startOfMonth, isBefore, isAfter } from 'date-fns';
-import { CalendarIcon, TrendingUp, TrendingDown, Minus, FileText, CreditCard, Activity, DollarSign, Users, Eye } from 'lucide-react';
+import { CalendarIcon, TrendingUp, TrendingDown, Minus, FileText, CreditCard, Activity, DollarSign, Users, Eye, QrCode, Globe } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,7 +19,9 @@ interface RangeMetric {
   growth: number | null;
 }
 
-interface RawRow { created_at: string; updated_at?: string; status?: string; package_id?: string; end_at?: string; amount_eur?: number; occurred_at?: string }
+interface RawRow { id?: string; created_at: string; updated_at?: string; status?: string; package_id?: string; end_at?: string; amount_eur?: number; occurred_at?: string; listing_id?: string }
+
+type SourceFilter = 'all' | 'activation' | 'direct';
 
 interface CustomMetrics {
   listingsCreated: RangeMetric;
@@ -133,11 +135,11 @@ const countInBucket = (rows: RawRow[], field: 'created_at' | 'updated_at' | 'occ
 const AdminMetrics = () => {
   const [dateFrom, setDateFrom] = useState<Date>(subDays(new Date(), 30));
   const [dateTo, setDateTo] = useState<Date>(new Date());
-  const [data, setData] = useState<CustomMetrics | null>(null);
   const [rawListings, setRawListings] = useState<RawRow[]>([]);
   const [rawPurchases, setRawPurchases] = useState<RawRow[]>([]);
   const [rawLeads, setRawLeads] = useState<RawRow[]>([]);
   const [rawScans, setRawScans] = useState<RawRow[]>([]);
+  const [activationListingIds, setActivationListingIds] = useState<Set<string>>(new Set());
   const [packageMap, setPackageMap] = useState<Record<string, string>>({});
   const [packageKeys, setPackageKeys] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -145,6 +147,7 @@ const AdminMetrics = () => {
   const [cumulativeSubs, setCumulativeSubs] = useState(false);
   const [cumulativeRevenue, setCumulativeRevenue] = useState(false);
   const [cumulativeScans, setCumulativeScans] = useState(false);
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
 
   const rangeDays = Math.max(1, differenceInDays(dateTo, dateFrom));
 
@@ -164,16 +167,20 @@ const AdminMetrics = () => {
       const prevTo = fromISO;
       const nowISO = new Date().toISOString();
 
-      const [{ data: allListings }, { data: allPurchases }, { data: pkgs }, { data: allLeads }, { data: allScans }] = await Promise.all([
+      const [{ data: allListings }, { data: allPurchases }, { data: pkgs }, { data: allLeads }, { data: allScans }, { data: assignedSigns }] = await Promise.all([
         db.from('listings').select('id, created_at, updated_at'),
-        db.from('purchases').select('id, created_at, status, package_id, end_at, amount_eur'),
+        db.from('purchases').select('id, created_at, status, package_id, end_at, amount_eur, listing_id'),
         db.from('packages').select('id, duration_months'),
         db.from('leads').select('id, created_at'),
         db.from('scans').select('id, occurred_at'),
+        db.from('unassigned_signs').select('listing_id').not('listing_id', 'is', null),
       ]);
 
-      const listings: RawRow[] = allListings || [];
-      const purchases: RawRow[] = allPurchases || [];
+      const actListingIds = new Set<string>((assignedSigns || []).map((s: any) => s.listing_id).filter(Boolean));
+      setActivationListingIds(actListingIds);
+
+      const listings: RawRow[] = (allListings || []).map((l: any) => ({ ...l }));
+      const purchases: RawRow[] = (allPurchases || []).map((p: any) => ({ ...p }));
       const leads: RawRow[] = (allLeads || []).map((l: any) => ({ created_at: l.created_at }));
       const scans: RawRow[] = (allScans || []).map((s: any) => ({ created_at: s.occurred_at, occurred_at: s.occurred_at }));
 
@@ -192,74 +199,117 @@ const AdminMetrics = () => {
       setRawScans(scans);
       setPackageMap(pm);
       setPackageKeys(pkgKeys);
-
-      const createdIn = (f: string, t: string) => listings.filter(l => l.created_at >= f && l.created_at < t).length;
-      const editedIn = (f: string, t: string) => listings.filter(l => {
-        if (!l.updated_at || l.updated_at < f || l.updated_at >= t) return false;
-        return l.created_at?.substring(0, 10) !== l.updated_at?.substring(0, 10);
-      }).length;
-
-      const paidPurchases = purchases.filter(p => p.status === 'paid');
-      const paidIn = (f: string, t: string, pk?: string) =>
-        paidPurchases.filter(p => {
-          if (p.created_at < f || p.created_at >= t) return false;
-          if (pk && pm[p.package_id!] !== pk) return false;
-          return true;
-        }).length;
-
-      const cc = createdIn(fromISO, toISO), cp = createdIn(prevFrom, prevTo);
-      const ec = editedIn(fromISO, toISO), ep = editedIn(prevFrom, prevTo);
-      const sc = paidIn(fromISO, toISO), sp = paidIn(prevFrom, prevTo);
-
-      const subsByPackage: Record<string, RangeMetric> = {};
-      pkgKeys.forEach(k => {
-        const c = paidIn(fromISO, toISO, k), p = paidIn(prevFrom, prevTo, k);
-        subsByPackage[k] = { count: c, prevCount: p, growth: calcGrowth(c, p) };
-      });
-
-      const revenueIn = (f: string, t: string, pk?: string) =>
-        paidPurchases.filter(p => {
-          if (p.created_at < f || p.created_at >= t) return false;
-          if (pk && pm[p.package_id!] !== pk) return false;
-          return true;
-        }).reduce((sum, p) => sum + (p.amount_eur || 0), 0);
-
-      const rc = revenueIn(fromISO, toISO), rp = revenueIn(prevFrom, prevTo);
-      const revenueByPackage: Record<string, RangeMetric> = {};
-      pkgKeys.forEach(k => {
-        const c = revenueIn(fromISO, toISO, k), p = revenueIn(prevFrom, prevTo, k);
-        revenueByPackage[k] = { count: c, prevCount: p, growth: calcGrowth(c, p) };
-      });
-
-      const leadsIn = (f: string, t: string) => leads.filter(l => l.created_at >= f && l.created_at < t).length;
-      const lc = leadsIn(fromISO, toISO), lp = leadsIn(prevFrom, prevTo);
-
-      const scansIn = (f: string, t: string) => scans.filter(s => s.occurred_at && s.occurred_at >= f && s.occurred_at < t).length;
-      const scanC = scansIn(fromISO, toISO), scanP = scansIn(prevFrom, prevTo);
-
-      const activePurchases = paidPurchases.filter(p => p.end_at && p.end_at >= nowISO);
-      const activeByPkg: Record<string, number> = {};
-      pkgKeys.forEach(k => activeByPkg[k] = 0);
-      activePurchases.forEach(p => { const k = pm[p.package_id!]; if (k && activeByPkg[k] !== undefined) activeByPkg[k]++; });
-
-      setData({
-        listingsCreated: { count: cc, prevCount: cp, growth: calcGrowth(cc, cp) },
-        listingsEdited: { count: ec, prevCount: ep, growth: calcGrowth(ec, ep) },
-        subscriptions: { count: sc, prevCount: sp, growth: calcGrowth(sc, sp) },
-        subsByPackage,
-        activeSubs: { total: activePurchases.length, byPackage: activeByPkg },
-        revenue: { count: rc, prevCount: rp, growth: calcGrowth(rc, rp) },
-        revenueByPackage,
-        leads: { count: lc, prevCount: lp, growth: calcGrowth(lc, lp) },
-        scans: { count: scanC, prevCount: scanP, growth: calcGrowth(scanC, scanP) },
-      });
       setLoading(false);
     };
     load();
   }, [dateFrom, dateTo, rangeDays]);
 
-  // Build chart data
+  // ── Compute metrics (reactive to sourceFilter) ──
+  const computedData = useMemo(() => {
+    if (loading || !rawListings.length && !rawPurchases.length) return null;
+
+    const toISO = dateTo.toISOString();
+    const fromISO = dateFrom.toISOString();
+    const prevFrom = subDays(dateFrom, rangeDays).toISOString();
+    const prevTo = fromISO;
+    const nowISO = new Date().toISOString();
+
+    // Apply source filter
+    const filterBySource = <T extends { id?: string; listing_id?: string }>(rows: T[], idField: 'id' | 'listing_id' = 'id'): T[] => {
+      if (sourceFilter === 'all') return rows;
+      return rows.filter(r => {
+        const lid = r[idField];
+        const isActivation = lid ? activationListingIds.has(lid) : false;
+        return sourceFilter === 'activation' ? isActivation : !isActivation;
+      });
+    };
+
+    const listings = filterBySource(rawListings, 'id');
+    const purchases = rawPurchases;
+    const filteredPurchases = filterBySource(purchases, 'listing_id');
+
+    const createdIn = (f: string, t: string) => listings.filter(l => l.created_at >= f && l.created_at < t).length;
+    const editedIn = (f: string, t: string) => listings.filter(l => {
+      if (!l.updated_at || l.updated_at < f || l.updated_at >= t) return false;
+      return l.created_at?.substring(0, 10) !== l.updated_at?.substring(0, 10);
+    }).length;
+
+    const paidPurchases = filteredPurchases.filter(p => p.status === 'paid');
+    const paidIn = (f: string, t: string, pk?: string) =>
+      paidPurchases.filter(p => {
+        if (p.created_at < f || p.created_at >= t) return false;
+        if (pk && packageMap[p.package_id!] !== pk) return false;
+        return true;
+      }).length;
+
+    const cc = createdIn(fromISO, toISO), cp = createdIn(prevFrom, prevTo);
+    const ec = editedIn(fromISO, toISO), ep = editedIn(prevFrom, prevTo);
+    const sc = paidIn(fromISO, toISO), sp = paidIn(prevFrom, prevTo);
+
+    const subsByPackage: Record<string, RangeMetric> = {};
+    packageKeys.forEach(k => {
+      const c = paidIn(fromISO, toISO, k), p = paidIn(prevFrom, prevTo, k);
+      subsByPackage[k] = { count: c, prevCount: p, growth: calcGrowth(c, p) };
+    });
+
+    const revenueIn = (f: string, t: string, pk?: string) =>
+      paidPurchases.filter(p => {
+        if (p.created_at < f || p.created_at >= t) return false;
+        if (pk && packageMap[p.package_id!] !== pk) return false;
+        return true;
+      }).reduce((sum, p) => sum + (p.amount_eur || 0), 0);
+
+    const rc = revenueIn(fromISO, toISO), rp = revenueIn(prevFrom, prevTo);
+    const revenueByPackage: Record<string, RangeMetric> = {};
+    packageKeys.forEach(k => {
+      const c = revenueIn(fromISO, toISO, k), p = revenueIn(prevFrom, prevTo, k);
+      revenueByPackage[k] = { count: c, prevCount: p, growth: calcGrowth(c, p) };
+    });
+
+    const leadsIn = (f: string, t: string) => rawLeads.filter(l => l.created_at >= f && l.created_at < t).length;
+    const lc = leadsIn(fromISO, toISO), lp = leadsIn(prevFrom, prevTo);
+
+    const scansIn = (f: string, t: string) => rawScans.filter(s => s.occurred_at && s.occurred_at >= f && s.occurred_at < t).length;
+    const scanC = scansIn(fromISO, toISO), scanP = scansIn(prevFrom, prevTo);
+
+    const activePurchases = paidPurchases.filter(p => p.end_at && p.end_at >= nowISO);
+    const activeByPkg: Record<string, number> = {};
+    packageKeys.forEach(k => activeByPkg[k] = 0);
+    activePurchases.forEach(p => { const k = packageMap[p.package_id!]; if (k && activeByPkg[k] !== undefined) activeByPkg[k]++; });
+
+    return {
+      listingsCreated: { count: cc, prevCount: cp, growth: calcGrowth(cc, cp) },
+      listingsEdited: { count: ec, prevCount: ep, growth: calcGrowth(ec, ep) },
+      subscriptions: { count: sc, prevCount: sp, growth: calcGrowth(sc, sp) },
+      subsByPackage,
+      activeSubs: { total: activePurchases.length, byPackage: activeByPkg },
+      revenue: { count: rc, prevCount: rp, growth: calcGrowth(rc, rp) },
+      revenueByPackage,
+      leads: { count: lc, prevCount: lp, growth: calcGrowth(lc, lp) },
+      scans: { count: scanC, prevCount: scanP, growth: calcGrowth(scanC, scanP) },
+    } as CustomMetrics;
+  }, [rawListings, rawPurchases, rawLeads, rawScans, packageMap, packageKeys, activationListingIds, sourceFilter, dateFrom, dateTo, rangeDays, loading]);
+
+  const data = computedData;
+
+  // Build chart data with source filter applied
   const buckets = useMemo(() => buildBuckets(dateFrom, dateTo), [dateFrom, dateTo]);
+
+  const filteredListings = useMemo(() => {
+    if (sourceFilter === 'all') return rawListings;
+    return rawListings.filter(l => {
+      const isAct = l.id ? activationListingIds.has(l.id) : false;
+      return sourceFilter === 'activation' ? isAct : !isAct;
+    });
+  }, [rawListings, sourceFilter, activationListingIds]);
+
+  const filteredPurchases = useMemo(() => {
+    if (sourceFilter === 'all') return rawPurchases;
+    return rawPurchases.filter(p => {
+      const isAct = p.listing_id ? activationListingIds.has(p.listing_id) : false;
+      return sourceFilter === 'activation' ? isAct : !isAct;
+    });
+  }, [rawPurchases, sourceFilter, activationListingIds]);
 
   const toCumulative = (data: any[], keys: string[]) => {
     const acc: Record<string, number> = {};
@@ -272,13 +322,13 @@ const AdminMetrics = () => {
   };
 
   const listingsChartDataRaw = useMemo(() => {
-    if (!rawListings.length && !loading) return [];
+    if (!filteredListings.length && !loading) return [];
     return buckets.map(b => ({
       label: b.label,
-      Created: countInBucket(rawListings, 'created_at', b.from, b.to),
-      Edited: countInBucket(rawListings, 'updated_at', b.from, b.to, r => r.created_at?.substring(0, 10) !== r.updated_at?.substring(0, 10)),
+      Created: countInBucket(filteredListings, 'created_at', b.from, b.to),
+      Edited: countInBucket(filteredListings, 'updated_at', b.from, b.to, r => r.created_at?.substring(0, 10) !== r.updated_at?.substring(0, 10)),
     }));
-  }, [buckets, rawListings, loading]);
+  }, [buckets, filteredListings, loading]);
 
   const listingsChartData = useMemo(
     () => cumulativeListings ? toCumulative(listingsChartDataRaw, ['Created', 'Edited']) : listingsChartDataRaw,
@@ -286,8 +336,8 @@ const AdminMetrics = () => {
   );
 
   const subsChartDataRaw = useMemo(() => {
-    if (!rawPurchases.length && !loading) return [];
-    const paid = rawPurchases.filter(p => p.status === 'paid');
+    if (!filteredPurchases.length && !loading) return [];
+    const paid = filteredPurchases.filter(p => p.status === 'paid');
     return buckets.map(b => {
       const row: any = { label: b.label };
       row['Total'] = countInBucket(paid, 'created_at', b.from, b.to);
@@ -296,7 +346,7 @@ const AdminMetrics = () => {
       });
       return row;
     });
-  }, [buckets, rawPurchases, packageMap, packageKeys, loading]);
+  }, [buckets, filteredPurchases, packageMap, packageKeys, loading]);
 
   const subsChartKeys = useMemo(() => ['Total', ...packageKeys.map(k => PACKAGE_LABELS[k] || k)], [packageKeys]);
   const subsChartData = useMemo(
@@ -314,8 +364,8 @@ const AdminMetrics = () => {
   };
 
   const revenueChartDataRaw = useMemo(() => {
-    if (!rawPurchases.length && !loading) return [];
-    const paid = rawPurchases.filter(p => p.status === 'paid');
+    if (!filteredPurchases.length && !loading) return [];
+    const paid = filteredPurchases.filter(p => p.status === 'paid');
     return buckets.map(b => {
       const row: any = { label: b.label };
       row['Total'] = Math.round(sumInBucket(paid, b.from, b.to) * 100) / 100;
@@ -324,7 +374,7 @@ const AdminMetrics = () => {
       });
       return row;
     });
-  }, [buckets, rawPurchases, packageMap, packageKeys, loading]);
+  }, [buckets, filteredPurchases, packageMap, packageKeys, loading]);
 
   const revenueChartData = useMemo(
     () => cumulativeRevenue ? toCumulative(revenueChartDataRaw, subsChartKeys) : revenueChartDataRaw,
@@ -378,9 +428,30 @@ const AdminMetrics = () => {
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        Showing {rangeDays} day{rangeDays !== 1 ? 's' : ''}: {format(dateFrom, 'MMM d, yyyy')} – {format(dateTo, 'MMM d, yyyy')}. Growth compares to the equivalent previous period.
-      </p>
+      {/* Source filter */}
+      <div className="flex flex-wrap items-center gap-3">
+        <p className="text-xs text-muted-foreground">
+          Showing {rangeDays} day{rangeDays !== 1 ? 's' : ''}: {format(dateFrom, 'MMM d, yyyy')} – {format(dateTo, 'MMM d, yyyy')}. Growth compares to the equivalent previous period.
+        </p>
+        <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+          {([
+            { value: 'all' as SourceFilter, label: 'All', icon: null },
+            { value: 'activation' as SourceFilter, label: 'Sign Activation', icon: QrCode },
+            { value: 'direct' as SourceFilter, label: 'Direct', icon: Globe },
+          ]).map(opt => (
+            <Button
+              key={opt.value}
+              variant={sourceFilter === opt.value ? 'default' : 'ghost'}
+              size="sm"
+              className={cn("h-7 text-xs gap-1.5 rounded-md", sourceFilter !== opt.value && "text-muted-foreground hover:text-foreground")}
+              onClick={() => setSourceFilter(opt.value)}
+            >
+              {opt.icon && <opt.icon className="h-3 w-3" />}
+              {opt.label}
+            </Button>
+          ))}
+        </div>
+      </div>
 
       {loading ? (
         <div className="space-y-4">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-2xl" />)}</div>
