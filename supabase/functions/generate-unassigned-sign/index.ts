@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const N8N_WEBHOOK_URL = "https://obminversion.app.n8n.cloud/webhook-test/43dc4fb9-fc7a-4af6-b06c-0fecc7dee9f9";
+const N8N_WEBHOOK_URL = "https://obminversion.app.n8n.cloud/webhook/43dc4fb9-fc7a-4af6-b06c-0fecc7dee9f9";
 
 const SIGN_TEXT: Record<string, { sale: string; rent: string }> = {
   en: { sale: "FOR SALE", rent: "FOR RENT" },

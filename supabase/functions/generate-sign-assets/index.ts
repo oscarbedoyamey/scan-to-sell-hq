@@ -119,7 +119,7 @@ serve(async (req) => {
     const signLang = fallback_language || sign.language || listing.base_language || "es";
     const saleRentText = getSignText(signLang, listing.operation_type || "sale");
 
-    const webhookUrl = "https://obminversion.app.n8n.cloud/webhook-test/43dc4fb9-fc7a-4af6-b06c-0fecc7dee9f9";
+    const webhookUrl = "https://obminversion.app.n8n.cloud/webhook/43dc4fb9-fc7a-4af6-b06c-0fecc7dee9f9";
     const webhookBody = {
       listingId: listing.id,
       language: signLang,
