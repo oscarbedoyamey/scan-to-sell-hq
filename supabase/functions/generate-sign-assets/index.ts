@@ -144,31 +144,26 @@ serve(async (req) => {
     }
 
     // --- 3. Save the returned poster to storage ---
-    // n8n may return raw PNG bytes OR a JSON with a URL to the image
     const responseContentType = webhookResponse.headers.get("content-type") || "";
     const responseBytes = new Uint8Array(await webhookResponse.arrayBuffer());
     console.log(`Webhook response: ${responseBytes.byteLength} bytes, content-type: ${responseContentType}`);
 
     let posterBuffer: Uint8Array;
+    let posterMime = "image/png";
 
-    // If response is small or not an image, it's likely JSON with a URL
     if (responseBytes.byteLength < 1000 || responseContentType.includes("application/json") || responseContentType.includes("text/")) {
       const responseText = new TextDecoder().decode(responseBytes);
       console.log("Webhook response body:", responseText);
 
-      // Try to parse as JSON and extract an image URL
       let imageUrl: string | null = null;
       try {
         const parsed = JSON.parse(responseText);
-        // Common patterns: { url: "..." }, { imageUrl: "..." }, { data: { url: "..." } }, or just a string URL
         imageUrl = parsed.url || parsed.imageUrl || parsed.image_url || parsed.data?.url || parsed.data?.imageUrl || null;
-        // If parsed is an array, try first element
         if (!imageUrl && Array.isArray(parsed) && parsed.length > 0) {
           const first = parsed[0];
           imageUrl = typeof first === "string" ? first : (first.url || first.imageUrl || first.image_url || null);
         }
       } catch {
-        // Maybe it's a plain URL string
         if (responseText.startsWith("http")) {
           imageUrl = responseText.trim();
         }
@@ -179,20 +174,30 @@ serve(async (req) => {
         const imgResponse = await fetch(imageUrl);
         if (!imgResponse.ok) throw new Error(`Failed to fetch poster image: ${imgResponse.status}`);
         posterBuffer = new Uint8Array(await imgResponse.arrayBuffer());
-        console.log(`Downloaded poster: ${posterBuffer.byteLength} bytes`);
+        posterMime = imgResponse.headers.get("content-type") || "image/png";
+        console.log(`Downloaded poster: ${posterBuffer.byteLength} bytes, mime: ${posterMime}`);
       } else {
         throw new Error(`Webhook returned non-image response (${responseBytes.byteLength} bytes): ${responseText.substring(0, 500)}`);
       }
     } else {
       posterBuffer = responseBytes;
-      console.log(`Received poster PNG: ${posterBuffer.byteLength} bytes`);
+      posterMime = responseContentType.split(";")[0].trim() || "image/png";
+      console.log(`Received poster image: ${posterBuffer.byteLength} bytes, mime: ${posterMime}`);
     }
 
-    const posterPath = `signs/${sign.id}/poster.png`;
+    const ext = posterMime.includes("jpeg") || posterMime.includes("jpg") ? "jpg" : "png";
+    const posterPath = `signs/${sign.id}/poster.${ext}`;
+
+    // Delete old poster if extension changed
+    const oldPosterPath = sign.sign_pdf_path;
+    if (oldPosterPath && oldPosterPath !== posterPath) {
+      await supabaseAdmin.storage.from("generated-assets").remove([oldPosterPath]);
+    }
+
     const { error: posterUploadError } = await supabaseAdmin.storage
       .from("generated-assets")
       .upload(posterPath, posterBuffer, {
-        contentType: "image/png",
+        contentType: posterMime,
         upsert: true,
       });
 
@@ -202,13 +207,16 @@ serve(async (req) => {
       .from("generated-assets")
       .getPublicUrl(posterPath);
 
-    // --- 4. Update sign record ---
+    console.log("Poster uploaded to:", posterPublicUrlData.publicUrl);
+
+    // --- 4. Update sign record with cache-busting timestamp ---
     const { error: updateError } = await supabaseAdmin
       .from("signs")
       .update({
         qr_image_path: qrPath,
         sign_pdf_path: posterPath,
         public_url: publicUrl,
+        updated_at: new Date().toISOString(),
       })
       .eq("id", sign.id);
 
