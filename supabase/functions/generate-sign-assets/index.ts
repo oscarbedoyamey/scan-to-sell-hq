@@ -9,6 +9,21 @@ const corsHeaders = {
 
 const PUBLISHED_URL = "https://scan-to-sell-hq.lovable.app";
 
+const SIGN_TEXT: Record<string, { sale: string; rent: string }> = {
+  en: { sale: "FOR SALE", rent: "FOR RENT" },
+  es: { sale: "SE VENDE", rent: "SE ALQUILA" },
+  fr: { sale: "À VENDRE", rent: "À LOUER" },
+  pt: { sale: "VENDE-SE", rent: "ALUGA-SE" },
+  it: { sale: "VENDESI", rent: "Affittasi" },
+  de: { sale: "ZU VERKAUFEN", rent: "ZU VERMIETEN" },
+  pl: { sale: "NA SPRZEDAŻ", rent: "DO WYNAJĘCIA" },
+};
+
+const getSignText = (lang: string, opType: string): string => {
+  const l = SIGN_TEXT[lang] || SIGN_TEXT["en"];
+  return opType === "rent" ? l.rent : l.sale;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -101,12 +116,13 @@ serve(async (req) => {
       .from("generated-assets")
       .getPublicUrl(qrPath);
 
-    const saleRentText = listing.operation_type === "rent" ? "ON RENT" : "ON SALE";
+    const signLang = fallback_language || sign.language || listing.base_language || "es";
+    const saleRentText = getSignText(signLang, listing.operation_type || "sale");
 
-    const webhookUrl = "https://obminversion.app.n8n.cloud/webhook/43dc4fb9-fc7a-4af6-b06c-0fecc7dee9f9";
+    const webhookUrl = "https://obminversion.app.n8n.cloud/webhook-test/43dc4fb9-fc7a-4af6-b06c-0fecc7dee9f9";
     const webhookBody = {
       listingId: listing.id,
-      language: fallback_language || sign.language || listing.base_language || "es",
+      language: signLang,
       Text: saleRentText,
       size: sign.size || "A4",
       type: listing.property_type || "",

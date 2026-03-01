@@ -6,7 +6,22 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const N8N_WEBHOOK_URL = "https://obminversion.app.n8n.cloud/webhook/43dc4fb9-fc7a-4af6-b06c-0fecc7dee9f9";
+const N8N_WEBHOOK_URL = "https://obminversion.app.n8n.cloud/webhook-test/43dc4fb9-fc7a-4af6-b06c-0fecc7dee9f9";
+
+const SIGN_TEXT: Record<string, { sale: string; rent: string }> = {
+  en: { sale: "FOR SALE", rent: "FOR RENT" },
+  es: { sale: "SE VENDE", rent: "SE ALQUILA" },
+  fr: { sale: "À VENDRE", rent: "À LOUER" },
+  pt: { sale: "VENDE-SE", rent: "ALUGA-SE" },
+  it: { sale: "VENDESI", rent: "Affittasi" },
+  de: { sale: "ZU VERKAUFEN", rent: "ZU VERMIETEN" },
+  pl: { sale: "NA SPRZEDAŻ", rent: "DO WYNAJĘCIA" },
+};
+
+const getSignText = (lang: string, opType: string): string => {
+  const l = SIGN_TEXT[lang] || SIGN_TEXT["en"];
+  return opType === "rent" ? l.rent : l.sale;
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -45,8 +60,9 @@ serve(async (req) => {
     const qrPublicUrl = qrPublicUrlData.publicUrl;
     console.log("QR uploaded, public URL:", qrPublicUrl);
 
-    // 4. Map transaction type to display text
-    const textValue = type === "rent" ? "ON RENT" : "ON SALE";
+    // 4. Map transaction type to localized display text
+    const lang = language || "es";
+    const textValue = getSignText(lang, type);
 
     // 5. Call n8n webhook with correct parameter names
     const webhookBody = {
