@@ -40,7 +40,7 @@ function paymentHtml(lang: Lang, data: { listingTitle?: string; amount?: string;
   };
 
   const l = labels[lang];
-  const dashboardUrl = "https://scan-to-sell-hq.lovable.app/app";
+  const dashboardUrl = "https://zignoqr.com/app";
 
   return `
 <!DOCTYPE html>
