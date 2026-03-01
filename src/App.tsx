@@ -41,6 +41,9 @@ import ActivateSign from "./pages/ActivateSign";
 import ActivateSignAuth from "./pages/ActivateSignAuth";
 import ActivateComplete from "./pages/ActivateComplete";
 import PublicListingById from "./pages/PublicListingById";
+import CartelesHub from "./pages/carteles/HubPage";
+import CartelesType from "./pages/carteles/TypePage";
+import CartelesProduct from "./pages/carteles/ProductLandingPage";
 
 import { queryClient } from "@/lib/queryClient";
 
@@ -69,6 +72,9 @@ const App = () => (
               <Route path="/activate/:token" element={<ActivateSign />} />
               <Route path="/activate/:token/auth" element={<ActivateSignAuth />} />
               <Route path="/listing/:listingId" element={<PublicListingById />} />
+              <Route path="/carteles" element={<CartelesHub />} />
+              <Route path="/carteles/:type" element={<CartelesType />} />
+              <Route path="/carteles/:type/:property" element={<CartelesProduct />} />
 
               {/* Protected app routes */}
               <Route
