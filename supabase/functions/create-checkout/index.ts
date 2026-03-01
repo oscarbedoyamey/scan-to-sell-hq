@@ -153,7 +153,7 @@ serve(async (req) => {
 
     if (purchaseError) throw new Error("Failed to create purchase record");
 
-    const origin = req.headers.get("origin") || "https://scan-to-sell-hq.lovable.app";
+    const origin = req.headers.get("origin") || "https://zignoqr.com";
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,

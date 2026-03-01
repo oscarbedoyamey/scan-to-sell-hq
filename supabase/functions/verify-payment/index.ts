@@ -8,7 +8,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PUBLISHED_URL = "https://scan-to-sell-hq.lovable.app";
+const PUBLISHED_URL = "https://zignoqr.com";
 
 function generateSignCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
