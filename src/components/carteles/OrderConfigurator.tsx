@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Lock, Truck, RotateCcw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,41 +29,13 @@ export const OrderConfigurator = ({ type }: OrderConfiguratorProps) => {
   const [phoneSpace, setPhoneSpace] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Shipping form
-  const [shipping, setShipping] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    postal_code: '',
-    province: '',
-  });
-
   const sizeObj = SIZES.find(s => s.code === selectedSize);
   const perfObj = PERFORATIONS.find(p => p.id === selectedPerf);
   const sizePrice = sizeObj?.price ?? 21.99;
   const perfExtra = perfObj?.extra ?? 0;
   const totalPrice = sizePrice + perfExtra;
 
-  const updateShipping = (field: string, value: string) => {
-    setShipping(prev => ({ ...prev, [field]: value }));
-  };
-
   const handleOrder = async () => {
-    // Validate shipping
-    if (!shipping.name || !shipping.email || !shipping.address || !shipping.city || !shipping.postal_code || !shipping.province) {
-      toast.error('Por favor completa todos los datos de envío');
-      document.getElementById('shipping-section')?.scrollIntoView({ behavior: 'smooth' });
-      return;
-    }
-
-    // Basic email validation
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shipping.email)) {
-      toast.error('Por favor introduce un email válido');
-      return;
-    }
-
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-carteles-checkout', {
@@ -77,13 +47,6 @@ export const OrderConfigurator = ({ type }: OrderConfiguratorProps) => {
           phone_space: phoneSpace,
           total_price_cents: Math.round(totalPrice * 100),
           sign_type: type || 'SE VENDE',
-          shipping_name: shipping.name.trim(),
-          shipping_email: shipping.email.trim(),
-          shipping_phone: shipping.phone.trim(),
-          shipping_address: shipping.address.trim(),
-          shipping_city: shipping.city.trim(),
-          shipping_postal_code: shipping.postal_code.trim(),
-          shipping_province: shipping.province.trim(),
         },
       });
 
@@ -183,86 +146,6 @@ export const OrderConfigurator = ({ type }: OrderConfiguratorProps) => {
               {val ? 'Sí' : 'No'}
             </button>
           ))}
-        </div>
-      </div>
-
-      {/* Step 4: Shipping */}
-      <div id="shipping-section" className="mb-8">
-        <h3 className="font-display text-lg font-bold text-foreground mb-1">4. Datos de envío</h3>
-        <p className="text-sm text-muted-foreground mb-4">¿A dónde te enviamos el cartel?</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="sm:col-span-2">
-            <Label htmlFor="shipping-name" className="text-sm font-medium">Nombre completo *</Label>
-            <Input
-              id="shipping-name"
-              value={shipping.name}
-              onChange={e => updateShipping('name', e.target.value)}
-              placeholder="Juan García López"
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <Label htmlFor="shipping-email" className="text-sm font-medium">Email *</Label>
-            <Input
-              id="shipping-email"
-              type="email"
-              value={shipping.email}
-              onChange={e => updateShipping('email', e.target.value)}
-              placeholder="tu@email.com"
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <Label htmlFor="shipping-phone" className="text-sm font-medium">Teléfono</Label>
-            <Input
-              id="shipping-phone"
-              type="tel"
-              value={shipping.phone}
-              onChange={e => updateShipping('phone', e.target.value)}
-              placeholder="+34 600 000 000"
-              className="mt-1"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <Label htmlFor="shipping-address" className="text-sm font-medium">Dirección *</Label>
-            <Input
-              id="shipping-address"
-              value={shipping.address}
-              onChange={e => updateShipping('address', e.target.value)}
-              placeholder="Calle Mayor 1, 2ºB"
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <Label htmlFor="shipping-city" className="text-sm font-medium">Ciudad *</Label>
-            <Input
-              id="shipping-city"
-              value={shipping.city}
-              onChange={e => updateShipping('city', e.target.value)}
-              placeholder="Madrid"
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <Label htmlFor="shipping-postal" className="text-sm font-medium">Código postal *</Label>
-            <Input
-              id="shipping-postal"
-              value={shipping.postal_code}
-              onChange={e => updateShipping('postal_code', e.target.value)}
-              placeholder="28001"
-              className="mt-1"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <Label htmlFor="shipping-province" className="text-sm font-medium">Provincia *</Label>
-            <Input
-              id="shipping-province"
-              value={shipping.province}
-              onChange={e => updateShipping('province', e.target.value)}
-              placeholder="Madrid"
-              className="mt-1"
-            />
-          </div>
         </div>
       </div>
 

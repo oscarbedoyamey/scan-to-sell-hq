@@ -21,17 +21,9 @@ serve(async (req) => {
       phone_space,
       total_price_cents,
       sign_type,
-      // Shipping info
-      shipping_name,
-      shipping_email,
-      shipping_phone,
-      shipping_address,
-      shipping_city,
-      shipping_postal_code,
-      shipping_province,
     } = await req.json();
 
-    if (!size_code || !total_price_cents || !sign_type || !shipping_email) {
+    if (!size_code || !total_price_cents || !sign_type) {
       throw new Error("Missing required fields");
     }
 
@@ -47,46 +39,9 @@ serve(async (req) => {
       phone_space ? "Con espacio teléfono" : "Sin espacio teléfono",
     ].join(" · ");
 
-    // Find or create Stripe customer
-    const customers = await stripe.customers.list({
-      email: shipping_email,
-      limit: 1,
-    });
-    let customerId: string | undefined;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-      await stripe.customers.update(customerId, {
-        name: shipping_name,
-        phone: shipping_phone,
-        address: {
-          line1: shipping_address,
-          city: shipping_city,
-          postal_code: shipping_postal_code,
-          state: shipping_province,
-          country: "ES",
-        },
-      });
-    } else {
-      const newCustomer = await stripe.customers.create({
-        email: shipping_email,
-        name: shipping_name,
-        phone: shipping_phone,
-        address: {
-          line1: shipping_address,
-          city: shipping_city,
-          postal_code: shipping_postal_code,
-          state: shipping_province,
-          country: "ES",
-        },
-        metadata: { source: "carteles" },
-      });
-      customerId = newCustomer.id;
-    }
-
     const origin = req.headers.get("origin") || "https://zignoqr.com";
 
     const session = await stripe.checkout.sessions.create({
-      customer: customerId,
       line_items: [
         {
           price_data: {
@@ -103,7 +58,8 @@ serve(async (req) => {
       mode: "payment",
       allow_promotion_codes: true,
       locale: "es",
-      
+      shipping_address_collection: { allowed_countries: ["ES"] },
+      phone_number_collection: { enabled: true },
       success_url: `${origin}/carteles/pedido-confirmado?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/carteles`,
       metadata: {
@@ -112,12 +68,6 @@ serve(async (req) => {
         size_code,
         perforation_id,
         phone_space: String(phone_space),
-        shipping_name,
-        shipping_phone,
-        shipping_address,
-        shipping_city,
-        shipping_postal_code,
-        shipping_province,
       },
     });
 
@@ -138,7 +88,7 @@ serve(async (req) => {
   </td></tr>
   <tr><td style="padding:32px 28px;">
     <h1 style="margin:0 0 8px;font-size:22px;color:#18181b;">📦 Nuevo pedido de cartel</h1>
-    <p style="margin:0 0 24px;color:#52525b;font-size:15px;line-height:1.6;">Se ha iniciado un nuevo pedido. El cliente será redirigido a Stripe para completar el pago.</p>
+    <p style="margin:0 0 24px;color:#52525b;font-size:15px;line-height:1.6;">Se ha iniciado un nuevo checkout. Los datos de envío están disponibles en Stripe.</p>
     <table width="100%" style="background:#f4f4f5;border-radius:12px;margin-bottom:24px;" cellpadding="0" cellspacing="0">
       <tr><td style="padding:8px 16px;color:#71717a;font-size:13px;">Producto</td><td style="padding:8px 16px;color:#18181b;font-size:14px;font-weight:600;text-align:right;">Cartel ${sign_type} — ${size_code}</td></tr>
       <tr><td style="padding:8px 16px;color:#71717a;font-size:13px;">Tamaño</td><td style="padding:8px 16px;color:#18181b;font-size:14px;text-align:right;">${size_label}</td></tr>
@@ -146,18 +96,9 @@ serve(async (req) => {
       <tr><td style="padding:8px 16px;color:#71717a;font-size:13px;">Espacio teléfono</td><td style="padding:8px 16px;color:#18181b;font-size:14px;text-align:right;">${phone_space ? "Sí" : "No"}</td></tr>
       <tr><td style="padding:8px 16px;color:#71717a;font-size:13px;">Precio</td><td style="padding:8px 16px;color:#18181b;font-size:14px;font-weight:600;text-align:right;">${totalEur} €</td></tr>
     </table>
-    <h2 style="margin:0 0 12px;font-size:16px;color:#18181b;">📬 Dirección de envío</h2>
-    <table width="100%" style="background:#f4f4f5;border-radius:12px;margin-bottom:24px;" cellpadding="0" cellspacing="0">
-      <tr><td style="padding:8px 16px;color:#71717a;font-size:13px;">Nombre</td><td style="padding:8px 16px;color:#18181b;font-size:14px;text-align:right;">${shipping_name}</td></tr>
-      <tr><td style="padding:8px 16px;color:#71717a;font-size:13px;">Email</td><td style="padding:8px 16px;color:#18181b;font-size:14px;text-align:right;">${shipping_email}</td></tr>
-      <tr><td style="padding:8px 16px;color:#71717a;font-size:13px;">Teléfono</td><td style="padding:8px 16px;color:#18181b;font-size:14px;text-align:right;">${shipping_phone || "—"}</td></tr>
-      <tr><td style="padding:8px 16px;color:#71717a;font-size:13px;">Dirección</td><td style="padding:8px 16px;color:#18181b;font-size:14px;text-align:right;">${shipping_address}</td></tr>
-      <tr><td style="padding:8px 16px;color:#71717a;font-size:13px;">Ciudad</td><td style="padding:8px 16px;color:#18181b;font-size:14px;text-align:right;">${shipping_postal_code} ${shipping_city}</td></tr>
-      <tr><td style="padding:8px 16px;color:#71717a;font-size:13px;">Provincia</td><td style="padding:8px 16px;color:#18181b;font-size:14px;text-align:right;">${shipping_province}</td></tr>
-    </table>
     <a href="https://dashboard.stripe.com/payments" style="display:inline-block;background:#18181b;color:#fff;font-size:15px;font-weight:600;padding:12px 28px;border-radius:8px;text-decoration:none;">Ver en Stripe →</a>
   </td></tr>
-  <tr><td style="padding:16px 28px 24px;text-align:center;color:#a1a1aa;font-size:12px;">Nota: Este email se envía al iniciar el checkout. Verifica el pago en Stripe antes de preparar el envío.</td></tr>
+  <tr><td style="padding:16px 28px 24px;text-align:center;color:#a1a1aa;font-size:12px;">Los datos de envío y teléfono del cliente están en la sesión de Stripe Checkout.</td></tr>
 </table>
 </td></tr>
 </table>
