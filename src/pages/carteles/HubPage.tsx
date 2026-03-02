@@ -8,6 +8,7 @@ import { SIZES } from '@/components/carteles/OrderConfigurator';
 import { CartelesHowItWorks } from '@/components/carteles/CartelesHowItWorks';
 import { CartelesMaterialSpecs } from '@/components/carteles/CartelesMaterialSpecs';
 import { CartelesFAQ } from '@/components/carteles/CartelesFAQ';
+import { CartelesQRBenefits } from '@/components/carteles/CartelesQRBenefits';
 import { CartelesFinalCTA } from '@/components/carteles/CartelesFinalCTA';
 import { Check, Home, Building2 } from 'lucide-react';
 
@@ -104,6 +105,7 @@ const HubPage = () => (
         </div>
       </section>
 
+      <CartelesQRBenefits />
       <CartelesHowItWorks />
       <CartelesMaterialSpecs />
       <CartelesFAQ />

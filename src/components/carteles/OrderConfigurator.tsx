@@ -151,15 +151,24 @@ export const OrderConfigurator = ({ type }: OrderConfiguratorProps) => {
 
       {/* Price + CTA */}
       <div className="border-t border-border pt-6">
-        <div className="flex items-end justify-between mb-4">
-          <div>
-            <span className="text-sm text-muted-foreground">Precio total</span>
-            <p className="text-3xl font-display font-extrabold text-foreground">
-              {totalPrice.toFixed(2).replace('.', ',')} €
-            </p>
-            <span className="text-xs text-muted-foreground">IVA incluido · Envío gratis</span>
-          </div>
+        <div className="mb-4">
+          <span className="text-sm text-muted-foreground">Precio del cartel</span>
+          <p className="text-3xl font-display font-extrabold text-foreground">
+            {totalPrice.toFixed(2).replace('.', ',')} €
+          </p>
+          <span className="text-xs text-muted-foreground">IVA incluido · Envío gratis</span>
         </div>
+
+        {/* Subscription notice */}
+        <div className="rounded-lg border border-accent/30 bg-accent/5 p-4 mb-5">
+          <p className="text-sm text-foreground font-semibold mb-1">
+            🌐 Tu cartel incluye un QR inteligente
+          </p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Al activar el QR obtendrás una <strong className="text-foreground">landing profesional</strong> con fotos, descripción, formulario de contacto, traducción a 7 idiomas y estadísticas. La suscripción digital se contrata por separado (desde 49 €/trimestre) y se puede cancelar en cualquier momento.
+          </p>
+        </div>
+
         <Button
           variant="hero"
           size="xl"
@@ -173,7 +182,7 @@ export const OrderConfigurator = ({ type }: OrderConfiguratorProps) => {
               Procesando…
             </span>
           ) : (
-            `Pedir ahora — ${totalPrice.toFixed(2).replace('.', ',')} €`
+            `Pedir cartel — ${totalPrice.toFixed(2).replace('.', ',')} €`
           )}
         </Button>
         <div className="flex items-center justify-center gap-4 mt-4 text-xs text-muted-foreground">

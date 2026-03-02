@@ -8,6 +8,7 @@ import { Check, ArrowLeft } from 'lucide-react';
 import { CartelesHowItWorks } from '@/components/carteles/CartelesHowItWorks';
 import { CartelesMaterialSpecs } from '@/components/carteles/CartelesMaterialSpecs';
 import { CartelesFAQ } from '@/components/carteles/CartelesFAQ';
+import { CartelesQRBenefits } from '@/components/carteles/CartelesQRBenefits';
 import { CartelesFinalCTA } from '@/components/carteles/CartelesFinalCTA';
 import { TYPE_DATA, PROPERTIES, getProductSEO } from './cartelesData';
 
@@ -77,6 +78,7 @@ const TypePage = () => {
           </div>
         </section>
 
+        <CartelesQRBenefits />
         <CartelesHowItWorks />
         <CartelesMaterialSpecs />
         <CartelesFAQ />

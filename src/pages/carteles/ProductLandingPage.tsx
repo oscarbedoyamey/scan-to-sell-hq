@@ -9,6 +9,7 @@ import { OrderConfigurator } from '@/components/carteles/OrderConfigurator';
 import { CartelesHowItWorks } from '@/components/carteles/CartelesHowItWorks';
 import { CartelesMaterialSpecs } from '@/components/carteles/CartelesMaterialSpecs';
 import { CartelesFAQ } from '@/components/carteles/CartelesFAQ';
+import { CartelesQRBenefits } from '@/components/carteles/CartelesQRBenefits';
 import { CartelesFinalCTA } from '@/components/carteles/CartelesFinalCTA';
 import { TYPE_DATA, PROPERTIES, getProductSEO, getProductHeroContent } from './cartelesData';
 
@@ -73,6 +74,9 @@ const ProductLandingPage = () => {
             <OrderConfigurator type={`${td.type} ${prop.name.toUpperCase()}`} />
           </div>
         </section>
+
+        {/* QR Benefits */}
+        <CartelesQRBenefits compact />
 
         {/* Condensed how it works */}
         <section className="py-16 bg-card">
