@@ -45,6 +45,7 @@ import CartelesHub from "./pages/carteles/HubPage";
 import CartelesType from "./pages/carteles/TypePage";
 import CartelesProduct from "./pages/carteles/ProductLandingPage";
 import CartelesOrderConfirmed from "./pages/carteles/OrderConfirmed";
+import { CartelesPageViewTracker } from "./components/carteles/CartelesPageViewTracker";
 
 import { queryClient } from "@/lib/queryClient";
 
@@ -56,6 +57,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <CartelesPageViewTracker />
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />

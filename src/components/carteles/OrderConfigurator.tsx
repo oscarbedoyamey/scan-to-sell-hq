@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Lock, Truck, RotateCcw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { trackEvent } from '@/lib/analytics';
 
 const SIZES = [
   { code: 'A3', dims: '29,7 × 42 cm', use: 'Portales y ventanas', price: 14.99 },
@@ -36,6 +37,16 @@ export const OrderConfigurator = ({ type }: OrderConfiguratorProps) => {
   const totalPrice = sizePrice + perfExtra;
 
   const handleOrder = async () => {
+    // GA4 event: click on "Pedir cartel" CTA
+    trackEvent('click_cta_pedido', {
+      sign_type: type || 'SE VENDE',
+      size_code: selectedSize,
+      perforation_id: selectedPerf,
+      phone_space: phoneSpace,
+      value: totalPrice,
+      currency: 'EUR',
+    });
+
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-carteles-checkout', {

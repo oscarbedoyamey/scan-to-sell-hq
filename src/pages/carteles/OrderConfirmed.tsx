@@ -1,13 +1,25 @@
 import { useSearchParams, Link } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Header } from '@/components/landing/Header';
 import { Footer } from '@/components/landing/Footer';
 import { SEO } from '@/components/SEO';
 import { CheckCircle2, Package, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { trackEvent } from '@/lib/analytics';
 
 const CartelesOrderConfirmed = () => {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session_id');
+
+  useEffect(() => {
+    if (sessionId) {
+      trackEvent('purchase', {
+        transaction_id: sessionId,
+        currency: 'EUR',
+        items: 'cartel',
+      });
+    }
+  }, [sessionId]);
 
   return (
     <>
