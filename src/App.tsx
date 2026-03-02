@@ -44,6 +44,7 @@ import PublicListingById from "./pages/PublicListingById";
 import CartelesHub from "./pages/carteles/HubPage";
 import CartelesType from "./pages/carteles/TypePage";
 import CartelesProduct from "./pages/carteles/ProductLandingPage";
+import CartelesOrderConfirmed from "./pages/carteles/OrderConfirmed";
 
 import { queryClient } from "@/lib/queryClient";
 
@@ -75,7 +76,7 @@ const App = () => (
               <Route path="/carteles" element={<CartelesHub />} />
               <Route path="/carteles/:type" element={<CartelesType />} />
               <Route path="/carteles/:type/:property" element={<CartelesProduct />} />
-
+              <Route path="/carteles/pedido-confirmado" element={<CartelesOrderConfirmed />} />
               {/* Protected app routes */}
               <Route
                 path="/app"

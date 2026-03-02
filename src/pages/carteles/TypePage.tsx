@@ -5,7 +5,6 @@ import { Footer } from '@/components/landing/Footer';
 import { SEO } from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 import { Check, ArrowLeft } from 'lucide-react';
-import { OrderConfigurator } from '@/components/carteles/OrderConfigurator';
 import { CartelesHowItWorks } from '@/components/carteles/CartelesHowItWorks';
 import { CartelesMaterialSpecs } from '@/components/carteles/CartelesMaterialSpecs';
 import { CartelesFAQ } from '@/components/carteles/CartelesFAQ';
@@ -37,7 +36,7 @@ const TypePage = () => {
               <p className="text-lg text-muted-foreground mb-8 max-w-2xl">{td.heroSub}</p>
               <div className="flex flex-col sm:flex-row gap-3 mb-4">
                 <Button asChild variant="hero" size="xl">
-                  <a href="#configurator">{td.heroCTA}</a>
+                  <a href="#property-types">Elegir tipo de inmueble</a>
                 </Button>
               </div>
               <Link to="/carteles" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -55,7 +54,7 @@ const TypePage = () => {
         </section>
 
         {/* Property type grid */}
-        <section className="py-20 bg-card">
+        <section id="property-types" className="py-20 bg-card">
           <div className="container-wide">
             <h2 className="font-display text-3xl md:text-4xl font-extrabold text-foreground mb-10">
               ¿Qué tipo de inmueble quieres {td.verb}?
@@ -78,18 +77,10 @@ const TypePage = () => {
           </div>
         </section>
 
-        {/* Configurator */}
-        <section id="configurator" className="py-20 bg-muted">
-          <div className="container-wide max-w-2xl">
-            <h2 className="font-display text-3xl md:text-4xl font-extrabold text-foreground mb-8">Configura tu cartel</h2>
-            <OrderConfigurator type={td.type} />
-          </div>
-        </section>
-
         <CartelesHowItWorks />
         <CartelesMaterialSpecs />
         <CartelesFAQ />
-        <CartelesFinalCTA ctaText={td.heroCTA} ctaLink={`/carteles/${td.typeSlug}#configurator`} />
+        <CartelesFinalCTA ctaText="Elegir tipo de inmueble" ctaLink={`/carteles/${td.typeSlug}#property-types`} />
       </main>
       <TrustStrip />
       <Footer />
