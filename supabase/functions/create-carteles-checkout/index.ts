@@ -103,7 +103,7 @@ serve(async (req) => {
       mode: "payment",
       allow_promotion_codes: true,
       locale: "es",
-      shipping_address_collection: { allowed_countries: ["ES"] },
+      
       success_url: `${origin}/carteles/pedido-confirmado?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/carteles`,
       metadata: {
