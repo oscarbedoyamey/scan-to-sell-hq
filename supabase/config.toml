@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.daily-summary]
 verify_jwt = false
+
+[functions.create-carteles-checkout]
+verify_jwt = false

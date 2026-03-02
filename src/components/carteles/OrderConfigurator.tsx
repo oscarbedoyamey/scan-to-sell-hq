@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Lock, Truck, RotateCcw } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Lock, Truck, RotateCcw, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const SIZES = [
   { code: 'A3', dims: '29,7 × 42 cm', use: 'Portales y ventanas', price: 14.99 },
@@ -25,14 +29,77 @@ export const OrderConfigurator = ({ type }: OrderConfiguratorProps) => {
   const [selectedSize, setSelectedSize] = useState('B2');
   const [selectedPerf, setSelectedPerf] = useState('none');
   const [phoneSpace, setPhoneSpace] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const sizePrice = SIZES.find(s => s.code === selectedSize)?.price ?? 21.99;
-  const perfExtra = PERFORATIONS.find(p => p.id === selectedPerf)?.extra ?? 0;
+  // Shipping form
+  const [shipping, setShipping] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    postal_code: '',
+    province: '',
+  });
+
+  const sizeObj = SIZES.find(s => s.code === selectedSize);
+  const perfObj = PERFORATIONS.find(p => p.id === selectedPerf);
+  const sizePrice = sizeObj?.price ?? 21.99;
+  const perfExtra = perfObj?.extra ?? 0;
   const totalPrice = sizePrice + perfExtra;
 
-  const subject = encodeURIComponent(
-    `Pedido cartel${type ? ` ${type}` : ''} — ${selectedSize}, ${PERFORATIONS.find(p => p.id === selectedPerf)?.label}${phoneSpace ? ', con espacio teléfono' : ''}`
-  );
+  const updateShipping = (field: string, value: string) => {
+    setShipping(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleOrder = async () => {
+    // Validate shipping
+    if (!shipping.name || !shipping.email || !shipping.address || !shipping.city || !shipping.postal_code || !shipping.province) {
+      toast.error('Por favor completa todos los datos de envío');
+      document.getElementById('shipping-section')?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    // Basic email validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shipping.email)) {
+      toast.error('Por favor introduce un email válido');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-carteles-checkout', {
+        body: {
+          size_code: selectedSize,
+          size_label: sizeObj?.dims,
+          perforation_id: selectedPerf,
+          perforation_label: perfObj?.label,
+          phone_space: phoneSpace,
+          total_price_cents: Math.round(totalPrice * 100),
+          sign_type: type || 'SE VENDE',
+          shipping_name: shipping.name.trim(),
+          shipping_email: shipping.email.trim(),
+          shipping_phone: shipping.phone.trim(),
+          shipping_address: shipping.address.trim(),
+          shipping_city: shipping.city.trim(),
+          shipping_postal_code: shipping.postal_code.trim(),
+          shipping_province: shipping.province.trim(),
+        },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      toast.error('Error al procesar el pedido. Inténtalo de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="bg-card rounded-lg border border-border p-6 md:p-8 shadow-sm">
@@ -119,6 +186,86 @@ export const OrderConfigurator = ({ type }: OrderConfiguratorProps) => {
         </div>
       </div>
 
+      {/* Step 4: Shipping */}
+      <div id="shipping-section" className="mb-8">
+        <h3 className="font-display text-lg font-bold text-foreground mb-1">4. Datos de envío</h3>
+        <p className="text-sm text-muted-foreground mb-4">¿A dónde te enviamos el cartel?</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="sm:col-span-2">
+            <Label htmlFor="shipping-name" className="text-sm font-medium">Nombre completo *</Label>
+            <Input
+              id="shipping-name"
+              value={shipping.name}
+              onChange={e => updateShipping('name', e.target.value)}
+              placeholder="Juan García López"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="shipping-email" className="text-sm font-medium">Email *</Label>
+            <Input
+              id="shipping-email"
+              type="email"
+              value={shipping.email}
+              onChange={e => updateShipping('email', e.target.value)}
+              placeholder="tu@email.com"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="shipping-phone" className="text-sm font-medium">Teléfono</Label>
+            <Input
+              id="shipping-phone"
+              type="tel"
+              value={shipping.phone}
+              onChange={e => updateShipping('phone', e.target.value)}
+              placeholder="+34 600 000 000"
+              className="mt-1"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <Label htmlFor="shipping-address" className="text-sm font-medium">Dirección *</Label>
+            <Input
+              id="shipping-address"
+              value={shipping.address}
+              onChange={e => updateShipping('address', e.target.value)}
+              placeholder="Calle Mayor 1, 2ºB"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="shipping-city" className="text-sm font-medium">Ciudad *</Label>
+            <Input
+              id="shipping-city"
+              value={shipping.city}
+              onChange={e => updateShipping('city', e.target.value)}
+              placeholder="Madrid"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="shipping-postal" className="text-sm font-medium">Código postal *</Label>
+            <Input
+              id="shipping-postal"
+              value={shipping.postal_code}
+              onChange={e => updateShipping('postal_code', e.target.value)}
+              placeholder="28001"
+              className="mt-1"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <Label htmlFor="shipping-province" className="text-sm font-medium">Provincia *</Label>
+            <Input
+              id="shipping-province"
+              value={shipping.province}
+              onChange={e => updateShipping('province', e.target.value)}
+              placeholder="Madrid"
+              className="mt-1"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Price + CTA */}
       <div className="border-t border-border pt-6">
         <div className="flex items-end justify-between mb-4">
@@ -127,18 +274,24 @@ export const OrderConfigurator = ({ type }: OrderConfiguratorProps) => {
             <p className="text-3xl font-display font-extrabold text-foreground">
               {totalPrice.toFixed(2).replace('.', ',')} €
             </p>
-            <span className="text-xs text-muted-foreground">IVA incluido</span>
+            <span className="text-xs text-muted-foreground">IVA incluido · Envío gratis</span>
           </div>
         </div>
         <Button
-          asChild
           variant="hero"
           size="xl"
           className="w-full text-base"
+          onClick={handleOrder}
+          disabled={loading}
         >
-          <a href={`mailto:hola@zignoqr.com?subject=${subject}`}>
-            Pedir ahora — {totalPrice.toFixed(2).replace('.', ',')} €
-          </a>
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Procesando…
+            </span>
+          ) : (
+            `Pedir ahora — ${totalPrice.toFixed(2).replace('.', ',')} €`
+          )}
         </Button>
         <div className="flex items-center justify-center gap-4 mt-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1"><Lock className="h-3 w-3" /> Pago seguro</span>
