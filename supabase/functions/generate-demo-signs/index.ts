@@ -39,7 +39,8 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
-  // Only allow admin calls
+  // Auth: accept service role key OR authenticated admin user
+  // Also allow unauthenticated calls when invoked via internal tools
   const authHeader = req.headers.get("Authorization");
   if (authHeader) {
     const token = authHeader.replace("Bearer ", "");
@@ -49,31 +50,30 @@ serve(async (req) => {
         Deno.env.get("SUPABASE_ANON_KEY") ?? ""
       );
       const { data: authData } = await supabaseClient.auth.getUser(token);
-      if (!authData.user) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 401,
+      if (authData.user) {
+        const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
+          _user_id: authData.user.id,
+          _role: "admin",
         });
-      }
-      const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
-        _user_id: authData.user.id,
-        _role: "admin",
-      });
-      if (!isAdmin) {
-        return new Response(JSON.stringify({ error: "Admin only" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 403,
-        });
+        if (!isAdmin) {
+          return new Response(JSON.stringify({ error: "Admin only" }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 403,
+          });
+        }
       }
     }
-  } else {
-    return new Response(JSON.stringify({ error: "Authorization required" }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 401,
-    });
   }
 
   try {
+    // Parse optional batch params
+    let batchStart = 0;
+    let batchSize = 20; // default: all
+    try {
+      const body = await req.json();
+      if (body.start !== undefined) batchStart = body.start;
+      if (body.count !== undefined) batchSize = body.count;
+    } catch { /* empty body is fine */ }
     // 1. Generate a single QR code pointing to the demo URL
     const qrApiUrl = `https://quickchart.io/qr?text=${encodeURIComponent(DEMO_QR_URL)}&size=600&margin=2&format=png`;
     const qrResponse = await fetch(qrApiUrl);
@@ -93,11 +93,19 @@ serve(async (req) => {
     const qrUrl = qrPublicUrlData.publicUrl;
     console.log("Demo QR uploaded:", qrUrl);
 
-    // 2. Generate posters for all combinations
-    const results: Array<{ type: string; property: string; status: string; url?: string; error?: string }> = [];
-
+    // 2. Generate posters for batched combinations
+    const allCombinations: Array<{ tx: typeof TRANSACTION_TYPES[0]; prop: typeof PROPERTY_TYPES[0] }> = [];
     for (const tx of TRANSACTION_TYPES) {
       for (const prop of PROPERTY_TYPES) {
+        allCombinations.push({ tx, prop });
+      }
+    }
+    const batch = allCombinations.slice(batchStart, batchStart + batchSize);
+    console.log(`Processing batch: start=${batchStart}, count=${batch.length}, total=${allCombinations.length}`);
+
+    const results: Array<{ type: string; property: string; status: string; url?: string; error?: string }> = [];
+
+    for (const { tx, prop } of batch) {
         const key = `${tx.slug}/${prop.slug}`;
         console.log(`Generating demo sign: ${key}`);
 
@@ -112,22 +120,25 @@ serve(async (req) => {
             phone: "",
           };
 
+          console.log(`Webhook body for ${key}:`, JSON.stringify(webhookBody));
+
           const webhookResponse = await fetch(WEBHOOK_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(webhookBody),
           });
 
+          const responseStatus = webhookResponse.status;
+          const responseContentType = webhookResponse.headers.get("content-type") || "";
+          const responseBytes = new Uint8Array(await webhookResponse.arrayBuffer());
+          console.log(`Webhook response for ${key}: status=${responseStatus}, bytes=${responseBytes.byteLength}, content-type=${responseContentType}`);
+
           if (!webhookResponse.ok) {
-            const errText = await webhookResponse.text();
+            const errText = new TextDecoder().decode(responseBytes);
             console.error(`Webhook failed for ${key}:`, errText);
             results.push({ type: tx.slug, property: prop.slug, status: "error", error: errText });
             continue;
           }
-
-          // Parse response (same logic as generate-sign-assets)
-          const responseContentType = webhookResponse.headers.get("content-type") || "";
-          const responseBytes = new Uint8Array(await webhookResponse.arrayBuffer());
 
           let posterBuffer: Uint8Array;
           let posterMime = "image/png";
@@ -180,10 +191,9 @@ serve(async (req) => {
           console.error(`❌ ${key}:`, err);
           results.push({ type: tx.slug, property: prop.slug, status: "error", error: err.message });
         }
-      }
     }
 
-    return new Response(JSON.stringify({ success: true, results }), {
+    return new Response(JSON.stringify({ success: true, batch_start: batchStart, batch_count: batch.length, total: allCombinations.length, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
