@@ -12,6 +12,7 @@ import { CartelesFAQ } from '@/components/carteles/CartelesFAQ';
 import { CartelesQRBenefits } from '@/components/carteles/CartelesQRBenefits';
 import { CartelesFinalCTA } from '@/components/carteles/CartelesFinalCTA';
 import { TYPE_DATA, PROPERTIES, getProductSEO, getProductHeroContent } from './cartelesData';
+import { getDemoSignUrl } from '@/lib/demoSignUrl';
 
 const ProductLandingPage = () => {
   const { type, property } = useParams<{ type: string; property: string }>();
@@ -34,34 +35,44 @@ const ProductLandingPage = () => {
         {/* Hero */}
         <section className="py-16 md:py-24 bg-background">
           <div className="container-wide">
-            <div className="max-w-3xl">
-              {/* Breadcrumb */}
-              <nav className="flex items-center gap-1 text-xs text-muted-foreground mb-6">
-                <Link to="/carteles" className="hover:text-foreground transition-colors">Carteles</Link>
-                <ChevronRight className="h-3 w-3" />
-                <Link to={`/carteles/${td.typeSlug}`} className="hover:text-foreground transition-colors capitalize">
-                  {td.type.charAt(0) + td.type.slice(1).toLowerCase()}
-                </Link>
-                <ChevronRight className="h-3 w-3" />
-                <span className="text-foreground font-medium">{prop.name}</span>
-              </nav>
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div className="max-w-3xl">
+                {/* Breadcrumb */}
+                <nav className="flex items-center gap-1 text-xs text-muted-foreground mb-6">
+                  <Link to="/carteles" className="hover:text-foreground transition-colors">Carteles</Link>
+                  <ChevronRight className="h-3 w-3" />
+                  <Link to={`/carteles/${td.typeSlug}`} className="hover:text-foreground transition-colors capitalize">
+                    {td.type.charAt(0) + td.type.slice(1).toLowerCase()}
+                  </Link>
+                  <ChevronRight className="h-3 w-3" />
+                  <span className="text-foreground font-medium">{prop.name}</span>
+                </nav>
 
-              <span className="inline-block text-xs font-semibold tracking-wide bg-accent/10 text-accent px-3 py-1 rounded-full mb-6">
-                Cartel {td.type} {prop.name.toUpperCase()}
-              </span>
-              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 leading-tight">
-                {hero.headline}
-              </h1>
-              <p className="text-lg text-muted-foreground mb-8 max-w-2xl">{hero.sub}</p>
-              <Button asChild variant="hero" size="xl">
-                <a href="#configurator">{hero.cta}</a>
-              </Button>
-              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground mt-6">
-                {['Impresión profesional', 'Entrega en 48-72h', 'QR activable incluido', 'Resistente exterior 3 años'].map(t => (
-                  <span key={t} className="flex items-center gap-1.5">
-                    <Check className="h-4 w-4 text-success" /> {t}
-                  </span>
-                ))}
+                <span className="inline-block text-xs font-semibold tracking-wide bg-accent/10 text-accent px-3 py-1 rounded-full mb-6">
+                  Cartel {td.type} {prop.name.toUpperCase()}
+                </span>
+                <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 leading-tight">
+                  {hero.headline}
+                </h1>
+                <p className="text-lg text-muted-foreground mb-8 max-w-2xl">{hero.sub}</p>
+                <Button asChild variant="hero" size="xl">
+                  <a href="#configurator">{hero.cta}</a>
+                </Button>
+                <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground mt-6">
+                  {['Impresión profesional', 'Entrega en 48-72h', 'QR activable incluido', 'Resistente exterior 3 años'].map(t => (
+                    <span key={t} className="flex items-center gap-1.5">
+                      <Check className="h-4 w-4 text-success" /> {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="hidden lg:flex justify-center">
+                <img
+                  src={getDemoSignUrl(td.typeSlug, prop.slug)}
+                  alt={`Ejemplo de cartel ${td.type} ${prop.name} con código QR`}
+                  className="w-full max-w-sm rounded-xl shadow-xl border border-border"
+                  loading="eager"
+                />
               </div>
             </div>
           </div>

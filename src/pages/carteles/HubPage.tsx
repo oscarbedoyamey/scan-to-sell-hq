@@ -11,6 +11,7 @@ import { CartelesFAQ } from '@/components/carteles/CartelesFAQ';
 import { CartelesQRBenefits } from '@/components/carteles/CartelesQRBenefits';
 import { CartelesFinalCTA } from '@/components/carteles/CartelesFinalCTA';
 import { Check, Home, Building2 } from 'lucide-react';
+import { getDemoSignUrl } from '@/lib/demoSignUrl';
 
 const HubPage = () => (
   <>
@@ -24,30 +25,40 @@ const HubPage = () => (
       {/* Hero */}
       <section className="py-16 md:py-24 bg-background">
         <div className="container-wide">
-          <div className="max-w-3xl">
-            <span className="inline-block text-xs font-semibold tracking-wide bg-accent/10 text-accent px-3 py-1 rounded-full mb-6">
-              Carteles para inmobiliarias · España
-            </span>
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 leading-tight">
-              Carteles <span className="text-accent">SE VENDE</span> y <span className="text-accent">SE ALQUILA</span> con QR inteligente
-            </h1>
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl">
-              Señalización profesional impresa en polipropileno resistente al exterior. Activa tu QR en zignoqr.com y crea tu landing en minutos.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 mb-8">
-              <Button asChild variant="hero" size="xl">
-                <Link to="/carteles/se-vende">Ver carteles Se Vende</Link>
-              </Button>
-              <Button asChild variant="heroOutline" size="xl">
-                <Link to="/carteles/se-alquila">Ver carteles Se Alquila</Link>
-              </Button>
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="max-w-3xl">
+              <span className="inline-block text-xs font-semibold tracking-wide bg-accent/10 text-accent px-3 py-1 rounded-full mb-6">
+                Carteles para inmobiliarias · España
+              </span>
+              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 leading-tight">
+                Carteles <span className="text-accent">SE VENDE</span> y <span className="text-accent">SE ALQUILA</span> con QR inteligente
+              </h1>
+              <p className="text-lg text-muted-foreground mb-8 max-w-2xl">
+                Señalización profesional impresa en polipropileno resistente al exterior. Activa tu QR en zignoqr.com y crea tu landing en minutos.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 mb-8">
+                <Button asChild variant="hero" size="xl">
+                  <Link to="/carteles/se-vende">Ver carteles Se Vende</Link>
+                </Button>
+                <Button asChild variant="heroOutline" size="xl">
+                  <Link to="/carteles/se-alquila">Ver carteles Se Alquila</Link>
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                {['Impresión profesional', 'Entrega en 48-72h', 'QR activable incluido', 'Resistente exterior 3 años'].map(t => (
+                  <span key={t} className="flex items-center gap-1.5">
+                    <Check className="h-4 w-4 text-success" /> {t}
+                  </span>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-              {['Impresión profesional', 'Entrega en 48-72h', 'QR activable incluido', 'Resistente exterior 3 años'].map(t => (
-                <span key={t} className="flex items-center gap-1.5">
-                  <Check className="h-4 w-4 text-success" /> {t}
-                </span>
-              ))}
+            <div className="hidden lg:flex justify-center">
+              <img
+                src={getDemoSignUrl('se-vende', 'piso')}
+                alt="Ejemplo de cartel SE VENDE con código QR"
+                className="w-full max-w-sm rounded-xl shadow-xl border border-border"
+                loading="eager"
+              />
             </div>
           </div>
         </div>
