@@ -11,6 +11,7 @@ import { CartelesFAQ } from '@/components/carteles/CartelesFAQ';
 import { CartelesQRBenefits } from '@/components/carteles/CartelesQRBenefits';
 import { CartelesFinalCTA } from '@/components/carteles/CartelesFinalCTA';
 import { TYPE_DATA, PROPERTIES, getProductSEO } from './cartelesData';
+import { getDemoSignUrl } from '@/lib/demoSignUrl';
 
 const TypePage = () => {
   const { type } = useParams<{ type: string }>();
@@ -27,28 +28,38 @@ const TypePage = () => {
         {/* Hero */}
         <section className="py-16 md:py-24 bg-background">
           <div className="container-wide">
-            <div className="max-w-3xl">
-              <span className="inline-block text-xs font-semibold tracking-wide bg-accent/10 text-accent px-3 py-1 rounded-full mb-6">
-                Cartel {td.type} · España
-              </span>
-              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 leading-tight">
-                {td.heroHeadline}
-              </h1>
-              <p className="text-lg text-muted-foreground mb-8 max-w-2xl">{td.heroSub}</p>
-              <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                <Button asChild variant="hero" size="xl">
-                  <a href="#property-types">Elegir tipo de inmueble</a>
-                </Button>
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div className="max-w-3xl">
+                <span className="inline-block text-xs font-semibold tracking-wide bg-accent/10 text-accent px-3 py-1 rounded-full mb-6">
+                  Cartel {td.type} · España
+                </span>
+                <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 leading-tight">
+                  {td.heroHeadline}
+                </h1>
+                <p className="text-lg text-muted-foreground mb-8 max-w-2xl">{td.heroSub}</p>
+                <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                  <Button asChild variant="hero" size="xl">
+                    <a href="#property-types">Elegir tipo de inmueble</a>
+                  </Button>
+                </div>
+                <Link to="/carteles" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <ArrowLeft className="h-3 w-3" /> Ver todos los carteles
+                </Link>
+                <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground mt-6">
+                  {['Impresión profesional', 'Entrega en 48-72h', 'QR activable incluido', 'Resistente exterior 3 años'].map(t => (
+                    <span key={t} className="flex items-center gap-1.5">
+                      <Check className="h-4 w-4 text-success" /> {t}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <Link to="/carteles" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                <ArrowLeft className="h-3 w-3" /> Ver todos los carteles
-              </Link>
-              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground mt-6">
-                {['Impresión profesional', 'Entrega en 48-72h', 'QR activable incluido', 'Resistente exterior 3 años'].map(t => (
-                  <span key={t} className="flex items-center gap-1.5">
-                    <Check className="h-4 w-4 text-success" /> {t}
-                  </span>
-                ))}
+              <div className="hidden lg:flex justify-center">
+                <img
+                  src={getDemoSignUrl(td.typeSlug, 'piso')}
+                  alt={`Ejemplo de cartel ${td.type} con código QR`}
+                  className="w-full max-w-sm rounded-xl shadow-xl border border-border"
+                  loading="eager"
+                />
               </div>
             </div>
           </div>
