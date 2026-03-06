@@ -6,4 +6,4 @@
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 export const getDemoSignUrl = (typeSlug = "se-vende", propSlug = "piso") =>
-  `${SUPABASE_URL}/storage/v1/object/public/generated-assets/demo-signs/${typeSlug}/${propSlug}/poster.png`;
+  `${SUPABASE_URL}/storage/v1/object/public/generated-assets/demo-signs/${typeSlug}/${propSlug}/poster.jpg`;
